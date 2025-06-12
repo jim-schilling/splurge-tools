@@ -81,6 +81,6 @@ class StringTokenizer:
             'hello'
         """
         value = content.strip() if strip else content
-        if value.startswith(bookend) and value.endswith(bookend) and len(value) > 1:
-            return value[1:-1]
+        if value.startswith(bookend) and value.endswith(bookend) and len(value) > 2 * len(bookend) - 1:
+           return value[len(bookend):-len(bookend)]
         return value
