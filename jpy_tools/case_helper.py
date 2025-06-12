@@ -10,6 +10,20 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
+from functools import wraps
+
+def handle_empty_value(func):
+    """
+    Decorator to handle empty value checks for case conversion methods.
+    Returns empty string if input value is empty.
+    """
+    @wraps(func)
+    def wrapper(value: str, *args, **kwargs):
+        if not value:
+            return ""
+        return func(value, *args, **kwargs)
+    return wrapper
+
 
 class CaseHelper:
     """
@@ -44,6 +58,7 @@ class CaseHelper:
         return value.replace('_', ' ').replace('-', ' ')
 
     @staticmethod
+    @handle_empty_value
     def to_train(value: str, normalize: bool = True) -> str:
         """
         Convert a string to train case (capitalized words separated by hyphens).
@@ -59,13 +74,12 @@ class CaseHelper:
             "hello world" -> "Hello-World"
             "hello_world" -> "Hello-World"
         """
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         return value.title().replace(" ", "-")
     
     @staticmethod
+    @handle_empty_value
     def to_sentence(value: str, normalize: bool = True) -> str:
         """
         Convert a string to sentence case (first word capitalized, rest lowercase).
@@ -81,13 +95,12 @@ class CaseHelper:
             "hello world" -> "Hello world"
             "hello_world" -> "Hello world"
         """
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         return value.capitalize()
     
     @staticmethod
+    @handle_empty_value
     def to_camel(value: str, normalize: bool = True) -> str:
         """
         Convert a string to camel case (first word lowercase, subsequent words capitalized).
@@ -103,8 +116,6 @@ class CaseHelper:
             "hello world" -> "helloWorld"
             "hello_world" -> "helloWorld"
         """
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         words = value.split()
@@ -113,6 +124,7 @@ class CaseHelper:
         return words[0].lower() + ''.join(word.title() for word in words[1:])
     
     @staticmethod
+    @handle_empty_value
     def to_snake(value: str, normalize: bool = True) -> str:
         """
         Convert a string to snake case (all lowercase with underscore separators).
@@ -128,13 +140,12 @@ class CaseHelper:
             "hello world" -> "hello_world"
             "hello-world" -> "hello_world"
         """
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         return value.lower().replace(" ", "_")
     
     @staticmethod
+    @handle_empty_value
     def to_kebab(value: str, normalize: bool = True) -> str:
         """
         Convert a string to kebab case (all lowercase with hyphen separators).
@@ -150,13 +161,12 @@ class CaseHelper:
             "hello world" -> "hello-world"
             "hello_world" -> "hello-world"
         """ 
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         return value.lower().replace(" ", "-")
     
     @staticmethod
+    @handle_empty_value
     def to_pascal(value: str, normalize: bool = True) -> str:
         """
         Convert a string to pascal case (all words capitalized, no separators).
@@ -172,8 +182,6 @@ class CaseHelper:
             "hello world" -> "HelloWorld"
             "hello_world" -> "HelloWorld"
         """
-        if not value:
-            return ""
         if normalize:
             value = CaseHelper.normalize(value)
         return ''.join(word.title() for word in value.split())
