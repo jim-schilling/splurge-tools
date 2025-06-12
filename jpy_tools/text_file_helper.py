@@ -33,7 +33,7 @@ class TextFileHelper:
     """
 
     @staticmethod
-    def line_count(file_name: Union[PathLike, str]) -> int:
+    def line_count(file_name: Union[PathLike, str], encoding: str = 'utf-8') -> int:
         """Count the number of lines in a text file.
 
         This method efficiently counts lines by iterating through the file
@@ -50,12 +50,12 @@ class TextFileHelper:
             FileNotFoundError: If the specified file doesn't exist
             IOError: If there are issues reading the file
         """
-        with open(file_name, 'r') as stream:
+        with open(file_name, 'r', encoding=encoding) as stream:
             # Use generator expression for memory efficiency
             return sum(1 for _ in stream)
 
     @staticmethod
-    def preview(file_name: Union[PathLike, str], max_lines: int = 100, strip: bool = True) -> List[str]:
+    def preview(file_name: Union[PathLike, str], max_lines: int = 100, strip: bool = True, encoding: str = 'utf-8') -> List[str]:
         """Preview the first N lines of a text file.
 
         This method reads up to max_lines from the beginning of the file,
@@ -78,7 +78,7 @@ class TextFileHelper:
             raise ValueError("TextFileHelper.preview: max_lines is less than 1")
 
         lines = []
-        with open(file_name, 'r') as stream:
+        with open(file_name, 'r', encoding=encoding) as stream:
             # Read up to max_lines or until EOF
             for _ in range(max_lines):
                 line = stream.readline()
@@ -92,7 +92,7 @@ class TextFileHelper:
         return lines
 
     @staticmethod
-    def load(file_name: Union[PathLike, str], strip: bool = True) -> List[str]:
+    def load(file_name: Union[PathLike, str], strip: bool = True, encoding: str = 'utf-8') -> List[str]:
         """Load the entire contents of a text file into a list of strings.
 
         This method reads the complete file into memory, with an option
@@ -109,7 +109,7 @@ class TextFileHelper:
             FileNotFoundError: If the specified file doesn't exist
             IOError: If there are issues reading the file
         """
-        with open(file_name, 'r') as stream:
+        with open(file_name, 'r', encoding=encoding) as stream:
             if strip:
                 return [line.strip() for line in stream]
             return [line.rstrip('\n') for line in stream]
