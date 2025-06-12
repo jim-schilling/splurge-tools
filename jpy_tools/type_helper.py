@@ -9,7 +9,6 @@ This module offers a comprehensive set of tools for:
 - Value profiling and analysis
 
 Copyright (c) 2023 Jim Schilling
-All Rights Reserved.
 
 Please preserve this header and all related material when sharing!
 

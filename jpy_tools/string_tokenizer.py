@@ -5,7 +5,6 @@ A utility module for string tokenization operations.
 Provides methods to split strings into tokens and manipulate string boundaries.
 
 Copyright (c) 2025 Jim Schilling
-All rights reserved.
 
 Please preserve this header and all related material when sharing!
 

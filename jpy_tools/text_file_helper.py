@@ -11,8 +11,7 @@ Key features:
 - File previewing with configurable line limits
 - Whitespace handling options
 
-Copyright (c) 2023 Jim Schilling
-All Rights Reserved.
+Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
@@ -46,7 +45,6 @@ class TextFileHelper:
             int: Number of lines in the file
 
         Raises:
-            ValueError: If file_name is None
             FileNotFoundError: If the specified file doesn't exist
             IOError: If there are issues reading the file
         """
