@@ -1,10 +1,14 @@
 # jpy-tools
 
-A Python package providing tools for data type handling and validation.
+A Python package providing tools for data type handling, validation, and text processing.
 
 ## Description
 
-jpy-tools is a collection of Python utilities focused on data type handling and validation. The package is designed to work with Python 3.10 and above.
+jpy-tools is a collection of Python utilities focused on:
+- Data type handling and validation
+- Text file processing and manipulation
+- String tokenization and parsing
+- Python 3.10+ compatibility
 
 ## Installation
 
@@ -14,9 +18,9 @@ pip install jpy-tools
 
 ## Features
 
-- Type validation and conversion utilities
-- Data type handling helpers
-- Python 3.10+ compatibility
+- `type_helper.py`: Comprehensive type validation and conversion utilities
+- `text_file_helper.py`: Text file processing and manipulation tools
+- `string_tokenizer.py`: String parsing and tokenization utilities
 
 ## Development
 
