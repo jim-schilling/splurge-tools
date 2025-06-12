@@ -108,6 +108,8 @@ class CaseHelper:
         if normalize:
             value = CaseHelper.normalize(value)
         words = value.split()
+        if not words:
+            return ""
         return words[0].lower() + ''.join(word.title() for word in words[1:])
     
     @staticmethod
