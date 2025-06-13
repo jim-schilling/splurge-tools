@@ -10,6 +10,7 @@ This software is licensed under the MIT License.
 from os import PathLike
 from typing import Union
 from jpy_tools.string_tokenizer import StringTokenizer
+from jpy_tools.text_file_helper import TextFileHelper
 
 class DSVHelper:
     """A utility class for working with DSV (Delimited String Values) files.
@@ -104,6 +105,4 @@ class DSVHelper:
             >>> DSVHelper.parse_file("data.csv", ",")
             [['header1', 'header2'], ['value1', 'value2']]
         """
-        with open(file_path, 'r') as file:
-            content = file.readlines()
-        return DSVHelper.parses(content, delimiter, strip, bookend, bookend_strip)
+        return DSVHelper.parses(TextFileHelper.load(file_path), delimiter, strip, bookend, bookend_strip)
