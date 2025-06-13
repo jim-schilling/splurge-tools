@@ -34,10 +34,22 @@ class StringTokenizer:
         Returns:
             list[str]: List of tokens, with empty tokens removed if strip is True
             
+        Raises:
+            ValueError: If delimiter is empty or None
+            
         Example:
             >>> StringTokenizer.parse("a,b,c", ",")
             ['a', 'b', 'c']
         """
+        if not delimiter:
+            raise ValueError("Delimiter cannot be empty or None")
+            
+        if content is None:
+            return []
+            
+        if not content.strip() and strip:
+            return []
+            
         result: list[str] = content.split(delimiter)
         if strip:
             result = [token.strip() for token in result if len(token.strip()) > 0]
