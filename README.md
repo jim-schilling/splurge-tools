@@ -38,7 +38,7 @@ pip install jpy-tools
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/jpy-tools.git
+git clone https://github.com/jim-schilling/jpy-tools.git
 cd jpy-tools
 ```
 
@@ -55,9 +55,9 @@ pip install -e .
 
 ### Testing
 
-Run tests using pytest:
+Run tests using unittest:
 ```bash
-pytest tests/
+python -m unittest discover tests/
 ```
 
 ## License
