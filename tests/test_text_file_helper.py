@@ -119,9 +119,5 @@ class TestTextFileHelper(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             TextFileHelper.load('nonexistent_file.txt')
 
-        # Test invalid skip parameters
-        with self.assertRaises(ValueError):
-            TextFileHelper.load(self.temp_file.name, skip_header_rows=3, skip_footer_rows=3)
-
 if __name__ == '__main__':
     unittest.main()

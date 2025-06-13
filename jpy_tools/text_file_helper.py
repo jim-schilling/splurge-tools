@@ -123,27 +123,32 @@ class TextFileHelper:
             List[str]: List of all lines from the file, excluding skipped rows
 
         Raises:
-            ValueError: If skip_header_rows + skip_footer_rows >= total lines
             FileNotFoundError: If the specified file doesn't exist
             IOError: If there are issues reading the file
             UnicodeDecodeError: If the file cannot be decoded with the specified encoding
         """
         skip_header_rows = max(0, skip_header_rows)
         skip_footer_rows = max(0, skip_footer_rows)
-        line_count = TextFileHelper.line_count(file_name, encoding)
         
-        # Handle empty files
-        if line_count == 0:
-            return []
-            
-        # Validate skip parameters for non-empty files
-        if skip_header_rows + skip_footer_rows >= line_count:
-            raise ValueError("TextFileHelper.load: skip_header_rows + skip_footer_rows is greater than or equal to the number of lines in the file")
-        
-        lines = []
+        # Read file once and handle skipping in a single pass
         with open(file_name, 'r', encoding=encoding) as stream:
-            if strip:
-                lines = [line.strip() for line in stream]
-            else:
-                lines = [line.rstrip('\n') for line in stream]
-        return lines[skip_header_rows:-skip_footer_rows] if skip_footer_rows > 0 else lines[skip_header_rows:]
+            # Skip header rows
+            for _ in range(skip_header_rows):
+                if not stream.readline():
+                    return []  # File is shorter than skip_header_rows
+            
+            # Read remaining lines into a list
+            lines = []
+            for line in stream:
+                if strip:
+                    lines.append(line.strip())
+                else:
+                    lines.append(line.rstrip('\n'))
+            
+            # Remove footer rows if needed
+            if skip_footer_rows > 0:
+                if skip_footer_rows >= len(lines):
+                    return []
+                lines = lines[:-skip_footer_rows]
+                
+            return lines
