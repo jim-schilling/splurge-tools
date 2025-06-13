@@ -9,6 +9,7 @@ jpy-tools is a collection of Python utilities focused on:
 - Text file processing and manipulation
 - String tokenization and parsing
 - Text case transformations
+- Delimited separated value parsing
 - Python 3.10+ compatibility
 
 ## Installation
@@ -23,6 +24,7 @@ pip install jpy-tools
 - `text_file_helper.py`: Text file processing and manipulation tools
 - `string_tokenizer.py`: String parsing and tokenization utilities
 - `case_helper.py`: Text case transformation utilities
+- `dsv_helper.py`: Delimited separated value utilities
 
 ## Development
 
