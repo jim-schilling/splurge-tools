@@ -135,4 +135,65 @@ class DsvHelper:
             bookend_strip
         )
     
+    def __init__(
+            self, 
+            data: list[list[str]],
+            header_rows: int = 1,
+            column_names_span: int = 1,
+            skip_empty_rows: bool = True
+    ):
+        if data is None or len(data) == 0:
+            raise ValueError("Data is required")
+        if header_rows < 0:
+            raise ValueError("Header rows must be greater than or equal to 0")
+        if header_rows > 0 and column_names_span > header_rows:
+            raise ValueError("Column names span must be less than or equal to header rows")
+        if header_rows > 0 and column_names_span == 0:
+            raise ValueError("Column names span must be greater than 0 if header rows are greater than 0")
+        
+        self._raw_data = data
+        self._header_rows = header_rows
+        self._column_names_span = column_names_span
+        self._header_data = data[:header_rows] if header_rows > 0 else []
+        self._data = self._normalize_data_model(data[header_rows:], skip_empty_rows) if header_rows > 0 else self._normalize_data_model(data, skip_empty_rows)
+        self._header_columns = len(self._header_data[0]) if len(self._header_data) > 0 else 0
+        self._columns = len(self._data[0]) if len(self._data) > 0 else 0
+        self._rows = len(self._data) if len(self._data) > 0 else 0
+        
+        # Get column names from header data
+        if len(self._header_data) > 0:
+            # For multi-row headers, combine the first column_names_span rows
+            self._column_names = []
+            for i in range(min(column_names_span, len(self._header_data))):
+                row = self._header_data[i]
+                # Extend column names if needed
+                while len(self._column_names) < len(row):
+                    self._column_names.append('')
+                # Combine with existing names
+                for j, name in enumerate(row):
+                    if self._column_names[j]:
+                        self._column_names[j] = f"{self._column_names[j]}_{name}"
+                    else:
+                        self._column_names[j] = name
+        else:
+            self._column_names = []
+            
+        # strip away 2 or more spaces from the column names
+        self._column_names = [re.sub(r'\s+', ' ', name).strip() for name in self._column_names]
+        
+        # If no headers, generate column names
+        if len(self._column_names) == 0:
+            self._column_names = [f"column_{i}" for i in range(self._columns)]
+        # ensure column_names matches the number of columns and replace empty names
+        while len(self._column_names) < self._columns:
+            self._column_names.append(f"column_{len(self._column_names)}")
+        # Replace any empty column names with column_n
+        self._column_names = [name if name else f"column_{i}" for i, name in enumerate(self._column_names)]
+            
+        self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
+    
+    def _normalize_data_model(self, data: list[list[str]], skip_empty_rows: bool = True) -> list[list[str]]:
+        # Implementation of _normalize_data_model method
+        pass
+    
     

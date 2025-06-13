@@ -104,7 +104,20 @@ class TestTabularDataModel(unittest.TestCase):
             TabularDataModel(self.sample_data, header_rows=-1)  
         
         with self.assertRaises(ValueError):
-            TabularDataModel(self.sample_data, header_rows=1, column_names_span=2)
+            TabularDataModel(self.sample_data, header_rows=1, multi_row_headers=2)
+
+    def test_multi_row_headers(self):
+        """Test multi-row header handling."""
+        data = [
+            ["Category", "Details", "Location"],  # First header row
+            ["Name", "Age", "City"],             # Second header row
+            ["John", "30", "New York"],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(data, header_rows=2, multi_row_headers=2)
+        self.assertEqual(model.column_names, ["Category_Name", "Details_Age", "Location_City"])
+        self.assertEqual(model.row_count, 2)
+        self.assertEqual(model.row(0), {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
 
 if __name__ == '__main__':
     unittest.main()

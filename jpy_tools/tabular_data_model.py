@@ -17,26 +17,42 @@ class TabularDataModel:
             self, 
             data: list[list[str]],
             header_rows: int = 1,
-            column_names_span: int = 1,
+            multi_row_headers: int = 1,
             skip_empty_rows: bool = True
     ):
         if data is None or len(data) == 0:
             raise ValueError("Data is required")
         if header_rows < 0:
             raise ValueError("Header rows must be greater than or equal to 0")
-        if header_rows > 0 and column_names_span > header_rows:
+        if header_rows > 0 and multi_row_headers > header_rows:
             raise ValueError("Column names span must be less than or equal to header rows")
-        if header_rows > 0 and column_names_span == 0:
+        if header_rows > 0 and multi_row_headers == 0:
             raise ValueError("Column names span must be greater than 0 if header rows are greater than 0")
         
         self._raw_data = data
         self._header_rows = header_rows
-        self._column_names_span = column_names_span
+        self._multi_row_headers = multi_row_headers
         self._header_data = data[:header_rows] if header_rows > 0 else []
         self._data = self._normalize_data_model(data[header_rows:], skip_empty_rows) if header_rows > 0 else self._normalize_data_model(data, skip_empty_rows)
         self._header_columns = len(self._header_data[0]) if len(self._header_data) > 0 else 0
         self._columns = len(self._data[0]) if len(self._data) > 0 else 0
         self._rows = len(self._data) if len(self._data) > 0 else 0
+        # if header_rows > 1 and multi_row_headers > 1, then merge the header data into a single row
+        if header_rows > 1 and multi_row_headers > 1:
+            # For multi-row headers, combine the first multi_row_headers rows
+            merged_headers = []
+            for i in range(min(multi_row_headers, len(self._header_data))):
+                row = self._header_data[i]
+                # Extend column names if needed
+                while len(merged_headers) < len(row):
+                    merged_headers.append('')
+                # Combine with existing names
+                for j, name in enumerate(row):
+                    if merged_headers[j]:
+                        merged_headers[j] = f"{merged_headers[j]}_{name}"
+                    else:
+                        merged_headers[j] = name
+            self._header_data = [merged_headers]
         
         # Get column names from the first row of header data
         self._column_names = self._header_data[0] if len(self._header_data) > 0 else []
