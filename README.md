@@ -25,6 +25,7 @@ pip install jpy-tools
 - `string_tokenizer.py`: String parsing and tokenization utilities
 - `case_helper.py`: Text case transformation utilities
 - `dsv_helper.py`: Delimited separated value utilities
+- `tabular_data_model.py`: Data model for tabular datasets
 
 ## Development
 
