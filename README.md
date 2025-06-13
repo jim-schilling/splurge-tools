@@ -10,6 +10,7 @@ jpy-tools is a collection of Python utilities focused on:
 - String tokenization and parsing
 - Text case transformations
 - Delimited separated value parsing
+- Tabular data model class
 - Python 3.10+ compatibility
 
 ## Installation
