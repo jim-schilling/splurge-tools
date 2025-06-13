@@ -190,10 +190,7 @@ class DsvHelper:
         # Replace any empty column names with column_n
         self._column_names = [name if name else f"column_{i}" for i, name in enumerate(self._column_names)]
             
-        self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
+        self._column_index_map = {name: i for i, name in enumerate(self._column_names)}    
     
-    def _normalize_data_model(self, data: list[list[str]], skip_empty_rows: bool = True) -> list[list[str]]:
-        # Implementation of _normalize_data_model method
-        pass
     
     
