@@ -2,7 +2,7 @@
 import unittest
 import tempfile
 from pathlib import Path
-from jpy_tools.dsv_helper import DSVHelper
+from jpy_tools.dsv_helper import DsvHelper
 
 class TestDSVHelper(unittest.TestCase):
     """Test cases for DSVHelper class."""
@@ -10,37 +10,37 @@ class TestDSVHelper(unittest.TestCase):
     def test_parse_basic(self):
         """Test basic parsing functionality."""
         content = "a,b,c"
-        result = DSVHelper.parse(content, ",")
+        result = DsvHelper.parse(content, ",")
         self.assertEqual(result, ["a", "b", "c"])
 
     def test_parse_with_bookend(self):
         """Test parsing with text bookends."""
         content = '"a","b","c"'
-        result = DSVHelper.parse(content, ",", bookend='"')
+        result = DsvHelper.parse(content, ",", bookend='"')
         self.assertEqual(result, ["a", "b", "c"])
 
     def test_parse_with_strip(self):
         """Test parsing with whitespace stripping."""
         content = " a , b , c "
-        result = DSVHelper.parse(content, ",", strip=True)
+        result = DsvHelper.parse(content, ",", strip=True)
         self.assertEqual(result, ["a", "b", "c"])
 
     def test_parse_without_strip(self):
         """Test parsing without whitespace stripping."""
         content = " a , b , c "
-        result = DSVHelper.parse(content, ",", strip=False)
+        result = DsvHelper.parse(content, ",", strip=False)
         self.assertEqual(result, [" a ", " b ", " c "])
 
     def test_parses_basic(self):
         """Test parsing multiple strings."""
         content = ["a,b,c", "d,e,f"]
-        result = DSVHelper.parses(content, ",")
+        result = DsvHelper.parses(content, ",")
         self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
 
     def test_parses_with_bookend(self):
         """Test parsing multiple strings with bookends."""
         content = ['"a","b","c"', '"d","e","f"']
-        result = DSVHelper.parses(content, ",", bookend='"')
+        result = DsvHelper.parses(content, ",", bookend='"')
         self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
 
     def test_parse_file(self):
@@ -50,7 +50,7 @@ class TestDSVHelper(unittest.TestCase):
             temp_path = Path(temp_file.name)
         
         try:
-            result = DSVHelper.parse_file(temp_path, ",")
+            result = DsvHelper.parse_file(temp_path, ",")
             self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
         finally:
             temp_path.unlink()
@@ -62,7 +62,7 @@ class TestDSVHelper(unittest.TestCase):
             temp_path = Path(temp_file.name)
         
         try:
-            result = DSVHelper.parse_file(temp_path, ",", bookend='"')
+            result = DsvHelper.parse_file(temp_path, ",", bookend='"')
             self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
         finally:
             temp_path.unlink()
@@ -70,12 +70,13 @@ class TestDSVHelper(unittest.TestCase):
     def test_invalid_delimiter(self):
         """Test handling of invalid delimiter."""
         with self.assertRaises(ValueError):
-            DSVHelper.parse("a,b,c", "")
+            DsvHelper.parse("a,b,c", "")
 
     def test_invalid_file_path(self):
         """Test handling of invalid file path."""
         with self.assertRaises(FileNotFoundError):
-            DSVHelper.parse_file("nonexistent.txt", ",")
+            DsvHelper.parse_file("nonexistent.txt", ",")
+
 
 if __name__ == '__main__':
     unittest.main()

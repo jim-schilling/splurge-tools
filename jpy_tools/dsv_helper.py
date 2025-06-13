@@ -7,12 +7,13 @@ Please preserve this header and all related material when sharing!
 
 This software is licensed under the MIT License.
 """
+import re
 from os import PathLike
 from typing import Union
 from jpy_tools.string_tokenizer import StringTokenizer
 from jpy_tools.text_file_helper import TextFileHelper
 
-class DSVHelper:
+class DsvHelper:
     """A utility class for working with DSV (Delimited String Values) files.
     
     This class provides methods to parse DSV content from strings, lists of strings,
@@ -27,7 +28,13 @@ class DSVHelper:
         - Optional whitespace stripping
     """
     @staticmethod
-    def parse(content: str, delimiter: str, strip: bool = True, bookend: str = None, bookend_strip: bool = True) -> list[str]:
+    def parse(
+        content: str, 
+        delimiter: str, 
+        strip: bool = True, 
+        bookend: str = None, 
+        bookend_strip: bool = True
+    ) -> list[str]:
         """Parse a string into a list of strings.
 
         Args:
@@ -44,9 +51,9 @@ class DSVHelper:
             ValueError: If delimiter is empty or None.
 
         Example:
-            >>> DSVHelper.parse("a,b,c", ",")
+            >>> DsvHelper.parse("a,b,c", ",")
             ['a', 'b', 'c']
-            >>> DSVHelper.parse('"a","b","c"', ",", bookend='"')
+            >>> DsvHelper.parse('"a","b","c"', ",", bookend='"')
             ['a', 'b', 'c']
         """
         # First parse the content into tokens
@@ -59,7 +66,13 @@ class DSVHelper:
         return tokens
     
     @staticmethod
-    def parses(content: list[str], delimiter: str, strip: bool = True, bookend: str = None, bookend_strip: bool = True) -> list[list[str]]:
+    def parses(
+        content: list[str], 
+        delimiter: str, 
+        strip: bool = True, 
+        bookend: str = None, 
+        bookend_strip: bool = True
+    ) -> list[list[str]]:
         """Parse a list of strings into a list of lists of strings.
 
         Args:
@@ -77,13 +90,22 @@ class DSVHelper:
             TypeError: If content is not a list of strings.
 
         Example:
-            >>> DSVHelper.parses(["a,b,c", "d,e,f"], ",")
+            >>> DsvHelper.parses(["a,b,c", "d,e,f"], ",")
             [['a', 'b', 'c'], ['d', 'e', 'f']]
         """
-        return [DSVHelper.parse(item, delimiter, strip, bookend, bookend_strip) for item in content]
+        return [DsvHelper.parse(item, delimiter, strip, bookend, bookend_strip) for item in content]
 
     @staticmethod
-    def parse_file(file_path: Union[PathLike, str], delimiter: str, strip: bool = True, bookend: str = None, bookend_strip: bool = True) -> list[list[str]]:
+    def parse_file(
+        file_path: Union[PathLike, str], 
+        delimiter: str, 
+        strip: bool = True, 
+        bookend: str = None, 
+        bookend_strip: bool = True,
+        encoding: str = 'utf-8',
+        skip_header_rows: int = 0,
+        skip_footer_rows: int = 0
+    ) -> list[list[str]]:
         """Parse a file into a list of lists of strings.
 
         Args:
@@ -102,7 +124,15 @@ class DSVHelper:
             PermissionError: If the file cannot be accessed.
 
         Example:
-            >>> DSVHelper.parse_file("data.csv", ",")
+            >>> DsvHelper.parse_file("data.csv", ",")
             [['header1', 'header2'], ['value1', 'value2']]
         """
-        return DSVHelper.parses(TextFileHelper.load(file_path), delimiter, strip, bookend, bookend_strip)
+        return DsvHelper.parses(
+            TextFileHelper.load(file_path, encoding=encoding, skip_header_rows=skip_header_rows, skip_footer_rows=skip_footer_rows), 
+            delimiter, 
+            strip, 
+            bookend, 
+            bookend_strip
+        )
+    
+    
