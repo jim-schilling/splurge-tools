@@ -83,4 +83,4 @@ class TestCaseHelper(unittest.TestCase):
                 self.assertEqual(CaseHelper.to_pascal(input_str), expected)
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

@@ -84,4 +84,4 @@ class TestTextFileHelper(unittest.TestCase):
             TextFileHelper.load('nonexistent_file.txt')
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()
