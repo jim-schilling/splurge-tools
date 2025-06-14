@@ -85,7 +85,10 @@ class TabularDataModel:
     def column_index(self, name: str) -> int:
         """
         Get the column index for a given name.
+        If the column name is not found, raise a ValueError.
         """
+        if name not in self._column_index_map:
+            raise ValueError(f"Column name {name} not found")
         return self._column_index_map[name]
     
     @property
