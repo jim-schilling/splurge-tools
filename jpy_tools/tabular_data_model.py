@@ -8,6 +8,7 @@ Please keep the copyright notice in this file and in the source code files.
 This module is licensed under the MIT License.
 """
 import re
+from typing import Generator
 
 class TabularDataModel:
     """
@@ -75,15 +76,8 @@ class TabularDataModel:
         """
         The column names.
         """
-        return self._column_names
-    
-    @property
-    def column_index_map(self) -> dict[str, int]:
-        """
-        The column index map.
-        """
-        return self._column_index_map
-    
+        return self._column_names  
+       
     def column_index(self, name: str) -> int:
         """
         Get the column index for a given name.
@@ -107,6 +101,22 @@ class TabularDataModel:
     # setup an iterator for the data
     def __iter__(self):
         return iter(self._data)
+    
+    def iter_rows(self) -> Generator[dict[str, str], None, None]:
+        """
+        Iterate over rows as dictionaries.
+        This is more efficient than calling row() for each index.
+        """
+        for row in self._data:
+            yield {self._column_names[i]: row[i] for i in range(self._columns)}
+    
+    def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
+        """
+        Iterate over rows as tuples.
+        This is more efficient than calling row_as_tuple() for each index.
+        """
+        for row in self._data:
+            yield tuple(row)
     
     # return a row as a dictionary
     def row(self, index: int) -> dict[str, str]:

@@ -21,10 +21,9 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(model.row_count, 3)
         self.assertEqual(model.column_count, 3)
 
-    def test_column_index_map(self):
+    def test_column_index(self):
         """Test column index mapping."""
         model = TabularDataModel(self.sample_data)
-        self.assertEqual(model.column_index_map, {"Name": 0, "Age": 1, "City": 2})
         self.assertEqual(model.column_index("Name"), 0)
         self.assertEqual(model.column_index("Age"), 1)
         self.assertEqual(model.column_index("City"), 2)
@@ -118,6 +117,24 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(model.column_names, ["Category_Name", "Details_Age", "Location_City"])
         self.assertEqual(model.row_count, 2)
         self.assertEqual(model.row(0), {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
+
+    def test_iter_rows(self):
+        """Test iteration over rows as dictionaries."""
+        model = TabularDataModel(self.sample_data)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0], {"Name": "John", "Age": "30", "City": "New York"})
+        self.assertEqual(rows[1], {"Name": "Jane", "Age": "25", "City": "Boston"})
+        self.assertEqual(rows[2], {"Name": "Bob", "Age": "35", "City": "Chicago"})
+
+    def test_iter_rows_as_tuples(self):
+        """Test iteration over rows as tuples."""
+        model = TabularDataModel(self.sample_data)
+        rows = list(model.iter_rows_as_tuples())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0], ("John", "30", "New York"))
+        self.assertEqual(rows[1], ("Jane", "25", "Boston"))
+        self.assertEqual(rows[2], ("Bob", "35", "Chicago"))
 
 if __name__ == '__main__':
     unittest.main()
