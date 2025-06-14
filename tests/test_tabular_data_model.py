@@ -166,6 +166,52 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(len(rows), 2)
         self.assertEqual(rows[0], {"column_0": "John", "column_1": "30", "column_2": "New York"})
 
+        # Test with multi-row headers
+        multi_header_data = [
+            ["Category", "Details", "Location"],  # First header row
+            ["Name", "Age", "City"],             # Second header row
+            ["John", "30", "New York"],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(multi_header_data, header_rows=2, multi_row_headers=2)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
+        self.assertEqual(rows[1], {"Category_Name": "Jane", "Details_Age": "25", "Location_City": "Boston"})
+
+        # Test with skip_empty_rows=True and mixed data
+        mixed_data = [
+            ["Name", "Age", "City"],
+            ["John", "30", "New York"],
+            ["", "", ""],
+            ["Jane", "25", "Boston"],
+            ["", "", ""],
+            ["Bob", "35", "Chicago"]
+        ]
+        model = TabularDataModel(mixed_data, skip_empty_rows=True)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0], {"Name": "John", "Age": "30", "City": "New York"})
+        self.assertEqual(rows[1], {"Name": "Jane", "Age": "25", "City": "Boston"})
+        self.assertEqual(rows[2], {"Name": "Bob", "Age": "35", "City": "Chicago"})
+
+        # Test with multi-row headers and skip_empty_rows=True
+        multi_header_mixed_data = [
+            ["Category", "Details", "Location"],  # First header row
+            ["Name", "Age", "City"],             # Second header row
+            ["John", "30", "New York"],
+            ["", "", ""],
+            ["Jane", "25", "Boston"],
+            ["", "", ""],
+            ["Bob", "35", "Chicago"]
+        ]
+        model = TabularDataModel(multi_header_mixed_data, header_rows=2, multi_row_headers=2, skip_empty_rows=True)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0], {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
+        self.assertEqual(rows[1], {"Category_Name": "Jane", "Details_Age": "25", "Location_City": "Boston"})
+        self.assertEqual(rows[2], {"Category_Name": "Bob", "Details_Age": "35", "Location_City": "Chicago"})
+
     def test_iter_rows_as_tuples_edge_cases(self):
         """Test edge cases for iter_rows_as_tuples method."""
         # Test with empty data
