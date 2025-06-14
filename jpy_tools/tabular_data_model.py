@@ -113,6 +113,7 @@ class TabularDataModel:
     def column_type(self, name: str) -> DataType:
         """
         Get the inferred data type for a column.
+        This is cached for the column.
         
         Args:
             name: Column name to get type for
