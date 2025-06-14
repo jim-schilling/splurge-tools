@@ -35,7 +35,8 @@ class DataType(Enum):
     - TIME: Time values
     - DATETIME: Combined date and time
     - MIXED: Multiple types in collection
-    - NONE: Null/empty values
+    - EMPTY: Empty values
+    - NONE: Null/None values
     """
     STRING = 'str'
     INTEGER = 'int'
@@ -45,6 +46,7 @@ class DataType(Enum):
     TIME = 'time'
     DATETIME = 'datetime'
     MIXED = 'mixed'
+    EMPTY = 'empty'
     NONE = 'none'
 
 
@@ -112,6 +114,29 @@ class String:
                 return True
 
         return False
+
+    @staticmethod
+    def is_empty_like(value: Any, trim: bool = True) -> bool:
+        """
+        Check if value is an empty string or contains only whitespace.
+        
+        Args:
+            value: Value to check
+            trim: Whether to trim whitespace before checking
+            
+        Returns:
+            True if value is empty string or contains only whitespace
+            
+        Examples:
+            >>> String.is_empty_like('')      # True
+            >>> String.is_empty_like('   ')   # True
+            >>> String.is_empty_like('abc')   # False
+            >>> String.is_empty_like(None)    # False
+        """
+        if not isinstance(value, str):
+            return False
+            
+        return not value.strip() if trim else not value
 
     @staticmethod
     def is_float_like(value: Union[str, float, None], trim: bool = True) -> bool:
@@ -620,6 +645,9 @@ class String:
 
         if cls.is_float_like(value, trim):
             return DataType.FLOAT
+        
+        if cls.is_empty_like(value, trim):
+            return DataType.EMPTY
 
         return DataType.STRING
 
@@ -675,6 +703,7 @@ def profile_values(values: Iterable, trim: bool = True) -> DataType:
         DataType.INTEGER.name: 0,
         DataType.FLOAT.name: 0,
         DataType.STRING.name: 0,
+        DataType.EMPTY.name: 0,
         DataType.NONE.name: 0,
     }
 
@@ -687,25 +716,31 @@ def profile_values(values: Iterable, trim: bool = True) -> DataType:
         types[String.infer_type(value, trim).name] += 1
         count += 1
 
+    if types[DataType.EMPTY.name] == count:
+        return DataType.EMPTY
+    
     if types[DataType.NONE.name] == count:
         return DataType.NONE
 
-    if types[DataType.BOOLEAN.name] + types[DataType.NONE.name] == count:
+    if types[DataType.NONE.name] + types[DataType.EMPTY.name] == count:
+        return DataType.NONE
+
+    if types[DataType.BOOLEAN.name] + types[DataType.EMPTY.name] == count:
         return DataType.BOOLEAN
 
-    if types[DataType.DATE.name] + types[DataType.NONE.name] == count:
+    if types[DataType.DATE.name] + types[DataType.EMPTY.name] == count:
         return DataType.DATE
 
-    if types[DataType.DATETIME.name] + types[DataType.DATE.name] + types[DataType.NONE.name] == count:
+    if types[DataType.DATETIME.name] + types[DataType.EMPTY.name] == count:
         return DataType.DATETIME
 
-    if types[DataType.INTEGER.name] + types[DataType.NONE.name] == count:
+    if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.INTEGER
 
-    if types[DataType.FLOAT.name] + types[DataType.INTEGER.name] + types[DataType.NONE.name] == count:
+    if types[DataType.FLOAT.name] + types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.FLOAT
 
-    if types[DataType.STRING.name] + types[DataType.NONE.name] == count:
+    if types[DataType.STRING.name] + types[DataType.EMPTY.name] == count:
         return DataType.STRING
 
     return DataType.MIXED

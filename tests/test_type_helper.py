@@ -293,45 +293,81 @@ class TestString(unittest.TestCase):
         self.assertEqual(String.infer_type('123.45'), DataType.FLOAT)
         self.assertEqual(String.infer_type('true'), DataType.BOOLEAN)
 
+    def test_is_empty_like(self):
+        """Test is_empty_like method."""
+        # Test empty strings
+        self.assertTrue(String.is_empty_like(''))
+        self.assertTrue(String.is_empty_like('   '))
+        self.assertTrue(String.is_empty_like('\t\n\r'))
+        
+        # Test non-empty strings
+        self.assertFalse(String.is_empty_like('abc'))
+        self.assertFalse(String.is_empty_like('  abc  '))
+        
+        # Test non-string values
+        self.assertFalse(String.is_empty_like(None))
+        self.assertFalse(String.is_empty_like(123))
+        self.assertFalse(String.is_empty_like([]))
+        self.assertFalse(String.is_empty_like({}))
+        
+        # Test with trim=False
+        self.assertFalse(String.is_empty_like('   ', trim=False))
+        self.assertTrue(String.is_empty_like('', trim=False))
+
 
 class TestProfileValues(unittest.TestCase):
     """Test cases for profile_values function"""
 
     def test_profile_values(self):
-        """Test value profiling"""
-        # Test homogeneous types
-        self.assertEqual(
-            profile_values([1, 2, 3]),
-            DataType.INTEGER
-        )
-        self.assertEqual(
-            profile_values([1.1, 2.2, 3.3]),
-            DataType.FLOAT
-        )
-        self.assertEqual(
-            profile_values(['a', 'b', 'c']),
-            DataType.STRING
-        )
-        self.assertEqual(
-            profile_values([True, False]),
-            DataType.BOOLEAN
-        )
+        """Test profile_values function."""
+        # Test empty collections
+        self.assertEqual(profile_values([]), DataType.EMPTY)
+        
+        # Test empty strings
+        self.assertEqual(profile_values(['', '   ', '\t']), DataType.EMPTY)
+        
+        # Test None values
+        self.assertEqual(profile_values([None, None]), DataType.NONE)
+        
+        # Test mixed None and empty
+        self.assertEqual(profile_values([None, '', '   ']), DataType.NONE)
+        
+        # Test boolean values
+        self.assertEqual(profile_values(['true', 'false']), DataType.BOOLEAN)
+        self.assertEqual(profile_values(['true', 'false', '']), DataType.BOOLEAN)
+        
+        # Test date values
+        self.assertEqual(profile_values(['2023-01-01', '2023-01-02']), DataType.DATE)
+        self.assertEqual(profile_values(['2023-01-01', '2023-01-02', '']), DataType.DATE)
+        
+        # Test datetime values
+        self.assertEqual(profile_values(['2023-01-01T12:00:00', '2023-01-02T12:00:00']), DataType.DATETIME)
+        self.assertEqual(profile_values(['2023-01-01T12:00:00', '2023-01-02T12:00:00', '']), DataType.DATETIME)
+        
+        # Test integer values
+        self.assertEqual(profile_values(['1', '2', '3']), DataType.INTEGER)
+        self.assertEqual(profile_values(['1', '2', '3', '']), DataType.INTEGER)
+        
+        # Test float values
+        self.assertEqual(profile_values(['1.1', '2.2', '3.3']), DataType.FLOAT)
+        self.assertEqual(profile_values(['1.1', '2.2', '3.3', '']), DataType.FLOAT)
+        self.assertEqual(profile_values(['1', '2.2', '3']), DataType.FLOAT)  # Mixed int and float
+        
+        # Test string values
+        self.assertEqual(profile_values(['abc', 'def']), DataType.STRING)
+        self.assertEqual(profile_values(['abc', 'def', '']), DataType.STRING)
         
         # Test mixed types
-        self.assertEqual(
-            profile_values([1, 'a', 2.0]),
-            DataType.MIXED
-        )
-        
-        # Test empty values
-        self.assertEqual(
-            profile_values([None, None, None]),
-            DataType.NONE
-        )
+        self.assertEqual(profile_values(['1', '2.2', 'abc']), DataType.MIXED)
+        self.assertEqual(profile_values(['1', '2.2', 'abc', '']), DataType.MIXED)
         
         # Test invalid input
         with self.assertRaises(ValueError):
             profile_values('not iterable')
+            
+        # Test with trim=False
+        self.assertEqual(profile_values(['  true  ', '  false  '], trim=False), DataType.STRING)
+        self.assertEqual(profile_values(['  1  ', '  2  '], trim=False), DataType.STRING)
 
 
 class TestUtilityFunctions(unittest.TestCase):
