@@ -108,7 +108,7 @@ class TabularDataModel:
         This is more efficient than calling row() for each index.
         """
         for row in self._data:
-            yield {self._column_names[i]: row[i] for i in range(self._columns)}
+            yield dict(zip(self._column_names, row))
     
     def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
         """
