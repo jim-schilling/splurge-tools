@@ -8,7 +8,7 @@ Please keep the copyright notice in this file and in the source code files.
 This module is licensed under the MIT License.
 """
 import re
-from typing import Generator, Any, Optional
+from typing import Generator
 from jpy_tools.type_helper import DataType, profile_values
 
 class TabularDataModel:

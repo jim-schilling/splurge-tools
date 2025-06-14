@@ -11,6 +11,8 @@ jpy-tools is a collection of Python utilities focused on:
 - Text case transformations
 - Delimited separated value parsing
 - Tabular data model class
+- Typed tabular data model class
+- Data validator class
 - Python 3.10+ compatibility
 
 ## Installation
@@ -27,6 +29,8 @@ pip install jpy-tools
 - `case_helper.py`: Text case transformation utilities
 - `dsv_helper.py`: Delimited separated value utilities
 - `tabular_data_model.py`: Data model for tabular datasets
+- `typed_tabular_data_model.py`: Type data model based on tabular data model
+- `data_validator.py`: Data validator class
 
 ## Development
 
