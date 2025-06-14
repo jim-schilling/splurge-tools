@@ -195,13 +195,35 @@ class TypedTabularDataModel(TabularDataModel):
     def row_as_list(self, index: int) -> list[Any]:
         """
         Get a row as a list with native Python types.
+        
+        Args:
+            index: Row index (0-based)
+            
+        Returns:
+            List of values in the row
+            
+        Raises:
+            ValueError: If row index is out of range
         """
+        if index < 0 or index >= self._rows:
+            raise ValueError(f"Row index {index} out of range")
         return self._typed_data[index]
     
     def row_as_tuple(self, index: int) -> tuple[Any, ...]:
         """
         Get a row as a tuple with native Python types.
+        
+        Args:
+            index: Row index (0-based)
+            
+        Returns:
+            Tuple of values in the row
+            
+        Raises:
+            ValueError: If row index is out of range
         """
+        if index < 0 or index >= self._rows:
+            raise ValueError(f"Row index {index} out of range")
         return tuple(self._typed_data[index])
     
     def column_type(self, name: str) -> DataType:
