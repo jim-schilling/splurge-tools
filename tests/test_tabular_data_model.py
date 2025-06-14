@@ -136,5 +136,65 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(rows[1], ("Jane", "25", "Boston"))
         self.assertEqual(rows[2], ("Bob", "35", "Chicago"))
 
+    def test_iter_rows_edge_cases(self):
+        """Test edge cases for iter_rows method."""
+        # Test with empty data
+        empty_data = [["Name", "Age", "City"]]
+        model = TabularDataModel(empty_data)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 0)
+
+        # Test with skip_empty_rows=False
+        data_with_empty = [
+            ["Name", "Age", "City"],
+            ["John", "30", "New York"],
+            ["", "", ""],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(data_with_empty, skip_empty_rows=False)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[1], {"Name": "", "Age": "", "City": ""})
+
+        # Test with no header
+        no_header_data = [
+            ["John", "30", "New York"],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(no_header_data, header_rows=0)
+        rows = list(model.iter_rows())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], {"column_0": "John", "column_1": "30", "column_2": "New York"})
+
+    def test_iter_rows_as_tuples_edge_cases(self):
+        """Test edge cases for iter_rows_as_tuples method."""
+        # Test with empty data
+        empty_data = [["Name", "Age", "City"]]
+        model = TabularDataModel(empty_data)
+        rows = list(model.iter_rows_as_tuples())
+        self.assertEqual(len(rows), 0)
+
+        # Test with skip_empty_rows=False
+        data_with_empty = [
+            ["Name", "Age", "City"],
+            ["John", "30", "New York"],
+            ["", "", ""],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(data_with_empty, skip_empty_rows=False)
+        rows = list(model.iter_rows_as_tuples())
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[1], ("", "", ""))
+
+        # Test with no header
+        no_header_data = [
+            ["John", "30", "New York"],
+            ["Jane", "25", "Boston"]
+        ]
+        model = TabularDataModel(no_header_data, header_rows=0)
+        rows = list(model.iter_rows_as_tuples())
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0], ("John", "30", "New York"))
+
 if __name__ == '__main__':
     unittest.main()
