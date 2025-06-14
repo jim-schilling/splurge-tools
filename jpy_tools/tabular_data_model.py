@@ -8,7 +8,8 @@ Please keep the copyright notice in this file and in the source code files.
 This module is licensed under the MIT License.
 """
 import re
-from typing import Generator
+from typing import Generator, Any, Optional
+from jpy_tools.type_helper import DataType, profile_values
 
 class TabularDataModel:
     """
@@ -72,8 +73,12 @@ class TabularDataModel:
         
         # Replace any empty column names with column_n
         self._column_names = [name if name else f"column_{i}" for i, name in enumerate(self._column_names)]
-            
+        
+        # create a map of column names to indices
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
+        
+        # Cache for column data types
+        self._column_types: dict[str, DataType] = {}
         
     @property
     def column_names(self) -> list[str]:
@@ -104,6 +109,70 @@ class TabularDataModel:
         The number of columns.
         """
         return self._columns
+    
+    def column_type(self, name: str) -> DataType:
+        """
+        Get the inferred data type for a column.
+        
+        Args:
+            name: Column name to get type for
+            
+        Returns:
+            DataType enum value representing the inferred type
+            
+        Raises:
+            ValueError: If column name is not found
+        """
+        if name not in self._column_index_map:
+            raise ValueError(f"Column name {name} not found")
+            
+        if name not in self._column_types:
+            col_idx = self._column_index_map[name]
+            values = [row[col_idx] for row in self._data]
+            self._column_types[name] = profile_values(values)
+            
+        return self._column_types[name]
+    
+    def column_values(self, name: str) -> list[str]:
+        """
+        Get all values for a column.
+        
+        Args:
+            name: Column name to get values for
+            
+        Returns:
+            List of values in the column
+            
+        Raises:
+            ValueError: If column name is not found
+        """
+        if name not in self._column_index_map:
+            raise ValueError(f"Column name {name} not found")
+            
+        col_idx = self._column_index_map[name]
+        return [row[col_idx] for row in self._data]
+    
+    def cell_value(self, name: str, row_index: int) -> str:
+        """
+        Get a cell value by column name and row index.
+        
+        Args:
+            name: Column name
+            row_index: Row index (0-based)
+            
+        Returns:
+            Cell value as string
+            
+        Raises:
+            ValueError: If column name is not found or row index is out of range
+        """
+        if name not in self._column_index_map:
+            raise ValueError(f"Column name {name} not found")
+        if row_index < 0 or row_index >= self._rows:
+            raise ValueError(f"Row index {row_index} out of range")
+            
+        col_idx = self._column_index_map[name]
+        return self._data[row_index][col_idx]
     
     # setup an iterator for the data
     def __iter__(self):

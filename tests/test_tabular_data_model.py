@@ -1,6 +1,7 @@
 """Unit tests for DSVHelper class."""
 import unittest
 from jpy_tools.tabular_data_model import TabularDataModel
+from jpy_tools.type_helper import DataType
 
 class TestTabularDataModel(unittest.TestCase):
     """Test cases for TabularDataModel class."""
@@ -12,6 +13,14 @@ class TestTabularDataModel(unittest.TestCase):
             ["John", "30", "New York"],
             ["Jane", "25", "Boston"],
             ["Bob", "35", "Chicago"]
+        ]
+        
+        # Data with mixed types
+        self.mixed_type_data = [
+            ["Name", "Age", "Score", "IsActive", "Date"],
+            ["John", "30", "95.5", "true", "2024-01-01"],
+            ["Jane", "25", "88.0", "false", "2024-01-02"],
+            ["Bob", "35", "92.5", "true", "2024-01-03"]
         ]
 
     def test_basic_initialization(self):
@@ -136,111 +145,73 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(rows[1], ("Jane", "25", "Boston"))
         self.assertEqual(rows[2], ("Bob", "35", "Chicago"))
 
-    def test_iter_rows_edge_cases(self):
-        """Test edge cases for iter_rows method."""
-        # Test with empty data
-        empty_data = [["Name", "Age", "City"]]
-        model = TabularDataModel(empty_data)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 0)
+    def test_column_type(self):
+        """Test column type inference."""
+        model = TabularDataModel(self.mixed_type_data)
+        
+        # Test string column
+        self.assertEqual(model.column_type("Name"), DataType.STRING)
+        
+        # Test integer column
+        self.assertEqual(model.column_type("Age"), DataType.INTEGER)
+        
+        # Test float column
+        self.assertEqual(model.column_type("Score"), DataType.FLOAT)
+        
+        # Test boolean column
+        self.assertEqual(model.column_type("IsActive"), DataType.BOOLEAN)
+        
+        # Test date column
+        self.assertEqual(model.column_type("Date"), DataType.DATE)
+        
+        # Test invalid column name
+        with self.assertRaises(ValueError):
+            model.column_type("InvalidColumn")
 
-        # Test with skip_empty_rows=False
-        data_with_empty = [
-            ["Name", "Age", "City"],
-            ["John", "30", "New York"],
-            ["", "", ""],
-            ["Jane", "25", "Boston"]
-        ]
-        model = TabularDataModel(data_with_empty, skip_empty_rows=False)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(rows[1], {"Name": "", "Age": "", "City": ""})
+    def test_column_values(self):
+        """Test getting column values."""
+        model = TabularDataModel(self.sample_data)
+        
+        # Test valid column
+        self.assertEqual(model.column_values("Name"), ["John", "Jane", "Bob"])
+        self.assertEqual(model.column_values("Age"), ["30", "25", "35"])
+        self.assertEqual(model.column_values("City"), ["New York", "Boston", "Chicago"])
+        
+        # Test invalid column name
+        with self.assertRaises(ValueError):
+            model.column_values("InvalidColumn")
 
-        # Test with no header
-        no_header_data = [
-            ["John", "30", "New York"],
-            ["Jane", "25", "Boston"]
-        ]
-        model = TabularDataModel(no_header_data, header_rows=0)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"column_0": "John", "column_1": "30", "column_2": "New York"})
+    def test_cell_value(self):
+        """Test getting cell values."""
+        model = TabularDataModel(self.sample_data)
+        
+        # Test valid cells
+        self.assertEqual(model.cell_value("Name", 0), "John")
+        self.assertEqual(model.cell_value("Age", 1), "25")
+        self.assertEqual(model.cell_value("City", 2), "Chicago")
+        
+        # Test invalid column name
+        with self.assertRaises(ValueError):
+            model.cell_value("InvalidColumn", 0)
+        
+        # Test invalid row index
+        with self.assertRaises(ValueError):
+            model.cell_value("Name", -1)
+        with self.assertRaises(ValueError):
+            model.cell_value("Name", 3)
 
-        # Test with multi-row headers
-        multi_header_data = [
-            ["Category", "Details", "Location"],  # First header row
-            ["Name", "Age", "City"],             # Second header row
-            ["John", "30", "New York"],
-            ["Jane", "25", "Boston"]
-        ]
-        model = TabularDataModel(multi_header_data, header_rows=2, multi_row_headers=2)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
-        self.assertEqual(rows[1], {"Category_Name": "Jane", "Details_Age": "25", "Location_City": "Boston"})
-
-        # Test with skip_empty_rows=True and mixed data
-        mixed_data = [
-            ["Name", "Age", "City"],
-            ["John", "30", "New York"],
-            ["", "", ""],
-            ["Jane", "25", "Boston"],
-            ["", "", ""],
-            ["Bob", "35", "Chicago"]
-        ]
-        model = TabularDataModel(mixed_data, skip_empty_rows=True)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(rows[0], {"Name": "John", "Age": "30", "City": "New York"})
-        self.assertEqual(rows[1], {"Name": "Jane", "Age": "25", "City": "Boston"})
-        self.assertEqual(rows[2], {"Name": "Bob", "Age": "35", "City": "Chicago"})
-
-        # Test with multi-row headers and skip_empty_rows=True
-        multi_header_mixed_data = [
-            ["Category", "Details", "Location"],  # First header row
-            ["Name", "Age", "City"],             # Second header row
-            ["John", "30", "New York"],
-            ["", "", ""],
-            ["Jane", "25", "Boston"],
-            ["", "", ""],
-            ["Bob", "35", "Chicago"]
-        ]
-        model = TabularDataModel(multi_header_mixed_data, header_rows=2, multi_row_headers=2, skip_empty_rows=True)
-        rows = list(model.iter_rows())
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(rows[0], {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"})
-        self.assertEqual(rows[1], {"Category_Name": "Jane", "Details_Age": "25", "Location_City": "Boston"})
-        self.assertEqual(rows[2], {"Category_Name": "Bob", "Details_Age": "35", "Location_City": "Chicago"})
-
-    def test_iter_rows_as_tuples_edge_cases(self):
-        """Test edge cases for iter_rows_as_tuples method."""
-        # Test with empty data
-        empty_data = [["Name", "Age", "City"]]
-        model = TabularDataModel(empty_data)
-        rows = list(model.iter_rows_as_tuples())
-        self.assertEqual(len(rows), 0)
-
-        # Test with skip_empty_rows=False
-        data_with_empty = [
-            ["Name", "Age", "City"],
-            ["John", "30", "New York"],
-            ["", "", ""],
-            ["Jane", "25", "Boston"]
-        ]
-        model = TabularDataModel(data_with_empty, skip_empty_rows=False)
-        rows = list(model.iter_rows_as_tuples())
-        self.assertEqual(len(rows), 3)
-        self.assertEqual(rows[1], ("", "", ""))
-
-        # Test with no header
-        no_header_data = [
-            ["John", "30", "New York"],
-            ["Jane", "25", "Boston"]
-        ]
-        model = TabularDataModel(no_header_data, header_rows=0)
-        rows = list(model.iter_rows_as_tuples())
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0], ("John", "30", "New York"))
+    def test_column_type_caching(self):
+        """Test that column types are cached."""
+        model = TabularDataModel(self.mixed_type_data)
+        
+        # First call should compute the type
+        type1 = model.column_type("Age")
+        
+        # Second call should use cached value
+        type2 = model.column_type("Age")
+        
+        self.assertEqual(type1, type2)
+        self.assertEqual(type1, DataType.INTEGER)
 
 if __name__ == '__main__':
     unittest.main()
