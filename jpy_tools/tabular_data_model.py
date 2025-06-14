@@ -38,6 +38,7 @@ class TabularDataModel:
         self._header_columns = len(self._header_data[0]) if len(self._header_data) > 0 else 0
         self._columns = len(self._data[0]) if len(self._data) > 0 else 0
         self._rows = len(self._data) if len(self._data) > 0 else 0
+        
         # if header_rows > 1 and multi_row_headers > 1, then merge the header data into a single row
         if header_rows > 1 and multi_row_headers > 1:
             # For multi-row headers, combine the first multi_row_headers rows
@@ -57,15 +58,18 @@ class TabularDataModel:
         
         # Get column names from the first row of header data
         self._column_names = self._header_data[0] if len(self._header_data) > 0 else []
+        
         # strip away 2 or more spaces from the column names
         self._column_names = [re.sub(r'\s+', ' ', name).strip() for name in self._column_names]
         
         # If no headers, generate column names
         if len(self._column_names) == 0:
             self._column_names = [f"column_{i}" for i in range(self._columns)]
+        
         # ensure column_names matches the number of columns and replace empty names
         while len(self._column_names) < self._columns:
             self._column_names.append(f"column_{len(self._column_names)}")
+        
         # Replace any empty column names with column_n
         self._column_names = [name if name else f"column_{i}" for i, name in enumerate(self._column_names)]
             
