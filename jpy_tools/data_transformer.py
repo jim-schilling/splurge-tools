@@ -282,6 +282,6 @@ class DataTransformer:
             value = row[column]
             if value and value.strip():
                 new_row[column] = str(normalize(float(value)))
-            new_data.append(list(new_row.values()))
+            new_data.append([new_row[col] for col in self._model.column_names])
         
         return TabularDataModel([self._model.column_names] + new_data) 
