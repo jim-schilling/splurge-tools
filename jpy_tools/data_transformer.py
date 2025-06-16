@@ -199,7 +199,7 @@ class DataTransformer:
         for row in self._model.iter_rows():
             new_row = row.copy()
             new_row[column] = str(transform_func(row[column]))
-            new_data.append(list(new_row.values()))
+            new_data.append([new_row[col] for col in self._model.column_names])
         
         return TabularDataModel([self._model.column_names] + new_data)
     
@@ -239,7 +239,7 @@ class DataTransformer:
             min_val = min(values)
             max_val = max(values)
             if min_val == max_val:
-                return self._model
+                return TabularDataModel([self._model.column_names] + [list(row.values()) for row in self._model.iter_rows()])
             
             def normalize(x: float) -> float:
                 return target_min + (x - min_val) * (target_max - target_min) / (max_val - min_val)
