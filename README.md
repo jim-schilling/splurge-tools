@@ -66,6 +66,13 @@ Run tests using unittest:
 python -m unittest discover tests/
 ```
 
+### Build
+
+Build distribution:
+```bash
+python -m build
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

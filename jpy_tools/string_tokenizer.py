@@ -55,8 +55,8 @@ class StringTokenizer:
             result = [token.strip() for token in result if len(token.strip()) > 0]
         return result
 
-    @staticmethod
-    def parses(content: list[str], delimiter: str, strip: bool = True) -> list[list[str]]:
+    @classmethod
+    def parses(cls, content: list[str], delimiter: str, strip: bool = True) -> list[list[str]]:
         """
         Process multiple strings into lists of tokens.
         
@@ -72,7 +72,7 @@ class StringTokenizer:
             >>> StringTokenizer.parses(["a,b", "c,d"], ",")
             [['a', 'b'], ['c', 'd']]
         """
-        return [StringTokenizer.parse(text, delimiter, strip) for text in content]
+        return [cls.parse(text, delimiter, strip) for text in content]
 
     @staticmethod
     def remove_bookends(content: str, bookend: str, strip: bool = True) -> str:
