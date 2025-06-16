@@ -31,7 +31,7 @@ class RandomHelper:
     
     Attributes:      
         INT64_MAX (int): Maximum value for 64-bit signed integer (2^63 - 1)
-        INT64_MIN (int): Minimum value for 64-bit signed integer (-2^63 + 1)
+        INT64_MIN (int): Minimum value for 64-bit signed integer (-2^63)
         INT64_MASK (int): Bit mask for 64-bit integers (0x7fff_ffff_ffff_ffff)
         ALPHA_CHARS (str): All ASCII letters (a-z, A-Z)
         DIGITS (str): All decimal digits (0-9)
@@ -39,7 +39,7 @@ class RandomHelper:
         BASE58_CHARS (str): Base58 character set (excluding 0, O, I, l)
     """
     INT64_MAX = 2 ** 63 - 1
-    INT64_MIN = -2 ** 63 - 1
+    INT64_MIN = -2 ** 63
     INT64_MASK = 0x7fff_ffff_ffff_ffff
     ALPHA_CHARS = f'{string.ascii_lowercase}{string.ascii_uppercase}'
     DIGITS = '0123456789'

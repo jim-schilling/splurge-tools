@@ -22,7 +22,7 @@ class TestRandomHelper(unittest.TestCase):
     def test_constants(self):
         """Test class constants are correctly defined."""
         self.assertEqual(RandomHelper.INT64_MAX, 2 ** 63 - 1)
-        self.assertEqual(RandomHelper.INT64_MIN, -2 ** 63 - 1)
+        self.assertEqual(RandomHelper.INT64_MIN, -2 ** 63)
         self.assertEqual(RandomHelper.INT64_MASK, 0x7fff_ffff_ffff_ffff)
         self.assertEqual(len(RandomHelper.ALPHA_CHARS), 52)  # 26 lowercase + 26 uppercase
         self.assertEqual(len(RandomHelper.DIGITS), 10)
