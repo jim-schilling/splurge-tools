@@ -258,7 +258,7 @@ class DataTransformer:
             min_val = min(values)
             max_val = max(values)
             if min_val == max_val:
-                return TabularDataModel([self._model.column_names] + [list(row.values()) for row in self._model.iter_rows()])
+                return TabularDataModel([self._model.column_names] + [[row[col] for col in self._model.column_names] for row in self._model.iter_rows()])
             
             def normalize(x: float) -> float:
                 return target_min + (x - min_val) * (target_max - target_min) / (max_val - min_val)
@@ -267,7 +267,7 @@ class DataTransformer:
             mean = sum(values) / len(values)
             std = (sum((x - mean) ** 2 for x in values) / len(values)) ** 0.5
             if std == 0:
-                return TabularDataModel([self._model.column_names] + [list(row.values()) for row in self._model.iter_rows()])
+                return TabularDataModel([self._model.column_names] + [[row[col] for col in self._model.column_names] for row in self._model.iter_rows()])
                 
             def normalize(x: float) -> float:
                 return (x - mean) / std
