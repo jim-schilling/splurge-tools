@@ -493,12 +493,13 @@ class RandomHelper:
         return values
     
     @classmethod
-    def as_date(cls, lower_days: int, upper_days: int, *, secure: Optional[bool] = False) -> date:
+    def as_date(cls, lower_days: int, upper_days: int, *, base_date: Optional[date] = None, secure: Optional[bool] = False) -> date:
         """Generate a random date between two days.
         
         Args:
             lower_days (int): Minimum number of days from today
             upper_days (int): Maximum number of days from today
+            base_date (date, optional): Base date to use for generation. Defaults to None.
             secure (bool, optional): If True, uses cryptographically secure random generation.
                 Defaults to False.
         
@@ -511,16 +512,44 @@ class RandomHelper:
             >>> RandomHelper.as_date(0, 30, secure=True)  # Cryptographically secure
             datetime.date(2025, 7, 15)
         """
-        return date.today() + timedelta(days=cls.as_int_range(lower_days, upper_days, secure=secure))
+        return (base_date if base_date else date.today()) + timedelta(days=cls.as_int_range(lower_days, upper_days, secure=secure))
     
     @classmethod
-    def as_datetime(cls, lower_days: int, upper_days: int, *, secure: Optional[bool] = False) -> datetime:
+    def as_datetime(cls, lower_days: int, upper_days: int, *, base_date: Optional[datetime] = None, secure: Optional[bool] = False) -> datetime:
         """Generate a random datetime between two days.
         
         Args:
             lower_days (int): Minimum number of days from today
             upper_days (int): Maximum number of days from today
+            base_date (datetime, optional): Base date to use for generation. Defaults to None.
             secure (bool, optional): If True, uses cryptographically secure random generation.
                 Defaults to False.
-        """ 
-        return datetime.now() + timedelta(days=cls.as_int_range(lower_days, upper_days, secure=secure))
+                
+        Returns:
+            datetime: Random datetime between two days, with random time component
+            
+        Example:
+            >>> RandomHelper.as_datetime(0, 30)
+            datetime.datetime(2025, 6, 16, 14, 30, 45)
+            >>> RandomHelper.as_datetime(0, 30, secure=True)  # Cryptographically secure
+            datetime.datetime(2025, 7, 15, 9, 15, 30)
+        """
+        # Get base date
+        base_date = base_date if base_date else datetime.now()
+        
+        # Add random days
+        days = cls.as_int_range(lower_days, upper_days, secure=secure)
+        result = base_date + timedelta(days=days)
+        
+        # Add random time components
+        hours = cls.as_int_range(0, 23, secure=secure)
+        minutes = cls.as_int_range(0, 59, secure=secure)
+        seconds = cls.as_int_range(0, 59, secure=secure)
+        microseconds = cls.as_int_range(0, 999999, secure=secure)
+        
+        return result.replace(
+            hour=hours,
+            minute=minutes,
+            second=seconds,
+            microsecond=microseconds
+        )

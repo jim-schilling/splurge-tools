@@ -22,6 +22,21 @@ class TestDataTransformer(unittest.TestCase):
         ]
         self.model = TabularDataModel(self.sample_data)
         self.transformer = DataTransformer(self.model)
+        
+        # Data with duplicates for testing
+        self.duplicate_data = [
+            ["Name", "Category", "Value", "Date"],
+            ["John", "A", "10", "2024-01-01"],
+            ["John", "A", "15", "2024-01-01"],  # Duplicate Category for John
+            ["John", "B", "20", "2024-01-01"],
+            ["Jane", "A", "15", "2024-01-01"],
+            ["Jane", "B", "25", "2024-01-01"],
+            ["Jane", "B", "30", "2024-01-01"],  # Duplicate Category for Jane
+            ["Bob", "A", "12", "2024-01-02"],
+            ["Bob", "B", "22", "2024-01-02"]
+        ]
+        self.duplicate_model = TabularDataModel(self.duplicate_data)
+        self.duplicate_transformer = DataTransformer(self.duplicate_model)
 
     def test_pivot(self):
         """Test pivot operation."""
@@ -172,4 +187,89 @@ class TestDataTransformer(unittest.TestCase):
             self.transformer.normalize_column(
                 column="Value",
                 method="invalid"
-            ) 
+            )
+
+    def test_pivot_with_duplicates(self):
+        """Test pivot operation with duplicate values."""
+        # Test that pivot raises error when duplicates are found without agg_func
+        with self.assertRaises(ValueError) as context:
+            self.duplicate_transformer.pivot(
+                index_cols=["Name"],
+                columns_col="Category",
+                values_col="Value"
+            )
+        self.assertIn("Duplicate values found", str(context.exception))
+        
+        # Test pivot with mean aggregation
+        result = self.duplicate_transformer.pivot(
+            index_cols=["Name"],
+            columns_col="Category",
+            values_col="Value",
+            agg_func=lambda x: mean(float(v) for v in x)
+        )
+        
+        # Check header
+        self.assertEqual(result.column_names, ["Name", "A", "B"])
+        
+        # Check data
+        rows = list(result.iter_rows())
+        self.assertEqual(len(rows), 3)  # 3 names
+        
+        # Check John's values (A should be mean of 10 and 15)
+        john_row = next(row for row in rows if row["Name"] == "John")
+        self.assertEqual(float(john_row["A"]), 12.5)  # (10 + 15) / 2
+        self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
+        
+        # Check Jane's values (B should be mean of 25 and 30)
+        jane_row = next(row for row in rows if row["Name"] == "Jane")
+        self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
+        self.assertEqual(float(jane_row["B"]), 27.5)  # (25 + 30) / 2
+        
+        # Check Bob's values (no duplicates)
+        bob_row = next(row for row in rows if row["Name"] == "Bob")
+        self.assertEqual(float(bob_row["A"]), 12.0)
+        self.assertEqual(float(bob_row["B"]), 22.0)
+
+    def test_pivot_with_duplicates_and_custom_agg(self):
+        """Test pivot operation with duplicate values and custom aggregation."""
+        # Test pivot with max aggregation
+        result = self.duplicate_transformer.pivot(
+            index_cols=["Name"],
+            columns_col="Category",
+            values_col="Value",
+            agg_func=lambda x: max(float(v) for v in x)
+        )
+        
+        # Check data
+        rows = list(result.iter_rows())
+        
+        # Check John's values (A should be max of 10 and 15)
+        john_row = next(row for row in rows if row["Name"] == "John")
+        self.assertEqual(float(john_row["A"]), 15.0)  # max(10, 15)
+        self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
+        
+        # Check Jane's values (B should be max of 25 and 30)
+        jane_row = next(row for row in rows if row["Name"] == "Jane")
+        self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
+        self.assertEqual(float(jane_row["B"]), 30.0)  # max(25, 30)
+        
+        # Test pivot with min aggregation
+        result = self.duplicate_transformer.pivot(
+            index_cols=["Name"],
+            columns_col="Category",
+            values_col="Value",
+            agg_func=lambda x: min(float(v) for v in x)
+        )
+        
+        # Check data
+        rows = list(result.iter_rows())
+        
+        # Check John's values (A should be min of 10 and 15)
+        john_row = next(row for row in rows if row["Name"] == "John")
+        self.assertEqual(float(john_row["A"]), 10.0)  # min(10, 15)
+        self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
+        
+        # Check Jane's values (B should be min of 25 and 30)
+        jane_row = next(row for row in rows if row["Name"] == "Jane")
+        self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
+        self.assertEqual(float(jane_row["B"]), 25.0)  # min(25, 30) 

@@ -48,24 +48,43 @@ class DataTransformer:
             index_cols: List of column names to use as index
             columns_col: Column name to use as columns
             values_col: Column name to use as values
-            agg_func: Optional aggregation function for duplicate values
+            agg_func: Optional aggregation function for duplicate values.
+                     Required if duplicates are detected.
             
         Returns:
             New TabularDataModel with pivoted data
             
         Raises:
-            ValueError: If any column names are invalid
+            ValueError: If any column names are invalid or if duplicates are found
+                      without an aggregation function
         """
         # Validate column names
         for col in index_cols + [columns_col, values_col]:
             if col not in self._model.column_names:
                 raise ValueError(f"Column {col} not found in data model")
         
-        # Group data by index columns
+        # Group data by index columns and detect duplicates
         grouped_data = defaultdict(list)
+        duplicate_keys = set()
+        
         for row in self._model.iter_rows():
             index_key = tuple(row[col] for col in index_cols)
-            grouped_data[index_key].append((row[columns_col], row[values_col]))
+            col_value = row[columns_col]
+            val_value = row[values_col]
+            
+            # Check for duplicates
+            if any(existing_col == col_value for existing_col, _ in grouped_data[index_key]):
+                duplicate_keys.add(index_key)
+            
+            grouped_data[index_key].append((col_value, val_value))
+        
+        # If duplicates found but no agg_func provided, raise error
+        if duplicate_keys and not agg_func:
+            duplicate_examples = list(duplicate_keys)[:3]  # Show up to 3 examples
+            raise ValueError(
+                f"Duplicate values found for index keys: {duplicate_examples}. "
+                "Please provide an aggregation function to handle duplicates."
+            )
         
         # Create new header and data
         unique_columns = sorted(set(col for group in grouped_data.values() 
