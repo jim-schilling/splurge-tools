@@ -65,8 +65,9 @@ class DsvHelper:
             
         return tokens
     
-    @staticmethod
+    @classmethod
     def parses(
+        cls,
         content: list[str], 
         delimiter: str, 
         strip: bool = True, 
@@ -93,10 +94,11 @@ class DsvHelper:
             >>> DsvHelper.parses(["a,b,c", "d,e,f"], ",")
             [['a', 'b', 'c'], ['d', 'e', 'f']]
         """
-        return [DsvHelper.parse(item, delimiter, strip, bookend, bookend_strip) for item in content]
+        return [cls.parse(item, delimiter, strip, bookend, bookend_strip) for item in content]
 
-    @staticmethod
+    @classmethod
     def parse_file(
+        cls,
         file_path: Union[PathLike, str], 
         delimiter: str, 
         strip: bool = True, 
@@ -127,7 +129,7 @@ class DsvHelper:
             >>> DsvHelper.parse_file("data.csv", ",")
             [['header1', 'header2'], ['value1', 'value2']]
         """
-        return DsvHelper.parses(
+        return cls.parses(
             TextFileHelper.load(file_path, encoding=encoding, skip_header_rows=skip_header_rows, skip_footer_rows=skip_footer_rows), 
             delimiter, 
             strip, 

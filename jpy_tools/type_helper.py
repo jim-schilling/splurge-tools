@@ -82,8 +82,8 @@ class String:
             return True
 
         if isinstance(value, str):
-            tvalue = value.lower().strip() if trim else value.lower()
-            if tvalue in ['true', 'false']:
+            tmp_value = value.lower().strip() if trim else value.lower()
+            if tmp_value in ['true', 'false']:
                 return True
 
         return False
@@ -109,8 +109,8 @@ class String:
             return True
 
         if isinstance(value, str):
-            tvalue = value.strip().lower() if trim else value.lower()
-            if tvalue in ['none', 'null']:
+            tmp_value = value.strip().lower() if trim else value.lower()
+            if tmp_value in ['none', 'null']:
                 return True
 
         return False
@@ -192,7 +192,8 @@ class String:
         if not isinstance(value, str):
             return False
 
-        return re.match(r"""^[-+]?\d+$""", value.strip() if trim else value) is not None
+        tmp_value = value.strip() if trim else value
+        return re.match(r"""^[-+]?\d+$""", tmp_value) is not None
 
     @classmethod
     def is_numeric_like(cls, value: Union[str, float, int, None], trim: bool = True) -> bool:
@@ -307,12 +308,12 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tvalue = value.strip() if trim else value
+        tmp_value = value.strip() if trim else value
 
-        if re.match(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""", tvalue) and cls._is_date_like(tvalue):
+        if re.match(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""", tmp_value) and cls._is_date_like(tmp_value):
             return True
 
-        if re.match(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""", tvalue) and cls._is_date_like(tvalue):
+        if re.match(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""", tmp_value) and cls._is_date_like(tmp_value):
             return True
 
         return False
@@ -398,12 +399,12 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tvalue = value.strip() if trim else value
+        tmp_value = value.strip() if trim else value
 
-        if re.match(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""", tvalue) and cls._is_datetime_like(tvalue):
+        if re.match(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""", tmp_value) and cls._is_datetime_like(tmp_value):
             return True
 
-        if re.match(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""", tvalue) and cls._is_datetime_like(tvalue):
+        if re.match(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""", tmp_value) and cls._is_datetime_like(tmp_value):
             return True
 
         return False
@@ -430,8 +431,8 @@ class String:
             return value
 
         if cls.is_bool_like(value, trim):
-            bvalue = value.lower().strip() if trim else value.lower()
-            return bvalue == 'true'
+            tmp_value = value.lower().strip() if trim else value.lower()
+            return tmp_value == 'true'
 
         return default
 
@@ -518,8 +519,8 @@ class String:
 
         for pattern in patterns:
             try:
-                tvalue = datetime.strptime(dvalue, pattern)
-                return tvalue.date()
+                tmp_value = datetime.strptime(dvalue, pattern)
+                return tmp_value.date()
             except ValueError:
                 pass
 
@@ -576,11 +577,11 @@ class String:
             '%m%d%Y%H%M%S%f',
         ]
 
-        dvalue = value.strip() if trim else value
+        tmp_value = value.strip() if trim else value
 
         for pattern in patterns:
             try:
-                tvalue = datetime.strptime(dvalue, pattern)
+                tvalue = datetime.strptime(tmp_value, pattern)
                 return tvalue
             except ValueError:
                 pass
