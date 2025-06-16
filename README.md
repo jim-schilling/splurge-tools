@@ -13,6 +13,7 @@ jpy-tools is a collection of Python utilities focused on:
 - Tabular data model class
 - Typed tabular data model class
 - Data validator class
+- Random data class
 - Python 3.10+ compatibility
 
 ## Installation
@@ -31,6 +32,7 @@ pip install jpy-tools
 - `tabular_data_model.py`: Data model for tabular datasets
 - `typed_tabular_data_model.py`: Type data model based on tabular data model
 - `data_validator.py`: Data validator class
+- `random_helper.py`: Random data class and methods for generating data
 
 ## Development
 
