@@ -22,7 +22,6 @@ class DataTransformer:
     - Melting data
     - Grouping and aggregating
     - Column transformations
-    - Data normalization
     """
     
     def __init__(self, data_model: Union[TabularDataModel, TypedTabularDataModel]):
@@ -220,68 +219,5 @@ class DataTransformer:
             new_row[column] = str(transform_func(row[column]))
             new_data.append([new_row[col] for col in self._model.column_names])
         
-        return TabularDataModel([self._model.column_names] + new_data)
+        return TabularDataModel([self._model.column_names] + new_data)    
     
-    def normalize_column(
-        self,
-        column: str,
-        method: str = 'min-max',
-        target_min: float = 0.0,
-        target_max: float = 1.0
-    ) -> TabularDataModel:
-        """
-        Normalize values in a numeric column.
-        
-        Args:
-            column: Name of column to normalize
-            method: Normalization method ('min-max' or 'z-score')
-            target_min: Target minimum value for min-max normalization
-            target_max: Target maximum value for min-max normalization
-            
-        Returns:
-            New TabularDataModel with normalized column
-            
-        Raises:
-            ValueError: If column name is invalid or method is unsupported
-        """
-        if column not in self._model.column_names:
-            raise ValueError(f"Column {column} not found in data model")
-        
-        # Get column values and convert to float
-        values = [float(v) for v in self._model.column_values(column)
-                 if v and v.strip()]
-        
-        if not values:
-            raise ValueError(f"No numeric values found in column {column}")
-        
-        if method == 'min-max':
-            min_val = min(values)
-            max_val = max(values)
-            if min_val == max_val:
-                return TabularDataModel([self._model.column_names] + [[row[col] for col in self._model.column_names] for row in self._model.iter_rows()])
-            
-            def normalize(x: float) -> float:
-                return target_min + (x - min_val) * (target_max - target_min) / (max_val - min_val)
-                
-        elif method == 'z-score':
-            mean = sum(values) / len(values)
-            std = (sum((x - mean) ** 2 for x in values) / len(values)) ** 0.5
-            if std == 0:
-                return TabularDataModel([self._model.column_names] + [[row[col] for col in self._model.column_names] for row in self._model.iter_rows()])
-                
-            def normalize(x: float) -> float:
-                return (x - mean) / std
-                
-        else:
-            raise ValueError(f"Unsupported normalization method: {method}")
-        
-        # Create new data with normalized column
-        new_data = []
-        for row in self._model.iter_rows():
-            new_row = row.copy()
-            value = row[column]
-            if value and value.strip():
-                new_row[column] = str(normalize(float(value)))
-            new_data.append([new_row[col] for col in self._model.column_names])
-        
-        return TabularDataModel([self._model.column_names] + new_data) 
