@@ -267,7 +267,7 @@ class DataTransformer:
             mean = sum(values) / len(values)
             std = (sum((x - mean) ** 2 for x in values) / len(values)) ** 0.5
             if std == 0:
-                return self._model
+                return TabularDataModel([self._model.column_names] + [list(row.values()) for row in self._model.iter_rows()])
                 
             def normalize(x: float) -> float:
                 return (x - mean) / std
