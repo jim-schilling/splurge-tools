@@ -18,7 +18,7 @@ def handle_empty_value(func):
     """Decorator to handle empty value checks for normalization methods."""
     @wraps(func)
     def wrapper(value: str, *args, **kwargs):
-        if not value:
+        if value is None or not value:
             return ""
         return func(value, *args, **kwargs)
     return wrapper
@@ -156,8 +156,6 @@ class TextNormalizer:
             "café" -> "cafe"
             "résumé" -> "resume"
         """
-        if value is None:
-            return ""
         # First remove accents
         value = cls.remove_accents(value)
         # Then convert to ASCII
@@ -223,8 +221,6 @@ class TextNormalizer:
             "hello–world" -> "hello-world"
             "hello—world" -> "hello-world"
         """
-        if value is None:
-            return ""
         # Replace all types of dashes with the desired dash character
         return re.sub(r'[–—]', dash_char, value)
     
@@ -333,9 +329,6 @@ class TextNormalizer:
             ... )
             'hello world!'
         """
-        if value is None:
-            return ""
-
         if remove_accents:
             value = cls.remove_accents(value)
             
