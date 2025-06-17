@@ -15,6 +15,7 @@ jpy-tools is a collection of Python utilities focused on:
 - Data validator class
 - Random data class
 - Data transformation class
+- Text normalizer class
 - Python 3.10+ compatibility
 
 ## Installation
@@ -35,6 +36,7 @@ pip install jpy-tools
 - `data_validator.py`: Data validator class
 - `random_helper.py`: Random data class and methods for generating data
 - `data_transformer.py`: Data transformation utility class
+- `text_normalizer.py`: Text normalization utility class
 
 ## Development
 
