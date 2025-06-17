@@ -119,14 +119,14 @@ class TestTextNormalizer(unittest.TestCase):
             "  Hello--World!  ",
             remove_accents=True,
             normalize_whitespace=True,
-            remove_special=True,  # Changed to True to remove special chars
+            remove_special=True,  
             to_ascii=True,
             normalize_quotes=True,
             normalize_dashes=True,
             normalize_case="lower",
             remove_duplicate_chars=True
         )
-        self.assertEqual(result, "helloworld")  # Changed expected result to match actual behavior
+        self.assertEqual(result, "helloworld")
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

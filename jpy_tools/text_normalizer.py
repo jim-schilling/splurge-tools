@@ -51,7 +51,7 @@ class TextNormalizer:
     @classmethod
     @handle_empty_value
     def remove_accents(cls, value: str) -> str:
-        """Remove diacritical marks (accents) from text.
+        """Remove accents from text.
         
         Args:
             value: Input string to normalize
