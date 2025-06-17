@@ -46,9 +46,7 @@ class TextNormalizer:
     # Common patterns
     _WHITESPACE_PATTERN: Pattern = re.compile(r'\s+')
     _CONTROL_CHARS_PATTERN: Pattern = re.compile(r'[\x00-\x1f\x7f-\x9f]')
-    _SPECIAL_CHARS_PATTERN: Pattern = re.compile(r'[^\w\s-]')
-    _QUOTES_PATTERN: Pattern = re.compile(r'[''""]')
-    _DASHES_PATTERN: Pattern = re.compile(r'[–—]')
+    _SPECIAL_CHARS_PATTERN: Pattern = re.compile(r'[^\w\s-]')    
     
     @classmethod
     @handle_empty_value
