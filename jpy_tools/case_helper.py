@@ -15,11 +15,11 @@ from functools import wraps
 def handle_empty_value(func):
     """
     Decorator to handle empty value checks for case conversion methods.
-    Returns empty string if input value is empty.
+    Returns empty string if input value is None or empty.
     """
     @wraps(func)
     def wrapper(value: str, *args, **kwargs):
-        if not value:
+        if value is None or not value:
             return ""
         return func(value, *args, **kwargs)
     return wrapper

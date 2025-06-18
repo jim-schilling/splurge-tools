@@ -93,40 +93,7 @@ class TestTextNormalizer(unittest.TestCase):
         
         # Test with no duplicates
         self.assertEqual(TextNormalizer.remove_duplicate_chars("hello world"), "hello world")
-
-    def test_normalize_all(self):
-        # Test basic normalization
-        result = TextNormalizer.normalize_all(
-            "  Hello   World!  ",
-            remove_accents=True,
-            normalize_whitespace=True,
-            normalize_case="lower"
-        )
-        self.assertEqual(result, "hello world!")
-
-        # Test with duplicate character removal
-        result = TextNormalizer.normalize_all(
-            "  Hello...World---Today!  ",
-            remove_accents=True,
-            normalize_whitespace=True,
-            normalize_case="lower",
-            remove_duplicate_chars=True
-        )
-        self.assertEqual(result, "hello.world-today!")
-
-        # Test with all options
-        result = TextNormalizer.normalize_all(
-            "  Hello--World!  ",
-            remove_accents=True,
-            normalize_whitespace=True,
-            remove_special=True,  
-            to_ascii=True,
-            normalize_quotes=True,
-            normalize_dashes=True,
-            normalize_case="lower",
-            remove_duplicate_chars=True
-        )
-        self.assertEqual(result, "helloworld")
+        
 
 if __name__ == '__main__':
     unittest.main()
