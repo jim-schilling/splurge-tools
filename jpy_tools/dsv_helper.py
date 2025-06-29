@@ -8,9 +8,8 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
-import re
 from os import PathLike
-from typing import Union
+from typing import Optional, Union
 
 from jpy_tools.string_tokenizer import StringTokenizer
 from jpy_tools.text_file_helper import TextFileHelper
@@ -36,7 +35,7 @@ class DsvHelper:
         content: str,
         delimiter: str,
         strip: bool = True,
-        bookend: str = None,
+        bookend: Optional[str] = None,
         bookend_strip: bool = True,
     ) -> list[str]:
         """Parse a string into a list of strings.
@@ -78,7 +77,7 @@ class DsvHelper:
         content: list[str],
         delimiter: str,
         strip: bool = True,
-        bookend: str = None,
+        bookend: Optional[str] = None,
         bookend_strip: bool = True,
     ) -> list[list[str]]:
         """Parse a list of strings into a list of lists of strings.
@@ -112,7 +111,7 @@ class DsvHelper:
         file_path: Union[PathLike, str],
         delimiter: str,
         strip: bool = True,
-        bookend: str = None,
+        bookend: Optional[str] = None,
         bookend_strip: bool = True,
         encoding: str = "utf-8",
         skip_header_rows: int = 0,

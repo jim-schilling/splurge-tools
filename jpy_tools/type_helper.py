@@ -18,7 +18,7 @@ This software is licensed under the MIT License.
 import collections
 import re
 import typing
-from datetime import date, datetime
+from datetime import date, datetime, time
 from enum import Enum
 from typing import Any, Iterable, Union
 
@@ -289,6 +289,47 @@ class String:
 
         return False
 
+    @staticmethod
+    def _is_time_like(value: str) -> bool:
+        """
+        Internal method to check if string matches common time formats.
+
+        Args:
+            value: String to check
+
+        Returns:
+            True if string matches a supported time format
+
+        Note:
+            Supports multiple time formats including:
+            - HH:MM:SS
+            - HH:MM:SS.microseconds
+            - HH:MM
+            - HHMMSS
+            - HHMM
+            And 12-hour format variations with AM/PM
+        """
+        patterns = [
+            "%H:%M:%S",
+            "%H:%M:%S.%f",
+            "%H:%M",
+            "%H%M%S",
+            "%H%M",
+            "%I:%M:%S %p",
+            "%I:%M %p",
+            "%I:%M:%S%p",
+            "%I:%M%p",
+        ]
+
+        for pattern in patterns:
+            try:
+                datetime.strptime(value, pattern)
+                return True
+            except ValueError:
+                pass
+
+        return False
+
     @classmethod
     def is_date_like(cls, value: Union[str, date, None], trim: bool = True) -> bool:
         """
@@ -424,6 +465,56 @@ class String:
             r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
             tmp_value,
         ) and cls._is_datetime_like(tmp_value):
+            return True
+
+        return False
+
+    @classmethod
+    def is_time_like(
+        cls, value: Union[str, time, None], trim: bool = True
+    ) -> bool:
+        """
+        Check if value can be interpreted as a time.
+
+        Args:
+            value: Value to check (string or time)
+            trim: Whether to trim whitespace before checking
+
+        Returns:
+            True if value is time or string in supported time format
+
+        Examples:
+            >>> String.is_time_like('14:30:00')     # True
+            >>> String.is_time_like('14:30:00.123') # True
+            >>> String.is_time_like('2:30 PM')      # True
+            >>> String.is_time_like('143000')       # True
+            >>> String.is_time_like('2023-01-01')   # False
+        """
+        if not value:
+            return False
+
+        if isinstance(value, time):
+            return True
+
+        if not isinstance(value, str):
+            return False
+
+        tmp_value = value.strip() if trim else value
+
+        # Check for time-only patterns (no date components)
+        if re.match(
+            r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""", tmp_value
+        ) and cls._is_time_like(tmp_value):
+            return True
+
+        if re.match(
+            r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""", tmp_value
+        ) and cls._is_time_like(tmp_value):
+            return True
+
+        if re.match(
+            r"""^(\d{2})(\d{2})(\d{2})?$""", tmp_value
+        ) and cls._is_time_like(tmp_value):
             return True
 
         return False
@@ -632,6 +723,59 @@ class String:
 
         return default
 
+    @classmethod
+    def to_time(
+        cls,
+        value: Union[str, time, None],
+        default: Union[time, None] = None,
+        trim: bool = True,
+    ) -> Union[time, None]:
+        """
+        Convert value to time.
+
+        Args:
+            value: Value to convert
+            default: Default value if conversion fails
+            trim: Whether to trim whitespace before converting
+
+        Returns:
+            Time value or default if conversion fails
+
+        Examples:
+            >>> String.to_time('14:30:00')     # datetime.time(14, 30)
+            >>> String.to_time('2:30 PM')      # datetime.time(14, 30)
+            >>> String.to_time('143000')       # datetime.time(14, 30, 0)
+            >>> String.to_time('invalid')      # None
+        """
+        if isinstance(value, time):
+            return value
+
+        if not cls.is_time_like(value, trim):
+            return default
+
+        patterns = [
+            "%H:%M:%S",
+            "%H:%M:%S.%f",
+            "%H:%M",
+            "%H%M%S",
+            "%H%M",
+            "%I:%M:%S %p",
+            "%I:%M %p",
+            "%I:%M:%S%p",
+            "%I:%M%p",
+        ]
+
+        tmp_value = value.strip() if trim else value
+
+        for pattern in patterns:
+            try:
+                tvalue = datetime.strptime(tmp_value, pattern)
+                return tvalue.time()
+            except ValueError:
+                pass
+
+        return default
+
     @staticmethod
     def has_leading_zero(value: Union[str, None], trim: bool = True) -> bool:
         """
@@ -657,7 +801,7 @@ class String:
     @classmethod
     def infer_type(
         cls,
-        value: Union[str, bool, int, float, date, datetime, None],
+        value: Union[str, bool, int, float, date, time, datetime, None],
         trim: bool = True,
     ) -> DataType:
         """
@@ -686,6 +830,9 @@ class String:
         if cls.is_datetime_like(value, trim):
             return DataType.DATETIME
 
+        if cls.is_time_like(value, trim):
+            return DataType.TIME
+
         if cls.is_date_like(value, trim):
             return DataType.DATE
 
@@ -703,7 +850,7 @@ class String:
     @classmethod
     def infer_type_name(
         cls,
-        value: Union[str, bool, int, float, date, datetime, None],
+        value: Union[str, bool, int, float, date, time, datetime, None],
         trim: bool = True,
     ) -> str:
         """
@@ -752,6 +899,7 @@ def profile_values(values: Iterable, trim: bool = True) -> DataType:
     types = {
         DataType.BOOLEAN.name: 0,
         DataType.DATE.name: 0,
+        DataType.TIME.name: 0,
         DataType.DATETIME.name: 0,
         DataType.INTEGER.name: 0,
         DataType.FLOAT.name: 0,
@@ -786,6 +934,9 @@ def profile_values(values: Iterable, trim: bool = True) -> DataType:
 
     if types[DataType.DATETIME.name] + types[DataType.EMPTY.name] == count:
         return DataType.DATETIME
+
+    if types[DataType.TIME.name] + types[DataType.EMPTY.name] == count:
+        return DataType.TIME
 
     if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.INTEGER

@@ -3,7 +3,7 @@ Unit tests for type_helper module
 """
 
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from jpy_tools.type_helper import (
     DataType,
@@ -286,10 +286,13 @@ class TestString(unittest.TestCase):
         self.assertEqual(
             String.infer_type(datetime(2023, 1, 1, 12, 30, 45)), DataType.DATETIME
         )
+        self.assertEqual(String.infer_type(time(14, 30, 45)), DataType.TIME)
 
         # Test string representations
         self.assertEqual(String.infer_type("2023-01-01"), DataType.DATE)
         self.assertEqual(String.infer_type("2023-01-01T12:30:45"), DataType.DATETIME)
+        self.assertEqual(String.infer_type("14:30:45"), DataType.TIME)
+        self.assertEqual(String.infer_type("2:30 PM"), DataType.TIME)
         self.assertEqual(String.infer_type("123"), DataType.INTEGER)
         self.assertEqual(String.infer_type("123.45"), DataType.FLOAT)
         self.assertEqual(String.infer_type("true"), DataType.BOOLEAN)
@@ -314,6 +317,65 @@ class TestString(unittest.TestCase):
         # Test with trim=False
         self.assertFalse(String.is_empty_like("   ", trim=False))
         self.assertTrue(String.is_empty_like("", trim=False))
+
+    def test_is_time_like(self):
+        """Test time-like value detection"""
+        # Test time values
+        test_time = time(14, 30, 45)
+        self.assertTrue(String.is_time_like(test_time))
+
+        # Test valid time strings
+        self.assertTrue(String.is_time_like("14:30:45"))
+        self.assertTrue(String.is_time_like("14:30:45.123456"))
+        self.assertTrue(String.is_time_like("14:30"))
+        self.assertTrue(String.is_time_like("143045"))
+        self.assertTrue(String.is_time_like("1430"))
+        self.assertTrue(String.is_time_like("2:30 PM"))
+        self.assertTrue(String.is_time_like("2:30:45 PM"))
+        self.assertTrue(String.is_time_like("2:30PM"))
+        self.assertTrue(String.is_time_like("2:30:45PM"))
+
+        # Test with whitespace
+        self.assertTrue(String.is_time_like(" 14:30:45 "))
+
+        # Test invalid time values
+        self.assertFalse(String.is_time_like("25:30:45"))  # Invalid hour
+        self.assertFalse(String.is_time_like("14:60:45"))  # Invalid minute
+        self.assertFalse(String.is_time_like("14:30:60"))  # Invalid second
+        self.assertFalse(String.is_time_like("abc"))
+        self.assertFalse(String.is_time_like(None))
+        self.assertFalse(String.is_time_like([]))
+        self.assertFalse(String.is_time_like("2023-01-01"))  # Date, not time
+
+    def test_to_time(self):
+        """Test time conversion"""
+        # Test time values
+        test_time = time(14, 30, 45)
+        self.assertEqual(String.to_time(test_time), test_time)
+
+        # Test valid time strings
+        self.assertEqual(
+            String.to_time("14:30:45"), time(14, 30, 45)
+        )
+        self.assertEqual(
+            String.to_time("2:30 PM"), time(14, 30)
+        )
+        self.assertEqual(
+            String.to_time("143045"), time(14, 30, 45)
+        )
+
+        # Test with default
+        self.assertIsNone(String.to_time("invalid", default=None))
+        default_time = time(12, 0, 0)
+        self.assertEqual(
+            String.to_time("invalid", default=default_time), default_time
+        )
+
+        # Test with whitespace
+        self.assertEqual(
+            String.to_time(" 14:30:45 "),
+            time(14, 30, 45),
+        )
 
 
 class TestProfileValues(unittest.TestCase):
@@ -351,6 +413,16 @@ class TestProfileValues(unittest.TestCase):
         self.assertEqual(
             profile_values(["2023-01-01T12:00:00", "2023-01-02T12:00:00", ""]),
             DataType.DATETIME,
+        )
+
+        # Test time values
+        self.assertEqual(
+            profile_values(["14:30:00", "15:45:00"]),
+            DataType.TIME,
+        )
+        self.assertEqual(
+            profile_values(["14:30:00", "15:45:00", ""]),
+            DataType.TIME,
         )
 
         # Test integer values

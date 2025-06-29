@@ -103,6 +103,9 @@ python -m build
 ### [0.1.11] - 2025-06-29
 
 #### Added
+- Added `String.is_time_like()` and `String.to_time()` for time value detection and conversion in `type_helper.py`
+- `DataType.TIME` is now fully supported in type inference and profiling
+- Added tests for time detection, conversion, and inference
 - Enhanced `pyproject.toml` configuration following Python best practices
 - Added comprehensive development dependencies (pytest, black, isort, flake8, mypy, pre-commit)
 - Added project URLs for better discoverability
