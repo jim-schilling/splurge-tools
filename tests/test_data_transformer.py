@@ -1,8 +1,10 @@
 """Unit tests for DataTransformer class."""
+
 import unittest
 from statistics import mean
-from jpy_tools.tabular_data_model import TabularDataModel
+
 from jpy_tools.data_transformer import DataTransformer
+from jpy_tools.tabular_data_model import TabularDataModel
 
 
 class TestDataTransformer(unittest.TestCase):
@@ -18,11 +20,11 @@ class TestDataTransformer(unittest.TestCase):
             ["Jane", "A", "15", "2024-01-01"],
             ["Jane", "B", "25", "2024-01-01"],
             ["Bob", "A", "12", "2024-01-02"],
-            ["Bob", "B", "22", "2024-01-02"]
+            ["Bob", "B", "22", "2024-01-02"],
         ]
         self.model = TabularDataModel(self.sample_data)
         self.transformer = DataTransformer(self.model)
-        
+
         # Data with duplicates for testing
         self.duplicate_data = [
             ["Name", "Category", "Value", "Date"],
@@ -33,7 +35,7 @@ class TestDataTransformer(unittest.TestCase):
             ["Jane", "B", "25", "2024-01-01"],
             ["Jane", "B", "30", "2024-01-01"],  # Duplicate Category for Jane
             ["Bob", "A", "12", "2024-01-02"],
-            ["Bob", "B", "22", "2024-01-02"]
+            ["Bob", "B", "22", "2024-01-02"],
         ]
         self.duplicate_model = TabularDataModel(self.duplicate_data)
         self.duplicate_transformer = DataTransformer(self.duplicate_model)
@@ -42,18 +44,16 @@ class TestDataTransformer(unittest.TestCase):
         """Test pivot operation."""
         # Pivot by Name and Category
         result = self.transformer.pivot(
-            index_cols=["Name"],
-            columns_col="Category",
-            values_col="Value"
+            index_cols=["Name"], columns_col="Category", values_col="Value"
         )
-        
+
         # Check header
         self.assertEqual(result.column_names, ["Name", "A", "B"])
-        
+
         # Check data
         rows = list(result.iter_rows())
         self.assertEqual(len(rows), 3)  # 3 names
-        
+
         # Check John's values
         john_row = next(row for row in rows if row["Name"] == "John")
         self.assertEqual(john_row["A"], "10")
@@ -63,17 +63,16 @@ class TestDataTransformer(unittest.TestCase):
         """Test melt operation."""
         # Melt Value and Date columns
         result = self.transformer.melt(
-            id_vars=["Name", "Category"],
-            value_vars=["Value", "Date"]
+            id_vars=["Name", "Category"], value_vars=["Value", "Date"]
         )
-        
+
         # Check header
         self.assertEqual(result.column_names, ["Name", "Category", "variable", "value"])
-        
+
         # Check data
         rows = list(result.iter_rows())
         self.assertEqual(len(rows), 12)  # 6 data rows * 2 variables
-        
+
         # Check first row
         self.assertEqual(rows[0]["Name"], "John")
         self.assertEqual(rows[0]["Category"], "A")
@@ -84,17 +83,16 @@ class TestDataTransformer(unittest.TestCase):
         """Test group by operation."""
         # Group by Name and calculate mean Value
         result = self.transformer.group_by(
-            group_cols=["Name"],
-            agg_dict={"Value": lambda x: mean(float(v) for v in x)}
+            group_cols=["Name"], agg_dict={"Value": lambda x: mean(float(v) for v in x)}
         )
-        
+
         # Check header
         self.assertEqual(result.column_names, ["Name", "Value"])
-        
+
         # Check data
         rows = list(result.iter_rows())
         self.assertEqual(len(rows), 3)  # 3 names
-        
+
         # Check John's mean value
         john_row = next(row for row in rows if row["Name"] == "John")
         self.assertEqual(float(john_row["Value"]), 15.0)  # (10 + 20) / 2
@@ -103,53 +101,50 @@ class TestDataTransformer(unittest.TestCase):
         """Test column transformation."""
         # Double the Value column
         result = self.transformer.transform_column(
-            column="Value",
-            transform_func=lambda x: str(float(x) * 2)
+            column="Value", transform_func=lambda x: str(float(x) * 2)
         )
-        
+
         # Check data
         rows = list(result.iter_rows())
         self.assertEqual(len(rows), 6)  # 6 data rows
-        
+
         # Check first row
-        self.assertEqual(rows[0]["Value"], "20.0")  # 10 * 2    
+        self.assertEqual(rows[0]["Value"], "20.0")  # 10 * 2
 
     def test_pivot_with_duplicates(self):
         """Test pivot operation with duplicate values."""
         # Test that pivot raises error when duplicates are found without agg_func
         with self.assertRaises(ValueError) as context:
             self.duplicate_transformer.pivot(
-                index_cols=["Name"],
-                columns_col="Category",
-                values_col="Value"
+                index_cols=["Name"], columns_col="Category", values_col="Value"
             )
         self.assertIn("Duplicate values found", str(context.exception))
-        
+
         # Test pivot with mean aggregation
         result = self.duplicate_transformer.pivot(
             index_cols=["Name"],
             columns_col="Category",
             values_col="Value",
-            agg_func=lambda x: mean(float(v) for v in x)
+            agg_func=lambda x: mean(float(v) for v in x),
         )
-        
+
         # Check header
         self.assertEqual(result.column_names, ["Name", "A", "B"])
-        
+
         # Check data
         rows = list(result.iter_rows())
         self.assertEqual(len(rows), 3)  # 3 names
-        
+
         # Check John's values (A should be mean of 10 and 15)
         john_row = next(row for row in rows if row["Name"] == "John")
         self.assertEqual(float(john_row["A"]), 12.5)  # (10 + 15) / 2
         self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
-        
+
         # Check Jane's values (B should be mean of 25 and 30)
         jane_row = next(row for row in rows if row["Name"] == "Jane")
         self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
         self.assertEqual(float(jane_row["B"]), 27.5)  # (25 + 30) / 2
-        
+
         # Check Bob's values (no duplicates)
         bob_row = next(row for row in rows if row["Name"] == "Bob")
         self.assertEqual(float(bob_row["A"]), 12.0)
@@ -162,39 +157,39 @@ class TestDataTransformer(unittest.TestCase):
             index_cols=["Name"],
             columns_col="Category",
             values_col="Value",
-            agg_func=lambda x: max(float(v) for v in x)
+            agg_func=lambda x: max(float(v) for v in x),
         )
-        
+
         # Check data
         rows = list(result.iter_rows())
-        
+
         # Check John's values (A should be max of 10 and 15)
         john_row = next(row for row in rows if row["Name"] == "John")
         self.assertEqual(float(john_row["A"]), 15.0)  # max(10, 15)
         self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
-        
+
         # Check Jane's values (B should be max of 25 and 30)
         jane_row = next(row for row in rows if row["Name"] == "Jane")
         self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
         self.assertEqual(float(jane_row["B"]), 30.0)  # max(25, 30)
-        
+
         # Test pivot with min aggregation
         result = self.duplicate_transformer.pivot(
             index_cols=["Name"],
             columns_col="Category",
             values_col="Value",
-            agg_func=lambda x: min(float(v) for v in x)
+            agg_func=lambda x: min(float(v) for v in x),
         )
-        
+
         # Check data
         rows = list(result.iter_rows())
-        
+
         # Check John's values (A should be min of 10 and 15)
         john_row = next(row for row in rows if row["Name"] == "John")
         self.assertEqual(float(john_row["A"]), 10.0)  # min(10, 15)
         self.assertEqual(float(john_row["B"]), 20.0)  # No duplicates
-        
+
         # Check Jane's values (B should be min of 25 and 30)
         jane_row = next(row for row in rows if row["Name"] == "Jane")
         self.assertEqual(float(jane_row["A"]), 15.0)  # No duplicates
-        self.assertEqual(float(jane_row["B"]), 25.0)  # min(25, 30) 
+        self.assertEqual(float(jane_row["B"]), 25.0)  # min(25, 30)

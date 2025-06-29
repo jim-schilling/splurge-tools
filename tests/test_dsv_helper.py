@@ -1,8 +1,11 @@
 """Unit tests for DSVHelper class."""
-import unittest
+
 import tempfile
+import unittest
 from pathlib import Path
+
 from jpy_tools.dsv_helper import DsvHelper
+
 
 class TestDSVHelper(unittest.TestCase):
     """Test cases for DSVHelper class."""
@@ -45,10 +48,10 @@ class TestDSVHelper(unittest.TestCase):
 
     def test_parse_file(self):
         """Test parsing from file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write("a,b,c\nd,e,f")
             temp_path = Path(temp_file.name)
-        
+
         try:
             result = DsvHelper.parse_file(temp_path, ",")
             self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
@@ -57,10 +60,10 @@ class TestDSVHelper(unittest.TestCase):
 
     def test_parse_file_with_bookend(self):
         """Test parsing from file with bookends."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
             temp_file.write('"a","b","c"\n"d","e","f"')
             temp_path = Path(temp_file.name)
-        
+
         try:
             result = DsvHelper.parse_file(temp_path, ",", bookend='"')
             self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
@@ -78,5 +81,5 @@ class TestDSVHelper(unittest.TestCase):
             DsvHelper.parse_file("nonexistent.txt", ",")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

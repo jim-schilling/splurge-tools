@@ -1,5 +1,7 @@
 import unittest
+
 from jpy_tools.case_helper import CaseHelper
+
 
 class TestCaseHelper(unittest.TestCase):
     """Test cases for CaseHelper class."""
@@ -82,5 +84,6 @@ class TestCaseHelper(unittest.TestCase):
             with self.subTest(input_str=input_str):
                 self.assertEqual(CaseHelper.to_pascal(input_str), expected)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

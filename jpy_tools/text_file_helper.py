@@ -2,7 +2,7 @@
 Text file utility functions for common file operations.
 
 This module provides helper methods for working with text files, including
-line counting, file previewing, and file loading capabilities. The TextFileHelper 
+line counting, file previewing, and file loading capabilities. The TextFileHelper
 class implements static methods for efficient file operations without requiring
 class instantiation.
 
@@ -20,12 +20,12 @@ This software is licensed under the MIT License.
 """
 
 from os import PathLike
-from typing import Union, List
+from typing import List, Union
 
 
 class TextFileHelper:
     """Utility class for text file operations.
-    
+
     This class provides static methods for common text file operations,
     making it easy to perform file operations without instantiating the class.
     All methods are designed to be memory efficient by processing files
@@ -33,7 +33,7 @@ class TextFileHelper:
     """
 
     @staticmethod
-    def line_count(file_name: Union[PathLike, str], encoding: str = 'utf-8') -> int:
+    def line_count(file_name: Union[PathLike, str], encoding: str = "utf-8") -> int:
         """Count the number of lines in a text file.
 
         This method efficiently counts lines by iterating through the file
@@ -51,16 +51,16 @@ class TextFileHelper:
             IOError: If there are issues reading the file
             UnicodeDecodeError: If the file cannot be decoded with the specified encoding
         """
-        with open(file_name, 'r', encoding=encoding) as stream:
+        with open(file_name, "r", encoding=encoding) as stream:
             # Use generator expression for memory efficiency
             return sum(1 for _ in stream)
 
     @staticmethod
     def preview(
-        file_name: Union[PathLike, str], 
-        max_lines: int = 100, 
-        strip: bool = True, 
-        encoding: str = 'utf-8'
+        file_name: Union[PathLike, str],
+        max_lines: int = 100,
+        strip: bool = True,
+        encoding: str = "utf-8",
     ) -> List[str]:
         """Preview the first N lines of a text file.
 
@@ -81,12 +81,12 @@ class TextFileHelper:
             FileNotFoundError: If the specified file doesn't exist
             IOError: If there are issues reading the file
             UnicodeDecodeError: If the file cannot be decoded with the specified encoding
-        """        
+        """
         if max_lines < 1:
             raise ValueError("TextFileHelper.preview: max_lines is less than 1")
 
         lines = []
-        with open(file_name, 'r', encoding=encoding) as stream:
+        with open(file_name, "r", encoding=encoding) as stream:
             # Read up to max_lines or until EOF
             for _ in range(max_lines):
                 line = stream.readline()
@@ -96,16 +96,16 @@ class TextFileHelper:
                 if strip:
                     lines.append(line.strip())
                 else:
-                    lines.append(line.rstrip('\n'))
+                    lines.append(line.rstrip("\n"))
         return lines
 
     @staticmethod
     def load(
-        file_name: Union[PathLike, str], 
-        strip: bool = True, 
-        encoding: str = 'utf-8',
+        file_name: Union[PathLike, str],
+        strip: bool = True,
+        encoding: str = "utf-8",
         skip_header_rows: int = 0,
-        skip_footer_rows: int = 0
+        skip_footer_rows: int = 0,
     ) -> List[str]:
         """Load the entire contents of a text file into a list of strings.
 
@@ -129,26 +129,26 @@ class TextFileHelper:
         """
         skip_header_rows = max(0, skip_header_rows)
         skip_footer_rows = max(0, skip_footer_rows)
-        
+
         # Read file once and handle skipping in a single pass
-        with open(file_name, 'r', encoding=encoding) as stream:
+        with open(file_name, "r", encoding=encoding) as stream:
             # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
                     return []  # File is shorter than skip_header_rows
-            
+
             # Read remaining lines into a list
             lines = []
             for line in stream:
                 if strip:
                     lines.append(line.strip())
                 else:
-                    lines.append(line.rstrip('\n'))
-            
+                    lines.append(line.rstrip("\n"))
+
             # Remove footer rows if needed
             if skip_footer_rows > 0:
                 if skip_footer_rows >= len(lines):
                     return []
                 lines = lines[:-skip_footer_rows]
-                
+
             return lines

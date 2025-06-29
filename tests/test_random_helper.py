@@ -6,8 +6,9 @@ including both secure and non-secure random generation modes.
 """
 
 import unittest
-from jpy_tools.random_helper import RandomHelper
 from datetime import date, datetime, timedelta
+
+from jpy_tools.random_helper import RandomHelper
 
 
 class TestRandomHelper(unittest.TestCase):
@@ -21,12 +22,16 @@ class TestRandomHelper(unittest.TestCase):
 
     def test_constants(self):
         """Test class constants are correctly defined."""
-        self.assertEqual(RandomHelper.INT64_MAX, 2 ** 63 - 1)
-        self.assertEqual(RandomHelper.INT64_MIN, -2 ** 63)
-        self.assertEqual(RandomHelper.INT64_MASK, 0x7fff_ffff_ffff_ffff)
-        self.assertEqual(len(RandomHelper.ALPHA_CHARS), 52)  # 26 lowercase + 26 uppercase
+        self.assertEqual(RandomHelper.INT64_MAX, 2**63 - 1)
+        self.assertEqual(RandomHelper.INT64_MIN, -(2**63))
+        self.assertEqual(RandomHelper.INT64_MASK, 0x7FFF_FFFF_FFFF_FFFF)
+        self.assertEqual(
+            len(RandomHelper.ALPHA_CHARS), 52
+        )  # 26 lowercase + 26 uppercase
         self.assertEqual(len(RandomHelper.DIGITS), 10)
-        self.assertEqual(len(RandomHelper.ALPHANUMERIC_CHARS), 62)  # 52 letters + 10 digits
+        self.assertEqual(
+            len(RandomHelper.ALPHANUMERIC_CHARS), 62
+        )  # 52 letters + 10 digits
         self.assertEqual(len(RandomHelper.BASE58_CHARS), 58)
 
     def test_as_bytes(self):
@@ -328,5 +333,5 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(0 <= value.microsecond <= 999999)
 
 
-if __name__ == '__main__':
-    unittest.main() 
+if __name__ == "__main__":
+    unittest.main()
