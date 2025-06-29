@@ -62,14 +62,33 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 3. Install development dependencies:
 ```bash
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 ### Testing
 
-Run tests using unittest:
+Run tests using pytest:
 ```bash
-python -m unittest discover tests/
+python -m pytest tests/
+```
+
+### Code Quality
+
+The project uses several tools to maintain code quality:
+
+- **Black**: Code formatting
+- **isort**: Import sorting
+- **flake8**: Linting
+- **mypy**: Type checking
+- **pytest**: Testing with coverage
+
+Run all quality checks:
+```bash
+black .
+isort .
+flake8 jpy_tools/ tests/ --max-line-length=88
+mypy jpy_tools/
+python -m pytest tests/ --cov=jpy_tools
 ```
 
 ### Build
@@ -78,6 +97,31 @@ Build distribution:
 ```bash
 python -m build
 ```
+
+## Changelog
+
+### [0.1.11] - 2025-06-29
+
+#### Added
+- Added `String.is_time_like()` and `String.to_time()` for time value detection and conversion in `type_helper.py`
+- `DataType.TIME` is now fully supported in type inference and profiling
+- Added tests for time detection, conversion, and inference
+- Enhanced `pyproject.toml` configuration following Python best practices
+- Added comprehensive development dependencies (pytest, black, isort, flake8, mypy, pre-commit)
+- Added project URLs for better discoverability
+- Added keywords and improved classifiers for PyPI
+- Added `py.typed` marker for type checking support
+- Added tool configurations for Black, isort, mypy, pytest, and coverage
+- Added optional dependency groups (dev, test, build)
+
+#### Changed
+- Updated development workflow to use modern Python packaging standards
+- Improved test configuration with coverage reporting
+- Enhanced code formatting and import organization
+
+#### Fixed
+- Code formatting issues across all modules
+- Import sorting and organization
 
 ## License
 

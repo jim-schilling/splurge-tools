@@ -5,7 +5,9 @@ Unit tests for the StringTokenizer class.
 """
 
 import unittest
+
 from jpy_tools.string_tokenizer import StringTokenizer
+
 
 class TestStringTokenizer(unittest.TestCase):
     """Test cases for the StringTokenizer class."""
@@ -65,5 +67,6 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.remove_bookends("  'hello'  ", "'", strip=False)
         self.assertEqual(result, "  'hello'  ")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

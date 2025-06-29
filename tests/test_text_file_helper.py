@@ -1,20 +1,22 @@
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
+
 from jpy_tools.text_file_helper import TextFileHelper
+
 
 class TestTextFileHelper(unittest.TestCase):
     def setUp(self):
         # Create a temporary file for testing
-        self.temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
         self.test_content = [
             "Line 1",
             "Line 2",
             "Line 3",
             "  Line 4 with spaces  ",
-            "Line 5"
+            "Line 5",
         ]
-        self.temp_file.write('\n'.join(self.test_content))
+        self.temp_file.write("\n".join(self.test_content))
         self.temp_file.close()
 
     def tearDown(self):
@@ -27,19 +29,23 @@ class TestTextFileHelper(unittest.TestCase):
         self.assertEqual(TextFileHelper.line_count(self.temp_file.name), 5)
 
         # Test empty file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as empty_file:
-            empty_file.write('')
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as empty_file:
+            empty_file.write("")
         self.assertEqual(TextFileHelper.line_count(empty_file.name), 0)
         os.unlink(empty_file.name)
 
         # Test file not found
         with self.assertRaises(FileNotFoundError):
-            TextFileHelper.line_count('nonexistent_file.txt')
+            TextFileHelper.line_count("nonexistent_file.txt")
 
         # Test with different encoding
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-16', delete=False) as encoded_file:
-            encoded_file.write('Line 1\nLine 2')
-        self.assertEqual(TextFileHelper.line_count(encoded_file.name, encoding='utf-16'), 2)
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-16", delete=False
+        ) as encoded_file:
+            encoded_file.write("Line 1\nLine 2")
+        self.assertEqual(
+            TextFileHelper.line_count(encoded_file.name, encoding="utf-16"), 2
+        )
         os.unlink(encoded_file.name)
 
     def test_preview(self):
@@ -60,10 +66,12 @@ class TestTextFileHelper(unittest.TestCase):
         self.assertEqual(preview_lines[2], "Line 3")
 
         # Test with different encoding
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-16', delete=False) as encoded_file:
-            encoded_file.write('Line 1\nLine 2')
-        preview_lines = TextFileHelper.preview(encoded_file.name, encoding='utf-16')
-        self.assertEqual(preview_lines, ['Line 1', 'Line 2'])
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-16", delete=False
+        ) as encoded_file:
+            encoded_file.write("Line 1\nLine 2")
+        preview_lines = TextFileHelper.preview(encoded_file.name, encoding="utf-16")
+        self.assertEqual(preview_lines, ["Line 1", "Line 2"])
         os.unlink(encoded_file.name)
 
         # Test invalid max_lines
@@ -72,7 +80,7 @@ class TestTextFileHelper(unittest.TestCase):
 
         # Test file not found
         with self.assertRaises(FileNotFoundError):
-            TextFileHelper.preview('nonexistent_file.txt')
+            TextFileHelper.preview("nonexistent_file.txt")
 
     def test_load(self):
         """Test file loading functionality"""
@@ -97,27 +105,32 @@ class TestTextFileHelper(unittest.TestCase):
         self.assertEqual(loaded_lines[-1], "Line 3")
 
         # Test with both skip_header_rows and skip_footer_rows
-        loaded_lines = TextFileHelper.load(self.temp_file.name, skip_header_rows=1, skip_footer_rows=1)
+        loaded_lines = TextFileHelper.load(
+            self.temp_file.name, skip_header_rows=1, skip_footer_rows=1
+        )
         self.assertEqual(len(loaded_lines), 3)
         self.assertEqual(loaded_lines[0], "Line 2")
         self.assertEqual(loaded_lines[-1], "Line 4 with spaces")
 
         # Test with different encoding
-        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-16', delete=False) as encoded_file:
-            encoded_file.write('Line 1\nLine 2')
-        loaded_lines = TextFileHelper.load(encoded_file.name, encoding='utf-16')
-        self.assertEqual(loaded_lines, ['Line 1', 'Line 2'])
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-16", delete=False
+        ) as encoded_file:
+            encoded_file.write("Line 1\nLine 2")
+        loaded_lines = TextFileHelper.load(encoded_file.name, encoding="utf-16")
+        self.assertEqual(loaded_lines, ["Line 1", "Line 2"])
         os.unlink(encoded_file.name)
 
         # Test empty file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as empty_file:
-            empty_file.write('')
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as empty_file:
+            empty_file.write("")
         self.assertEqual(TextFileHelper.load(empty_file.name), [])
         os.unlink(empty_file.name)
 
         # Test file not found
         with self.assertRaises(FileNotFoundError):
-            TextFileHelper.load('nonexistent_file.txt')
+            TextFileHelper.load("nonexistent_file.txt")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
