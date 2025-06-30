@@ -100,6 +100,24 @@ python -m build
 
 ## Changelog
 
+### [0.1.13] - 2025-06-30
+
+#### Added
+- Enhanced time type handling with comprehensive test coverage
+- Added support for 12-hour time format with microseconds (e.g., "2:30:45.123456 PM")
+- Added boundary condition tests for time parsing (midnight, noon, end of day)
+- Added edge case testing for invalid time formats and invalid boundary conditions
+- Added comprehensive time type inference tests
+
+#### Fixed
+- Fixed parsing bug for 4-digit time format "1430" (was incorrectly parsed as 14:03, now correctly parsed as 14:30)
+- Reordered time parsing patterns to prioritize more specific formats before general ones
+- Added missing pattern "%I:%M:%S.%f %p" for 12-hour time with microseconds and AM/PM
+
+#### Changed
+- Improved time type detection and conversion robustness
+- Enhanced test coverage for time-related functionality to 96% overall coverage
+
 ### [0.1.12] - 2025-06-30
 - Rename to splurge-tools
 
