@@ -8,7 +8,7 @@ including both secure and non-secure random generation modes.
 import unittest
 from datetime import date, datetime, timedelta
 
-from jpy_tools.random_helper import RandomHelper
+from splurge_tools.random_helper import RandomHelper
 
 
 class TestRandomHelper(unittest.TestCase):

@@ -6,7 +6,7 @@ Unit tests for the StringTokenizer class.
 
 import unittest
 
-from jpy_tools.string_tokenizer import StringTokenizer
+from splurge_tools.string_tokenizer import StringTokenizer
 
 
 class TestStringTokenizer(unittest.TestCase):

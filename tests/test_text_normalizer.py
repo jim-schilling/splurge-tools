@@ -2,7 +2,7 @@
 
 import unittest
 
-from jpy_tools.text_normalizer import TextNormalizer
+from splurge_tools.text_normalizer import TextNormalizer
 
 
 class TestTextNormalizer(unittest.TestCase):

@@ -11,7 +11,7 @@ This module is licensed under the MIT License.
 import re
 from typing import Generator
 
-from jpy_tools.type_helper import DataType, profile_values
+from splurge_tools.type_helper import DataType, profile_values
 
 
 class TabularDataModel:

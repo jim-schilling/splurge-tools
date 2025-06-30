@@ -3,8 +3,8 @@
 import unittest
 from statistics import mean
 
-from jpy_tools.data_transformer import DataTransformer
-from jpy_tools.tabular_data_model import TabularDataModel
+from splurge_tools.data_transformer import DataTransformer
+from splurge_tools.tabular_data_model import TabularDataModel
 
 
 class TestDataTransformer(unittest.TestCase):

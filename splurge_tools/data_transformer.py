@@ -11,8 +11,8 @@ This module is licensed under the MIT License.
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from jpy_tools.tabular_data_model import TabularDataModel
-from jpy_tools.typed_tabular_data_model import TypedTabularDataModel
+from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
 
 
 class DataTransformer:

@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from jpy_tools.text_file_helper import TextFileHelper
+from splurge_tools.text_file_helper import TextFileHelper
 
 
 class TestTextFileHelper(unittest.TestCase):

@@ -13,7 +13,7 @@ import unicodedata
 from functools import wraps
 from typing import Optional, Pattern
 
-from jpy_tools.case_helper import CaseHelper
+from splurge_tools.case_helper import CaseHelper
 
 
 def handle_empty_value(func):

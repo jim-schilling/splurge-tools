@@ -11,8 +11,8 @@ This software is licensed under the MIT License.
 from os import PathLike
 from typing import Optional, Union
 
-from jpy_tools.string_tokenizer import StringTokenizer
-from jpy_tools.text_file_helper import TextFileHelper
+from splurge_tools.string_tokenizer import StringTokenizer
+from splurge_tools.text_file_helper import TextFileHelper
 
 
 class DsvHelper:
