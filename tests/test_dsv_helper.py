@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from jpy_tools.dsv_helper import DsvHelper
+from splurge_tools.dsv_helper import DsvHelper
 
 
 class TestDSVHelper(unittest.TestCase):

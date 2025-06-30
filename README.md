@@ -1,10 +1,10 @@
-# jpy-tools
+# splurge-tools
 
 A Python package providing tools for data type handling, validation, and text processing.
 
 ## Description
 
-jpy-tools is a collection of Python utilities focused on:
+splurge-tools is a collection of Python utilities focused on:
 - Data type handling and validation
 - Text file processing and manipulation
 - String tokenization and parsing
@@ -21,7 +21,7 @@ jpy-tools is a collection of Python utilities focused on:
 ## Installation
 
 ```bash
-pip install jpy-tools
+pip install splurge-tools
 ```
 
 ## Features
@@ -50,8 +50,8 @@ pip install jpy-tools
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/jim-schilling/jpy-tools.git
-cd jpy-tools
+git clone https://github.com/jim-schilling/splurge-tools.git
+cd splurge-tools
 ```
 
 2. Create and activate a virtual environment:
@@ -86,9 +86,9 @@ Run all quality checks:
 ```bash
 black .
 isort .
-flake8 jpy_tools/ tests/ --max-line-length=88
-mypy jpy_tools/
-python -m pytest tests/ --cov=jpy_tools
+flake8 splurge_tools/ tests/ --max-line-length=88
+mypy splurge_tools/
+python -m pytest tests/ --cov=splurge_tools
 ```
 
 ### Build
@@ -99,6 +99,9 @@ python -m build
 ```
 
 ## Changelog
+
+### [0.1.12] - 2025-06-30
+- Rename to splurge-tools
 
 ### [0.1.11] - 2025-06-29
 

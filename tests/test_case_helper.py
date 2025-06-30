@@ -1,6 +1,6 @@
 import unittest
 
-from jpy_tools.case_helper import CaseHelper
+from splurge_tools.case_helper import CaseHelper
 
 
 class TestCaseHelper(unittest.TestCase):

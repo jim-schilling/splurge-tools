@@ -11,8 +11,8 @@ This module is licensed under the MIT License.
 import unittest
 from datetime import date, datetime
 
-from jpy_tools.type_helper import DataType
-from jpy_tools.typed_tabular_data_model import TypeConfig, TypedTabularDataModel
+from splurge_tools.type_helper import DataType
+from splurge_tools.typed_tabular_data_model import TypeConfig, TypedTabularDataModel
 
 
 class TestTypedTabularDataModel(unittest.TestCase):

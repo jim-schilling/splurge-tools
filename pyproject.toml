@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jpy-tools"
-version = "0.1.11"
+name = "splurge-tools"
+version = "0.1.12"
 description = "Python tools for data type handling and validation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,10 +32,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/jim-schilling/jpy-tools"
-Repository = "https://github.com/jim-schilling/jpy-tools.git"
-Documentation = "https://github.com/jim-schilling/jpy-tools#readme"
-"Bug Tracker" = "https://github.com/jim-schilling/jpy-tools/issues"
+Homepage = "https://github.com/jim-schilling/splurge-tools"
+Repository = "https://github.com/jim-schilling/splurge-tools.git"
+Documentation = "https://github.com/jim-schilling/splurge-tools#readme"
+"Bug Tracker" = "https://github.com/jim-schilling/splurge-tools/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -57,10 +57,10 @@ build = [
 ]
 
 [tool.setuptools]
-packages = ["jpy_tools"]
+packages = ["splurge_tools"]
 
 [tool.setuptools.package-data]
-jpy_tools = ["py.typed"]
+splurge_tools = ["py.typed"]
 
 [tool.black]
 line-length = 88
@@ -84,7 +84,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["jpy_tools"]
+known_first_party = ["splurge_tools"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -116,7 +116,7 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=jpy_tools",
+    "--cov=splurge_tools",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
@@ -126,7 +126,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["jpy_tools"]
+source = ["splurge_tools"]
 omit = [
     "*/tests/*",
     "*/test_*",

@@ -5,7 +5,7 @@ Unit tests for type_helper module
 import unittest
 from datetime import date, datetime, time
 
-from jpy_tools.type_helper import (
+from splurge_tools.type_helper import (
     DataType,
     String,
     is_dict_like,

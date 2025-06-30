@@ -4,7 +4,7 @@ Tests for data validation utilities.
 
 import unittest
 
-from jpy_tools.data_validator import DataValidator
+from splurge_tools.data_validator import DataValidator
 
 
 class TestDataValidator(unittest.TestCase):

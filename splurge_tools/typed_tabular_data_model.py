@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, Generator, Optional, Union
 
-from jpy_tools.tabular_data_model import TabularDataModel
-from jpy_tools.type_helper import DataType, String, profile_values
+from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.type_helper import DataType, String, profile_values
 
 
 @dataclass

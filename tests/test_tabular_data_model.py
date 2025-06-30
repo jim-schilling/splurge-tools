@@ -2,8 +2,8 @@
 
 import unittest
 
-from jpy_tools.tabular_data_model import TabularDataModel
-from jpy_tools.type_helper import DataType
+from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.type_helper import DataType
 
 
 class TestTabularDataModel(unittest.TestCase):
