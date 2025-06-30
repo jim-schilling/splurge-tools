@@ -324,28 +324,43 @@ class TestString(unittest.TestCase):
         test_time = time(14, 30, 45)
         self.assertTrue(String.is_time_like(test_time))
 
-        # Test valid time strings
+        # Test valid time strings - 24-hour format
         self.assertTrue(String.is_time_like("14:30:45"))
         self.assertTrue(String.is_time_like("14:30:45.123456"))
         self.assertTrue(String.is_time_like("14:30"))
         self.assertTrue(String.is_time_like("143045"))
         self.assertTrue(String.is_time_like("1430"))
+        self.assertTrue(String.is_time_like("00:00:00"))  # Midnight
+        self.assertTrue(String.is_time_like("23:59:59"))  # End of day
+        self.assertTrue(String.is_time_like("12:00:00"))  # Noon
+
+        # Test valid time strings - 12-hour format
         self.assertTrue(String.is_time_like("2:30 PM"))
         self.assertTrue(String.is_time_like("2:30:45 PM"))
         self.assertTrue(String.is_time_like("2:30PM"))
         self.assertTrue(String.is_time_like("2:30:45PM"))
+        self.assertTrue(String.is_time_like("12:00 AM"))  # Midnight
+        self.assertTrue(String.is_time_like("12:00 PM"))  # Noon
+        self.assertTrue(String.is_time_like("11:59 PM"))  # End of day
+        self.assertTrue(String.is_time_like("12:30 AM"))  # Early morning
 
         # Test with whitespace
         self.assertTrue(String.is_time_like(" 14:30:45 "))
+        self.assertTrue(String.is_time_like(" 2:30 PM "))
 
         # Test invalid time values
         self.assertFalse(String.is_time_like("25:30:45"))  # Invalid hour
         self.assertFalse(String.is_time_like("14:60:45"))  # Invalid minute
         self.assertFalse(String.is_time_like("14:30:60"))  # Invalid second
+        self.assertFalse(String.is_time_like("13:30 PM"))  # Invalid 13 PM
+        self.assertFalse(String.is_time_like("0:30 AM"))   # Invalid 0 AM
+        self.assertFalse(String.is_time_like("12:30:60 PM"))  # Invalid seconds
         self.assertFalse(String.is_time_like("abc"))
         self.assertFalse(String.is_time_like(None))
         self.assertFalse(String.is_time_like([]))
         self.assertFalse(String.is_time_like("2023-01-01"))  # Date, not time
+        self.assertFalse(String.is_time_like("14:30:45:67"))  # Too many components
+        self.assertFalse(String.is_time_like("14:30:45.123456789"))  # Too many microseconds
 
     def test_to_time(self):
         """Test time conversion"""
@@ -353,15 +368,55 @@ class TestString(unittest.TestCase):
         test_time = time(14, 30, 45)
         self.assertEqual(String.to_time(test_time), test_time)
 
-        # Test valid time strings
+        # Test valid time strings - 24-hour format
         self.assertEqual(
             String.to_time("14:30:45"), time(14, 30, 45)
         )
         self.assertEqual(
-            String.to_time("2:30 PM"), time(14, 30)
+            String.to_time("14:30"), time(14, 30)
         )
         self.assertEqual(
             String.to_time("143045"), time(14, 30, 45)
+        )
+        self.assertEqual(
+            String.to_time("1430"), time(14, 30)
+        )
+        self.assertEqual(
+            String.to_time("00:00:00"), time(0, 0, 0)  # Midnight
+        )
+        self.assertEqual(
+            String.to_time("23:59:59"), time(23, 59, 59)  # End of day
+        )
+        self.assertEqual(
+            String.to_time("12:00:00"), time(12, 0, 0)  # Noon
+        )
+
+        # Test valid time strings - 12-hour format
+        self.assertEqual(
+            String.to_time("2:30 PM"), time(14, 30)
+        )
+        self.assertEqual(
+            String.to_time("2:30:45 PM"), time(14, 30, 45)
+        )
+        self.assertEqual(
+            String.to_time("12:00 AM"), time(0, 0, 0)  # Midnight
+        )
+        self.assertEqual(
+            String.to_time("12:00 PM"), time(12, 0, 0)  # Noon
+        )
+        self.assertEqual(
+            String.to_time("11:59 PM"), time(23, 59)  # End of day
+        )
+        self.assertEqual(
+            String.to_time("12:30 AM"), time(0, 30)  # Early morning
+        )
+
+        # Test with microseconds
+        self.assertEqual(
+            String.to_time("14:30:45.123456"), time(14, 30, 45, 123456)
+        )
+        self.assertEqual(
+            String.to_time("2:30:45.123456 PM"), time(14, 30, 45, 123456)
         )
 
         # Test with default
@@ -376,6 +431,58 @@ class TestString(unittest.TestCase):
             String.to_time(" 14:30:45 "),
             time(14, 30, 45),
         )
+        self.assertEqual(
+            String.to_time(" 2:30 PM "),
+            time(14, 30),
+        )
+
+        # Test edge cases
+        self.assertEqual(
+            String.to_time("00:00"), time(0, 0)
+        )
+        self.assertEqual(
+            String.to_time("23:59"), time(23, 59)
+        )
+
+    def test_time_type_inference(self):
+        """Test time type inference and edge cases"""
+        # Test time type inference
+        self.assertEqual(String.infer_type(time(14, 30, 45)), DataType.TIME)
+        self.assertEqual(String.infer_type("14:30:45"), DataType.TIME)
+        self.assertEqual(String.infer_type("2:30 PM"), DataType.TIME)
+        self.assertEqual(String.infer_type("143045"), DataType.TIME)
+        
+        # Test time type name inference
+        self.assertEqual(String.infer_type_name(time(14, 30, 45)), "TIME")
+        self.assertEqual(String.infer_type_name("14:30:45"), "TIME")
+        self.assertEqual(String.infer_type_name("2:30 PM"), "TIME")
+        
+        # Test boundary conditions
+        self.assertTrue(String.is_time_like("00:00:00"))  # Start of day
+        self.assertTrue(String.is_time_like("23:59:59"))  # End of day
+        self.assertTrue(String.is_time_like("12:00:00"))  # Noon
+        self.assertTrue(String.is_time_like("12:00:00.000000"))  # Noon with microseconds
+        
+        # Test 12-hour format boundaries
+        self.assertTrue(String.is_time_like("12:00 AM"))  # Midnight
+        self.assertTrue(String.is_time_like("12:00 PM"))  # Noon
+        self.assertTrue(String.is_time_like("11:59 PM"))  # End of day
+        self.assertTrue(String.is_time_like("12:01 AM"))  # After midnight
+        
+        # Test invalid boundary conditions
+        self.assertFalse(String.is_time_like("24:00:00"))  # Invalid hour
+        self.assertFalse(String.is_time_like("23:60:00"))  # Invalid minute
+        self.assertFalse(String.is_time_like("23:59:60"))  # Invalid second
+        self.assertFalse(String.is_time_like("13:00 PM"))  # Invalid 13 PM
+        self.assertFalse(String.is_time_like("0:00 AM"))   # Invalid 0 AM
+        
+        # Test conversion edge cases
+        self.assertEqual(String.to_time("00:00:00.000000"), time(0, 0, 0, 0))
+        self.assertEqual(String.to_time("23:59:59.999999"), time(23, 59, 59, 999999))
+        
+        # Test with trim=False
+        self.assertFalse(String.is_time_like(" 14:30:45 ", trim=False))
+        self.assertFalse(String.is_time_like(" 2:30 PM ", trim=False))
 
 
 class TestProfileValues(unittest.TestCase):
@@ -422,6 +529,22 @@ class TestProfileValues(unittest.TestCase):
         )
         self.assertEqual(
             profile_values(["14:30:00", "15:45:00", ""]),
+            DataType.TIME,
+        )
+        self.assertEqual(
+            profile_values(["2:30 PM", "3:45 PM"]),
+            DataType.TIME,
+        )
+        self.assertEqual(
+            profile_values(["143000", "154500"]),
+            DataType.TIME,
+        )
+        self.assertEqual(
+            profile_values(["00:00:00", "23:59:59"]),
+            DataType.TIME,
+        )
+        self.assertEqual(
+            profile_values(["12:00 AM", "12:00 PM"]),
             DataType.TIME,
         )
 
