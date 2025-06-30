@@ -60,6 +60,7 @@ class TypedTabularDataModel(TabularDataModel):
             DataType.MIXED: TypeConfig("", None),  # For mixed types, treat as string
             DataType.EMPTY: TypeConfig("", ""),
             DataType.NONE: TypeConfig(None, None),
+            DataType.TIME: TypeConfig(None, None),
         }
 
         # Override with user-provided configurations
@@ -120,6 +121,8 @@ class TypedTabularDataModel(TabularDataModel):
             return String.to_date(value, default=type_config.empty_default)
         elif data_type == DataType.DATETIME:
             return String.to_datetime(value, default=type_config.empty_default)
+        elif data_type == DataType.TIME:
+            return String.to_time(value, default=type_config.empty_default)
         else:
             return value
 
