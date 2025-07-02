@@ -24,17 +24,19 @@ from typing import List, Union
 
 
 class TextFileHelper:
-    """Utility class for text file operations.
-
-    This class provides static methods for common text file operations,
-    making it easy to perform file operations without instantiating the class.
-    All methods are designed to be memory efficient by processing files
-    line by line rather than loading entire files into memory.
+    """
+    Utility class for text file operations.
+    All methods are static and memory efficient.
     """
 
     @staticmethod
-    def line_count(file_name: Union[PathLike, str], encoding: str = "utf-8") -> int:
-        """Count the number of lines in a text file.
+    def line_count(
+        file_name: Union[PathLike, str],
+        *,
+        encoding: str = "utf-8"
+    ) -> int:
+        """
+        Count the number of lines in a text file.
 
         This method efficiently counts lines by iterating through the file
         without loading it entirely into memory.
@@ -52,17 +54,18 @@ class TextFileHelper:
             UnicodeDecodeError: If the file cannot be decoded with the specified encoding
         """
         with open(file_name, "r", encoding=encoding) as stream:
-            # Use generator expression for memory efficiency
             return sum(1 for _ in stream)
 
     @staticmethod
     def preview(
         file_name: Union[PathLike, str],
+        *,
         max_lines: int = 100,
         strip: bool = True,
-        encoding: str = "utf-8",
+        encoding: str = "utf-8"
     ) -> List[str]:
-        """Preview the first N lines of a text file.
+        """
+        Preview the first N lines of a text file.
 
         This method reads up to max_lines from the beginning of the file,
         optionally stripping whitespace from each line.
@@ -84,30 +87,26 @@ class TextFileHelper:
         """
         if max_lines < 1:
             raise ValueError("TextFileHelper.preview: max_lines is less than 1")
-
-        lines = []
+        lines: List[str] = []
         with open(file_name, "r", encoding=encoding) as stream:
-            # Read up to max_lines or until EOF
             for _ in range(max_lines):
                 line = stream.readline()
-                if not line:  # EOF reached
+                if not line:
                     break
-                # Strip newline but preserve other whitespace when strip=False
-                if strip:
-                    lines.append(line.strip())
-                else:
-                    lines.append(line.rstrip("\n"))
+                lines.append(line.strip() if strip else line.rstrip("\n"))
         return lines
 
     @staticmethod
     def load(
         file_name: Union[PathLike, str],
+        *,
         strip: bool = True,
         encoding: str = "utf-8",
         skip_header_rows: int = 0,
-        skip_footer_rows: int = 0,
+        skip_footer_rows: int = 0
     ) -> List[str]:
-        """Load the entire contents of a text file into a list of strings.
+        """
+        Load the entire contents of a text file into a list of strings.
 
         This method reads the complete file into memory, with options to
         strip whitespace from each line and skip header/footer rows.
@@ -129,26 +128,13 @@ class TextFileHelper:
         """
         skip_header_rows = max(0, skip_header_rows)
         skip_footer_rows = max(0, skip_footer_rows)
-
-        # Read file once and handle skipping in a single pass
         with open(file_name, "r", encoding=encoding) as stream:
-            # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
-                    return []  # File is shorter than skip_header_rows
-
-            # Read remaining lines into a list
-            lines = []
-            for line in stream:
-                if strip:
-                    lines.append(line.strip())
-                else:
-                    lines.append(line.rstrip("\n"))
-
-            # Remove footer rows if needed
+                    return []
+            lines: List[str] = [line.strip() if strip else line.rstrip("\n") for line in stream]
             if skip_footer_rows > 0:
                 if skip_footer_rows >= len(lines):
                     return []
                 lines = lines[:-skip_footer_rows]
-
             return lines

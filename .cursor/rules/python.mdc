@@ -1,0 +1,35 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Write concise, technical Python targeting v3.10-3.12. 
+- Follow PEP8. 
+- Document everything with docstrings. 
+- For complex logic, preface block with comment.
+- Type annotate method signatures always.
+- Type annotate variables where clarity is needed. 
+- Allow line length of 120 characters.
+- Prefer list comprehensions over `map()` and `filter()`.
+- Avoid wildcard imports.
+- Avoid relative import paths.
+- Group imports at top of module: standard -> third-party -> local.
+- Avoid side effects in module-level code.
+- Optimize loops.
+- Use pytest and pytest-cov for testing.
+- Prioritize error handling.
+- Use guard clauses to handle preconditions and invalid state early.
+- Place the happy path last in the function.
+- Use try blocks as needed.
+- Prefer if blocks over if else blocks
+- Except clauses shall be prefixed with a blank line. 
+- Prefer separating logical blocks of code with a blank line for visual clarity.
+- Prefer clarity, efficiency, and best practices in code.
+- Use descriptive variable names with auxiliary verbs (e.g. is_active, has_permission).
+- Prefer iteration and modularization over code duplication.
+- For Object definitions/declarations (e.g. class, enum, dataclass), names with acronymns or abbreviations (e.g. DSVReader, CSVWriter, TransformXMLToJSON), shall be Pascal case like DsvReader, CsvWriter, TransformXmlToJson.
+- All class and instance level fields shall be private by default (e.g. self._is_active, self._data_model).
+- Class and instance level fields shall have public property getters (e.g. is_active, data_model, file_name).
+- Prefer parameters in method signatures to be listed on separate lines.
+
+- Default parameters for Method signatures shall be named (e.g def myfunc(value: str, trim:bool = True) will be def myfunc(value: str, *, trim: bool = True)).

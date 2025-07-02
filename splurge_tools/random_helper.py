@@ -23,7 +23,8 @@ from typing import List, Optional
 
 
 class RandomHelper:
-    """A utility class for generating various types of random values.
+    """
+    A utility class for generating various types of random values.
 
     This class provides methods for generating random integers, strings, booleans, and more.
     All methods support both cryptographically secure (using secrets module) and non-secure
@@ -39,17 +40,22 @@ class RandomHelper:
         BASE58_CHARS (str): Base58 character set (excluding 0, O, I, l)
     """
 
-    INT64_MAX = 2**63 - 1
-    INT64_MIN = -(2**63)
-    INT64_MASK = 0x7FFF_FFFF_FFFF_FFFF
-    ALPHA_CHARS = f"{string.ascii_lowercase}{string.ascii_uppercase}"
-    DIGITS = "0123456789"
-    ALPHANUMERIC_CHARS = f"{ALPHA_CHARS}{DIGITS}"
-    BASE58_CHARS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    INT64_MAX: int = 2**63 - 1
+    INT64_MIN: int = -(2**63)
+    INT64_MASK: int = 0x7FFF_FFFF_FFFF_FFFF
+    ALPHA_CHARS: str = f"{string.ascii_lowercase}{string.ascii_uppercase}"
+    DIGITS: str = "0123456789"
+    ALPHANUMERIC_CHARS: str = f"{ALPHA_CHARS}{DIGITS}"
+    BASE58_CHARS: str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
     @staticmethod
-    def as_bytes(size: int, *, secure: Optional[bool] = False) -> bytes:
-        """Generate random bytes of specified size.
+    def as_bytes(
+        size: int,
+        *,
+        secure: Optional[bool] = False
+    ) -> bytes:
+        """
+        Generate random bytes of specified size.
 
         Args:
             size (int): Number of bytes to generate
@@ -61,19 +67,24 @@ class RandomHelper:
 
         Example:
             >>> RandomHelper.as_bytes(4)
-            b'\\x12\\x34\\x56\\x78'
+            b'\x12\x34\x56\x78'
             >>> RandomHelper.as_bytes(4, secure=True)  # Cryptographically secure
-            b'\\x9a\\xb2\\xc3\\xd4'
+            b'\x9a\xb2\xc3\xd4'
         """
         if secure:
-            # Convert random bits to bytes
-            bits = randbits(size * 8)
+            bits: int = randbits(size * 8)
             return bits.to_bytes(size, sys.byteorder)
         return random.randbytes(size)
 
     @classmethod
-    def as_int(cls, size: int = 8, *, secure: Optional[bool] = False) -> int:
-        """Generate a random 64-bit integer.
+    def as_int(
+        cls,
+        size: int = 8,
+        *,
+        secure: Optional[bool] = False
+    ) -> int:
+        """
+        Generate a random 64-bit integer.
 
         Args:
             size (int, optional): Number of bytes to generate. Defaults to 8.
@@ -96,9 +107,14 @@ class RandomHelper:
 
     @classmethod
     def as_int_range(
-        cls, lower: int, upper: int, *, secure: Optional[bool] = False
+        cls,
+        lower: int,
+        upper: int,
+        *,
+        secure: Optional[bool] = False
     ) -> int:
-        """Generate a random 64-bit integer within a specified range.
+        """
+        Generate a random 64-bit integer within a specified range.
 
         Args:
             lower (int): Lower bound (inclusive)
@@ -125,8 +141,13 @@ class RandomHelper:
         return int(cls.as_int(secure=secure) % (upper - lower + 1)) + lower
 
     @classmethod
-    def as_float_range(cls, lower: float, upper: float) -> float:
-        """Generate a random float within a specified range.
+    def as_float_range(
+        cls,
+        lower: float,
+        upper: float
+    ) -> float:
+        """
+        Generate a random float within a specified range.
 
         Args:
             lower (float): Lower bound (inclusive)
@@ -150,9 +171,14 @@ class RandomHelper:
 
     @classmethod
     def as_string(
-        cls, length: int, allowable_chars: str, *, secure: Optional[bool] = False
+        cls,
+        length: int,
+        allowable_chars: str,
+        *,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random string of specified length using given characters.
+        """
+        Generate a random string of specified length using given characters.
 
         Args:
             length (int): Length of the string to generate
@@ -193,9 +219,10 @@ class RandomHelper:
         upper: int,
         allowable_chars: str,
         *,
-        secure: Optional[bool] = False,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random string with length between lower and upper bounds.
+        """
+        Generate a random string with length between lower and upper bounds.
 
         Args:
             lower (int): Minimum length (inclusive)
@@ -219,15 +246,21 @@ class RandomHelper:
         if lower < 0 or lower >= upper:
             raise ValueError("lower must be >= 0 and < upper")
 
-        length = cls.as_int_range(lower, upper, secure=secure)
+        length: int = cls.as_int_range(lower, upper, secure=secure)
 
         return (
             cls.as_string(length, allowable_chars, secure=secure) if length > 0 else ""
         )
 
     @classmethod
-    def as_alpha(cls, length: int, *, secure: Optional[bool] = False) -> str:
-        """Generate a random string of letters.
+    def as_alpha(
+        cls,
+        length: int,
+        *,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a random string of letters.
 
         Args:
             length (int): Length of the string to generate
@@ -246,8 +279,14 @@ class RandomHelper:
         return cls.as_string(length, cls.ALPHA_CHARS, secure=secure)
 
     @classmethod
-    def as_alphanumeric(cls, length: int, *, secure: Optional[bool] = False) -> str:
-        """Generate a random alphanumeric string.
+    def as_alphanumeric(
+        cls,
+        length: int,
+        *,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a random alphanumeric string.
 
         Args:
             length (int): Length of the string to generate
@@ -266,8 +305,14 @@ class RandomHelper:
         return cls.as_string(length, cls.ALPHANUMERIC_CHARS, secure=secure)
 
     @classmethod
-    def as_numeric(cls, length: int, *, secure: Optional[bool] = False) -> str:
-        """Generate a random numeric string.
+    def as_numeric(
+        cls,
+        length: int,
+        *,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a random numeric string.
 
         Args:
             length (int): Length of the string to generate
@@ -286,8 +331,14 @@ class RandomHelper:
         return cls.as_string(length, cls.DIGITS, secure=secure)
 
     @classmethod
-    def as_base58(cls, length: int, *, secure: Optional[bool] = False) -> str:
-        """Generate a random Base58 string.
+    def as_base58(
+        cls,
+        length: int,
+        *,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a random Base58 string.
 
         Args:
             length (int): Length of the string to generate
@@ -307,9 +358,14 @@ class RandomHelper:
 
     @classmethod
     def as_variable_base58(
-        cls, lower: int, upper: int, *, secure: Optional[bool] = False
+        cls,
+        lower: int,
+        upper: int,
+        *,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random Base58 string with variable length.
+        """
+        Generate a random Base58 string with variable length.
 
         Args:
             lower (int): Minimum length (inclusive)
@@ -330,9 +386,14 @@ class RandomHelper:
 
     @classmethod
     def as_variable_alpha(
-        cls, lower: int, upper: int, *, secure: Optional[bool] = False
+        cls,
+        lower: int,
+        upper: int,
+        *,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random alphabetic string with variable length.
+        """
+        Generate a random alphabetic string with variable length.
 
         Args:
             lower (int): Minimum length (inclusive)
@@ -353,9 +414,14 @@ class RandomHelper:
 
     @classmethod
     def as_variable_alphanumeric(
-        cls, lower: int, upper: int, *, secure: Optional[bool] = False
+        cls,
+        lower: int,
+        upper: int,
+        *,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random alphanumeric string with variable length.
+        """
+        Generate a random alphanumeric string with variable length.
 
         Args:
             lower (int): Minimum length (inclusive)
@@ -378,9 +444,14 @@ class RandomHelper:
 
     @classmethod
     def as_variable_numeric(
-        cls, lower: int, upper: int, *, secure: Optional[bool] = False
+        cls,
+        lower: int,
+        upper: int,
+        *,
+        secure: Optional[bool] = False
     ) -> str:
-        """Generate a random numeric string with variable length.
+        """
+        Generate a random numeric string with variable length.
 
         Args:
             lower (int): Minimum length (inclusive)
@@ -400,8 +471,13 @@ class RandomHelper:
         return cls.as_variable_string(lower, upper, cls.DIGITS, secure=secure)
 
     @classmethod
-    def as_bool(cls, *, secure: Optional[bool] = False) -> bool:
-        """Generate a random boolean value.
+    def as_bool(
+        cls,
+        *,
+        secure: Optional[bool] = False
+    ) -> bool:
+        """
+        Generate a random boolean value.
 
         Args:
             secure (bool, optional): If True, uses cryptographically secure random generation.
@@ -419,8 +495,14 @@ class RandomHelper:
         return cls.as_int_range(0, 1, secure=secure) == 1
 
     @classmethod
-    def as_masked_string(cls, mask: str, *, secure: Optional[bool] = False) -> str:
-        """Generate a random string based on a mask pattern.
+    def as_masked_string(
+        cls,
+        mask: str,
+        *,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a random string based on a mask pattern.
 
         The mask can contain:
         - '#' for random digits (0-9)
@@ -447,11 +529,11 @@ class RandomHelper:
         if not mask or (mask.count("#") == 0 and mask.count("@") == 0):
             raise ValueError("mask must contain at least one mask char # or @")
 
-        digit_count = mask.count("#")
-        digits = cls.as_numeric(digit_count, secure=secure)
-        alpha_count = mask.count("@")
-        alphas = cls.as_alpha(alpha_count, secure=False)
-        value = mask
+        digit_count: int = mask.count("#")
+        digits: str = cls.as_numeric(digit_count, secure=secure)
+        alpha_count: int = mask.count("@")
+        alphas: str = cls.as_alpha(alpha_count, secure=False)
+        value: str = mask
 
         if digit_count:
             for digit in digits:
@@ -471,9 +553,10 @@ class RandomHelper:
         *,
         start: Optional[int] = 0,
         prefix: Optional[str] = None,
-        suffix: Optional[str] = None,
+        suffix: Optional[str] = None
     ) -> List[str]:
-        """Generate a list of sequentially numbered strings.
+        """
+        Generate a list of sequentially numbered strings.
 
         Args:
             count (int): Number of strings to generate
@@ -501,7 +584,7 @@ class RandomHelper:
         if start < 0:
             raise ValueError("start must be >= 0")
 
-        max_value = 10**digits - 1
+        max_value: int = 10**digits - 1
         if start + count > max_value:
             raise ValueError(
                 f"digits not large enough to hold sequence value of {max_value}"
@@ -509,7 +592,7 @@ class RandomHelper:
 
         prefix = prefix if prefix else ""
         suffix = suffix if suffix else ""
-        values = []
+        values: List[str] = []
 
         for sequence in range(start, start + count):
             values.append(f"{prefix}{sequence:0{digits}}{suffix}")
@@ -523,9 +606,10 @@ class RandomHelper:
         upper_days: int,
         *,
         base_date: Optional[date] = None,
-        secure: Optional[bool] = False,
+        secure: Optional[bool] = False
     ) -> date:
-        """Generate a random date between two days.
+        """
+        Generate a random date between two days.
 
         Args:
             lower_days (int): Minimum number of days from today
@@ -554,9 +638,10 @@ class RandomHelper:
         upper_days: int,
         *,
         base_date: Optional[datetime] = None,
-        secure: Optional[bool] = False,
+        secure: Optional[bool] = False
     ) -> datetime:
-        """Generate a random datetime between two days.
+        """
+        Generate a random datetime between two days.
 
         Args:
             lower_days (int): Minimum number of days from today
@@ -574,18 +659,15 @@ class RandomHelper:
             >>> RandomHelper.as_datetime(0, 30, secure=True)  # Cryptographically secure
             datetime.datetime(2025, 7, 15, 9, 15, 30)
         """
-        # Get base date
         base_date = base_date if base_date else datetime.now()
 
-        # Add random days
-        days = cls.as_int_range(lower_days, upper_days, secure=secure)
-        result = base_date + timedelta(days=days)
+        days: int = cls.as_int_range(lower_days, upper_days, secure=secure)
+        result: datetime = base_date + timedelta(days=days)
 
-        # Add random time components
-        hours = cls.as_int_range(0, 23, secure=secure)
-        minutes = cls.as_int_range(0, 59, secure=secure)
-        seconds = cls.as_int_range(0, 59, secure=secure)
-        microseconds = cls.as_int_range(0, 999999, secure=secure)
+        hours: int = cls.as_int_range(0, 23, secure=secure)
+        minutes: int = cls.as_int_range(0, 59, secure=secure)
+        seconds: int = cls.as_int_range(0, 59, secure=secure)
+        microseconds: int = cls.as_int_range(0, 999999, secure=secure)
 
         return result.replace(
             hour=hours, minute=minutes, second=seconds, microsecond=microseconds
