@@ -102,7 +102,10 @@ python -m build
 
 ### [0.2.0] - 2025-07-02
 
-### [0.1.13] - 2025-06-30
+#### Breaking Changes
+- **Method Signature Standardization**: All method signatures across the codebase have been updated to require default parameters to be named (e.g., `def myfunc(value: str, *, trim: bool = True)`). This enforces keyword-only arguments for all default values, improving clarity and consistency. This is a breaking change and may require updates to any code that calls these methods positionally for defaulted parameters.
+- All method signatures now use explicit type annotations and follow PEP8 and project-specific conventions for parameter ordering and naming.
+- Some methods may have reordered parameters or stricter type requirements as part of this standardization.
 
 #### Added
 - Enhanced time type handling with comprehensive test coverage
@@ -119,6 +122,29 @@ python -m build
 #### Changed
 - Improved time type detection and conversion robustness
 - Enhanced test coverage for time-related functionality to 96% overall coverage
+
+### [0.1.13] - 2025-06-30
+
+#### Added
+- Added `String.is_time_like()` and `String.to_time()` for time value detection and conversion in `type_helper.py`
+- `DataType.TIME` is now fully supported in type inference and profiling
+- Added tests for time detection, conversion, and inference
+- Enhanced `pyproject.toml` configuration following Python best practices
+- Added comprehensive development dependencies (pytest, black, isort, flake8, mypy, pre-commit)
+- Added project URLs for better discoverability
+- Added keywords and improved classifiers for PyPI
+- Added `py.typed` marker for type checking support
+- Added tool configurations for Black, isort, mypy, pytest, and coverage
+- Added optional dependency groups (dev, test, build)
+
+#### Changed
+- Updated development workflow to use modern Python packaging standards
+- Improved test configuration with coverage reporting
+- Enhanced code formatting and import organization
+
+#### Fixed
+- Code formatting issues across all modules
+- Import sorting and organization
 
 ### [0.1.12] - 2025-06-30
 - Rename to splurge-tools
