@@ -497,13 +497,13 @@ class String:
         tmp_value: str = value.strip() if trim else value
 
         if re.match(
-            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]??\d{2}([:]??\d{2}([.]??\d{5})?)?$""",
+            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
             tmp_value,
         ) and cls._is_datetime_like(tmp_value):
             return True
 
         if re.match(
-            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]??\d{2}([:]??\d{2}([.]??\d{5})?)?$""",
+            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
             tmp_value,
         ) and cls._is_datetime_like(tmp_value):
             return True

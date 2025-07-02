@@ -107,6 +107,8 @@ python -m build
 - All method signatures now use explicit type annotations and follow PEP8 and project-specific conventions for parameter ordering and naming.
 - Some methods may have reordered parameters or stricter type requirements as part of this standardization.
 
+### Fixed
+- **Resolved Regex Pattern Bug**: Fixed regex pattern bug - ?? should have been ? in String class in type_helper.py.
 
 ## License
 
