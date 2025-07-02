@@ -23,7 +23,7 @@ alwaysApply: true
 - Use try blocks as needed.
 - Prefer if blocks over if else blocks
 - Except clauses shall be prefixed with a blank line. 
-- Prefer seperating logical blocks of code with a blank line for visual clarity.
+- Prefer separating logical blocks of code with a blank line for visual clarity.
 - Prefer clarity, efficiency, and best practices in code.
 - Use descriptive variable names with auxiliary verbs (e.g. is_active, has_permission).
 - Prefer iteration and modularization over code duplication.
