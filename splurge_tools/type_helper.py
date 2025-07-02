@@ -15,7 +15,7 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
-import collections
+import collections.abc
 import re
 import typing
 from datetime import date, datetime, time
@@ -64,7 +64,11 @@ class String:
     """
 
     @staticmethod
-    def is_bool_like(value: Union[str, bool, None], trim: bool = True) -> bool:
+    def is_bool_like(
+        value: Union[str, bool, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value can be interpreted as a boolean.
 
@@ -84,14 +88,17 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value = value.lower().strip() if trim else value.lower()
-            if tmp_value in ["true", "false"]:
-                return True
+            tmp_value: str = value.lower().strip() if trim else value.lower()
+            return tmp_value in ["true", "false"]
 
         return False
 
     @staticmethod
-    def is_none_like(value: Any, trim: bool = True) -> bool:
+    def is_none_like(
+        value: Any,
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value represents None/null.
 
@@ -111,14 +118,17 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value = value.strip().lower() if trim else value.lower()
-            if tmp_value in ["none", "null"]:
-                return True
+            tmp_value: str = value.strip().lower() if trim else value.lower()
+            return tmp_value in ["none", "null"]
 
         return False
 
     @staticmethod
-    def is_empty_like(value: Any, trim: bool = True) -> bool:
+    def is_empty_like(
+        value: Any,
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value is an empty string or contains only whitespace.
 
@@ -141,7 +151,11 @@ class String:
         return not value.strip() if trim else not value
 
     @staticmethod
-    def is_float_like(value: Union[str, float, None], trim: bool = True) -> bool:
+    def is_float_like(
+        value: Union[str, float, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value can be interpreted as a float.
 
@@ -172,7 +186,11 @@ class String:
         )
 
     @staticmethod
-    def is_int_like(value: Union[str, int, None], trim: bool = True) -> bool:
+    def is_int_like(
+        value: Union[str, int, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value can be interpreted as an integer.
 
@@ -197,12 +215,15 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
         return re.match(r"""^[-+]?\d+$""", tmp_value) is not None
 
     @classmethod
     def is_numeric_like(
-        cls, value: Union[str, float, int, None], trim: bool = True
+        cls,
+        value: Union[str, float, int, None],
+        *,
+        trim: bool = True
     ) -> bool:
         """
         Check if value can be interpreted as a number (int or float).
@@ -222,10 +243,15 @@ class String:
         if value is None:
             return False
 
-        return cls.is_float_like(value, trim) or cls.is_int_like(value, trim)
+        return cls.is_float_like(value, trim=trim) or cls.is_int_like(value, trim=trim)
 
     @classmethod
-    def is_category_like(cls, value: Union[str, None], trim: bool = True) -> bool:
+    def is_category_like(
+        cls,
+        value: Union[str, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value is non-numeric (categorical).
 
@@ -244,10 +270,12 @@ class String:
         if value is None:
             return False
 
-        return not cls.is_numeric_like(value, trim)
+        return not cls.is_numeric_like(value, trim=trim)
 
     @staticmethod
-    def _is_date_like(value: str) -> bool:
+    def _is_date_like(
+        value: str
+    ) -> bool:
         """
         Internal method to check if string matches common date formats.
 
@@ -265,7 +293,7 @@ class String:
             - YYYYMMDD
             And their variations with different date component orders
         """
-        patterns = [
+        patterns: list[str] = [
             "%Y-%m-%d",
             "%Y/%m/%d",
             "%Y.%m.%d",
@@ -290,7 +318,9 @@ class String:
         return False
 
     @staticmethod
-    def _is_time_like(value: str) -> bool:
+    def _is_time_like(
+        value: str
+    ) -> bool:
         """
         Internal method to check if string matches common time formats.
 
@@ -309,7 +339,7 @@ class String:
             - HHMM
             And 12-hour format variations with AM/PM
         """
-        patterns = [
+        patterns: list[str] = [
             "%H:%M:%S",
             "%H:%M:%S.%f",
             "%H:%M",
@@ -332,7 +362,12 @@ class String:
         return False
 
     @classmethod
-    def is_date_like(cls, value: Union[str, date, None], trim: bool = True) -> bool:
+    def is_date_like(
+        cls,
+        value: Union[str, date, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if value can be interpreted as a date.
 
@@ -357,7 +392,7 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
 
         if re.match(
             r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""", tmp_value
@@ -372,7 +407,9 @@ class String:
         return False
 
     @staticmethod
-    def _is_datetime_like(value: str) -> bool:
+    def _is_datetime_like(
+        value: str
+    ) -> bool:
         """
         Internal method to check if string matches common datetime formats.
 
@@ -390,7 +427,7 @@ class String:
             - YYYYMMDDHHMMSS
             And their variations with different date component orders and optional microseconds
         """
-        patterns = [
+        patterns: list[str] = [
             "%Y-%m-%dT%H:%M:%S",
             "%Y/%m/%dT%H:%M:%S",
             "%Y.%m.%dT%H:%M:%S",
@@ -428,7 +465,10 @@ class String:
 
     @classmethod
     def is_datetime_like(
-        cls, value: Union[str, datetime, None], trim: bool = True
+        cls,
+        value: Union[str, datetime, None],
+        *,
+        trim: bool = True
     ) -> bool:
         """
         Check if value can be interpreted as a datetime.
@@ -454,16 +494,16 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
 
         if re.match(
-            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
+            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]??\d{2}([:]??\d{2}([.]??\d{5})?)?$""",
             tmp_value,
         ) and cls._is_datetime_like(tmp_value):
             return True
 
         if re.match(
-            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
+            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]??\d{2}([:]??\d{2}([.]??\d{5})?)?$""",
             tmp_value,
         ) and cls._is_datetime_like(tmp_value):
             return True
@@ -472,7 +512,10 @@ class String:
 
     @classmethod
     def is_time_like(
-        cls, value: Union[str, time, None], trim: bool = True
+        cls,
+        value: Union[str, time, None],
+        *,
+        trim: bool = True
     ) -> bool:
         """
         Check if value can be interpreted as a time.
@@ -500,9 +543,8 @@ class String:
         if not isinstance(value, str):
             return False
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
 
-        # Check for time-only patterns (no date components)
         if re.match(
             r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""", tmp_value
         ) and cls._is_time_like(tmp_value):
@@ -524,8 +566,9 @@ class String:
     def to_bool(
         cls,
         value: Union[str, bool, None],
+        *,
         default: Union[bool, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[bool, None]:
         """
         Convert value to boolean.
@@ -546,8 +589,8 @@ class String:
         if isinstance(value, bool):
             return value
 
-        if cls.is_bool_like(value, trim):
-            tmp_value = value.lower().strip() if trim else value.lower()
+        if cls.is_bool_like(value, trim=trim):
+            tmp_value: str = value.lower().strip() if trim else value.lower()
             return tmp_value == "true"
 
         return default
@@ -556,8 +599,9 @@ class String:
     def to_float(
         cls,
         value: Union[str, float, None],
+        *,
         default: Union[float, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[float, None]:
         """
         Convert value to float.
@@ -575,14 +619,15 @@ class String:
             >>> String.to_float('-1.23') # -1.23
             >>> String.to_float('abc')   # None
         """
-        return float(value) if cls.is_float_like(value, trim) else default
+        return float(value) if cls.is_float_like(value, trim=trim) else default
 
     @classmethod
     def to_int(
         cls,
         value: Union[str, int, None],
+        *,
         default: Union[int, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[int, None]:
         """
         Convert value to integer.
@@ -600,14 +645,15 @@ class String:
             >>> String.to_int('-123')  # -123
             >>> String.to_int('1.23')  # None
         """
-        return int(value) if cls.is_int_like(value, trim) else default
+        return int(value) if cls.is_int_like(value, trim=trim) else default
 
     @classmethod
     def to_date(
         cls,
         value: Union[str, date, None],
+        *,
         default: Union[date, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[date, None]:
         """
         Convert value to date.
@@ -628,10 +674,10 @@ class String:
         if isinstance(value, date):
             return value
 
-        if not cls.is_date_like(value, trim):
+        if not cls.is_date_like(value, trim=trim):
             return default
 
-        patterns = [
+        patterns: list[str] = [
             "%Y-%m-%d",
             "%Y/%m/%d",
             "%Y.%m.%d",
@@ -646,7 +692,7 @@ class String:
             "%m%d%Y",
         ]
 
-        dvalue = value.strip() if trim else value
+        dvalue: str = value.strip() if trim else value
 
         for pattern in patterns:
             try:
@@ -661,8 +707,9 @@ class String:
     def to_datetime(
         cls,
         value: Union[str, datetime, None],
+        *,
         default: Union[datetime, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[datetime, None]:
         """
         Convert value to datetime.
@@ -683,10 +730,10 @@ class String:
         if isinstance(value, datetime):
             return value
 
-        if not cls.is_datetime_like(value, trim):
+        if not cls.is_datetime_like(value, trim=trim):
             return default
 
-        patterns = [
+        patterns: list[str] = [
             "%Y-%m-%dT%H:%M:%S",
             "%Y/%m/%dT%H:%M:%S",
             "%Y.%m.%dT%H:%M:%S",
@@ -713,7 +760,7 @@ class String:
             "%m%d%Y%H%M%S%f",
         ]
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
 
         for pattern in patterns:
             try:
@@ -728,8 +775,9 @@ class String:
     def to_time(
         cls,
         value: Union[str, time, None],
+        *,
         default: Union[time, None] = None,
-        trim: bool = True,
+        trim: bool = True
     ) -> Union[time, None]:
         """
         Convert value to time.
@@ -751,10 +799,10 @@ class String:
         if isinstance(value, time):
             return value
 
-        if not cls.is_time_like(value, trim):
+        if not cls.is_time_like(value, trim=trim):
             return default
 
-        patterns = [
+        patterns: list[str] = [
             "%H:%M:%S",
             "%H:%M:%S.%f",
             "%H:%M",
@@ -767,7 +815,7 @@ class String:
             "%I:%M%p",
         ]
 
-        tmp_value = value.strip() if trim else value
+        tmp_value: str = value.strip() if trim else value
 
         for pattern in patterns:
             try:
@@ -779,7 +827,11 @@ class String:
         return default
 
     @staticmethod
-    def has_leading_zero(value: Union[str, None], trim: bool = True) -> bool:
+    def has_leading_zero(
+        value: Union[str, None],
+        *,
+        trim: bool = True
+    ) -> bool:
         """
         Check if string value has leading zero.
 
@@ -804,7 +856,8 @@ class String:
     def infer_type(
         cls,
         value: Union[str, bool, int, float, date, time, datetime, None],
-        trim: bool = True,
+        *,
+        trim: bool = True
     ) -> DataType:
         """
         Infer the most appropriate data type for a value.
@@ -823,28 +876,28 @@ class String:
             >>> String.infer_type('true')          # DataType.BOOLEAN
             >>> String.infer_type('abc')           # DataType.STRING
         """
-        if cls.is_none_like(value, trim):
+        if cls.is_none_like(value, trim=trim):
             return DataType.NONE
 
-        if cls.is_bool_like(value, trim):
+        if cls.is_bool_like(value, trim=trim):
             return DataType.BOOLEAN
 
-        if cls.is_datetime_like(value, trim):
+        if cls.is_datetime_like(value, trim=trim):
             return DataType.DATETIME
 
-        if cls.is_time_like(value, trim):
+        if cls.is_time_like(value, trim=trim):
             return DataType.TIME
 
-        if cls.is_date_like(value, trim):
+        if cls.is_date_like(value, trim=trim):
             return DataType.DATE
 
-        if cls.is_int_like(value, trim):
+        if cls.is_int_like(value, trim=trim):
             return DataType.INTEGER
 
-        if cls.is_float_like(value, trim):
+        if cls.is_float_like(value, trim=trim):
             return DataType.FLOAT
 
-        if cls.is_empty_like(value, trim):
+        if cls.is_empty_like(value, trim=trim):
             return DataType.EMPTY
 
         return DataType.STRING
@@ -853,7 +906,8 @@ class String:
     def infer_type_name(
         cls,
         value: Union[str, bool, int, float, date, time, datetime, None],
-        trim: bool = True,
+        *,
+        trim: bool = True
     ) -> str:
         """
         Infer the most appropriate data type name for a value.
@@ -872,10 +926,10 @@ class String:
             >>> String.infer_type_name('true')          # 'BOOLEAN'
             >>> String.infer_type_name('abc')           # 'STRING'
         """
-        return cls.infer_type(value, trim).name
+        return cls.infer_type(value, trim=trim).name
 
 
-def profile_values(values: Iterable, trim: bool = True) -> DataType:
+def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
     """
     Infer the most appropriate data type for a collection of values.
 
@@ -916,7 +970,7 @@ def profile_values(values: Iterable, trim: bool = True) -> DataType:
     count = 0
 
     for value in values:
-        types[String.infer_type(value, trim).name] += 1
+        types[String.infer_type(value, trim=trim).name] += 1
         count += 1
 
     if types[DataType.EMPTY.name] == count:

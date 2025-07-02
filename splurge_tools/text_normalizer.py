@@ -11,25 +11,26 @@ This software is licensed under the MIT License.
 import re
 import unicodedata
 from functools import wraps
-from typing import Optional, Pattern
+from typing import Any, Callable, Pattern
 
 from splurge_tools.case_helper import CaseHelper
 
 
-def handle_empty_value(func):
+def handle_empty_value(
+    func: Callable[[str, Any], str]
+) -> Callable[[str, Any], str]:
     """Decorator to handle empty value checks for normalization methods."""
-
     @wraps(func)
-    def wrapper(value: str, *args, **kwargs):
+    def wrapper(value: str, *args: Any, **kwargs: Any) -> str:
         if value is None or not value:
             return ""
         return func(value, *args, **kwargs)
-
     return wrapper
 
 
 class TextNormalizer:
-    """A utility class for text normalization operations.
+    """
+    A utility class for text normalization operations.
 
     This class provides methods to:
     - Remove diacritics (accents)
@@ -48,15 +49,18 @@ class TextNormalizer:
     - Preserves original string if no changes needed
     """
 
-    # Common patterns
     _WHITESPACE_PATTERN: Pattern = re.compile(r"\s+")
     _CONTROL_CHARS_PATTERN: Pattern = re.compile(r"[\x00-\x1f\x7f-\x9f]")
     _SPECIAL_CHARS_PATTERN: Pattern = re.compile(r"[^\w\s-]")
 
     @classmethod
     @handle_empty_value
-    def remove_accents(cls, value: str) -> str:
-        """Remove accents from text.
+    def remove_accents(
+        cls,
+        value: str
+    ) -> str:
+        """
+        Remove accents from text.
 
         Args:
             value: Input string to normalize
@@ -78,8 +82,13 @@ class TextNormalizer:
 
     @classmethod
     @handle_empty_value
-    def normalize_whitespace(cls, value: str, preserve_newlines: bool = False) -> str:
-        """Normalize whitespace in text.
+    def normalize_whitespace(
+        cls,
+        value: str,
+        preserve_newlines: bool = False
+    ) -> str:
+        """
+        Normalize whitespace in text.
 
         Args:
             value: Input string to normalize
@@ -93,13 +102,9 @@ class TextNormalizer:
             "hello\n\nworld" -> "hello world" (if preserve_newlines=False)
         """
         if preserve_newlines:
-            # Replace multiple spaces with single space
             value = re.sub(r"[^\S\n]+", " ", value)
-            # Normalize newlines to \n
             value = re.sub(r"\r\n|\r", "\n", value)
-            # Remove multiple newlines and surrounding spaces
             value = re.sub(r"\n\s*\n", "\n\n", value)
-            # Remove spaces before and after newlines
             value = re.sub(r" +(\n)", r"\1", value)
             value = re.sub(r"(\n) +", r"\1", value)
         else:
@@ -108,8 +113,13 @@ class TextNormalizer:
 
     @classmethod
     @handle_empty_value
-    def remove_special_chars(cls, value: str, keep_chars: str = "") -> str:
-        """Remove special characters from text.
+    def remove_special_chars(
+        cls,
+        value: str,
+        keep_chars: str = ""
+    ) -> str:
+        """
+        Remove special characters from text.
 
         Args:
             value: Input string to normalize
@@ -124,13 +134,18 @@ class TextNormalizer:
         """
         if value is None:
             return ""
-        pattern = f"[^\\w\\s{re.escape(keep_chars)}]"
+        pattern: str = f"[^\\w\\s{re.escape(keep_chars)}]"
         return re.sub(pattern, "", value)
 
     @classmethod
     @handle_empty_value
-    def normalize_line_endings(cls, value: str, line_ending: str = "\n") -> str:
-        """Normalize line endings in text.
+    def normalize_line_endings(
+        cls,
+        value: str,
+        line_ending: str = "\n"
+    ) -> str:
+        """
+        Normalize line endings in text.
 
         Args:
             value: Input string to normalize
@@ -146,8 +161,14 @@ class TextNormalizer:
 
     @classmethod
     @handle_empty_value
-    def to_ascii(cls, value: str, *, replacement: str = "") -> str:
-        """Convert text to ASCII, replacing non-ASCII characters.
+    def to_ascii(
+        cls,
+        value: str,
+        *,
+        replacement: str = ""
+    ) -> str:
+        """
+        Convert text to ASCII, replacing non-ASCII characters.
 
         Args:
             value: Input string to normalize
@@ -160,17 +181,19 @@ class TextNormalizer:
             "café" -> "cafe"
             "résumé" -> "resume"
         """
-        # First remove accents
         value = cls.remove_accents(value)
-        # Then convert to ASCII
         return (
             value.encode("ascii", "replace").decode("ascii").replace("?", replacement)
         )
 
     @classmethod
     @handle_empty_value
-    def remove_control_chars(cls, value: str) -> str:
-        """Remove control characters from text.
+    def remove_control_chars(
+        cls,
+        value: str
+    ) -> str:
+        """
+        Remove control characters from text.
 
         Args:
             value: Input string to normalize
@@ -185,8 +208,14 @@ class TextNormalizer:
 
     @classmethod
     @handle_empty_value
-    def normalize_quotes(cls, value: str, *, quote_char: str = '"') -> str:
-        """Normalize quote characters in text.
+    def normalize_quotes(
+        cls,
+        value: str,
+        *,
+        quote_char: str = '"'
+    ) -> str:
+        """
+        Normalize quote characters in text.
 
         Args:
             value: Input string to normalize
@@ -198,23 +227,25 @@ class TextNormalizer:
         Example:
             'hello "world"' -> 'hello "world"'
             "hello 'world'" -> 'hello "world"'
-            "hello 'world's" -> 'hello "world\'s"'
+            "hello 'world's" -> 'hello "world's"'
         """
         if value is None:
             return ""
-        # Replace quotes but preserve apostrophes
-        # First, protect apostrophes by replacing them with a temporary marker
-        temp = re.sub(r"(\w)'(\w)", r"\1§APOS§\2", value)
-        # Now replace all remaining quotes with the desired quote character
+        temp: str = re.sub(r"(\w)'(\w)", r"\1§APOS§\2", value)
         temp = temp.replace('"', quote_char).replace("'", quote_char)
-        # Finally, restore the apostrophes
-        result = temp.replace("§APOS§", "'")
+        result: str = temp.replace("§APOS§", "'")
         return result
 
     @classmethod
     @handle_empty_value
-    def normalize_dashes(cls, value: str, *, dash_char: str = "-") -> str:
-        """Normalize dash characters in text.
+    def normalize_dashes(
+        cls,
+        value: str,
+        *,
+        dash_char: str = "-"
+    ) -> str:
+        """
+        Normalize dash characters in text.
 
         Args:
             value: Input string to normalize
@@ -227,13 +258,16 @@ class TextNormalizer:
             "hello–world" -> "hello-world"
             "hello—world" -> "hello-world"
         """
-        # Replace all types of dashes with the desired dash character
         return re.sub(r"[–—]", dash_char, value)
 
     @classmethod
     @handle_empty_value
-    def normalize_spaces(cls, value: str) -> str:
-        """Normalize space characters in text.
+    def normalize_spaces(
+        cls,
+        value: str
+    ) -> str:
+        """
+        Normalize space characters in text.
 
         Args:
             value: Input string to normalize
@@ -248,8 +282,14 @@ class TextNormalizer:
 
     @classmethod
     @handle_empty_value
-    def normalize_case(cls, value: str, *, case: str = "lower") -> str:
-        """Normalize text case.
+    def normalize_case(
+        cls,
+        value: str,
+        *,
+        case: str = "lower"
+    ) -> str:
+        """
+        Normalize text case.
 
         Args:
             value: Input string to normalize
@@ -265,18 +305,24 @@ class TextNormalizer:
         case = case.lower()
         if case == "lower":
             return value.lower()
-        elif case == "upper":
+        if case == "upper":
             return value.upper()
-        elif case == "title":
+        if case == "title":
             return value.title()
-        elif case == "sentence":
+        if case == "sentence":
             return CaseHelper.to_sentence(value)
         return value
 
     @classmethod
     @handle_empty_value
-    def remove_duplicate_chars(cls, value: str, *, chars: str = " -.") -> str:
-        """Remove embedded duplicate characters from text.
+    def remove_duplicate_chars(
+        cls,
+        value: str,
+        *,
+        chars: str = " -."
+    ) -> str:
+        """
+        Remove embedded duplicate characters from text.
 
         Args:
             value: Input string to normalize
@@ -290,8 +336,8 @@ class TextNormalizer:
             "hello--world" -> "hello-world"
             "hello...world" (chars='.') -> "hello.world"
         """
-        result = value
+        result: str = value
         for char in chars:
-            pattern = f"{re.escape(char)}{{2,}}"
+            pattern: str = f"{re.escape(char)}{{2,}}"
             result = re.sub(pattern, char, result)
         return result

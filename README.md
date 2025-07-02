@@ -86,7 +86,7 @@ Run all quality checks:
 ```bash
 black .
 isort .
-flake8 splurge_tools/ tests/ --max-line-length=88
+flake8 splurge_tools/ tests/ --max-line-length=120
 mypy splurge_tools/
 python -m pytest tests/ --cov=splurge_tools
 ```
@@ -99,6 +99,8 @@ python -m build
 ```
 
 ## Changelog
+
+### [0.2.0] - 2025-07-02
 
 ### [0.1.13] - 2025-06-30
 

@@ -14,7 +14,7 @@ This software is licensed under the MIT License.
 
 class StringTokenizer:
     """
-    A utility class for string tokenization operations.
+    Utility class for string tokenization operations.
 
     This class provides methods to:
     - Split strings into tokens based on delimiters
@@ -23,7 +23,12 @@ class StringTokenizer:
     """
 
     @staticmethod
-    def parse(content: str, delimiter: str, strip: bool = True) -> list[str]:
+    def parse(
+        content: str,
+        delimiter: str,
+        *,
+        strip: bool = True
+    ) -> list[str]:
         """
         Split a string into tokens based on a delimiter.
 
@@ -48,17 +53,21 @@ class StringTokenizer:
         if content is None:
             return []
 
-        if not content.strip() and strip:
+        if strip and not content.strip():
             return []
 
         result: list[str] = content.split(delimiter)
         if strip:
-            result = [token.strip() for token in result if len(token.strip()) > 0]
+            result = [token.strip() for token in result if token.strip()]
         return result
 
     @classmethod
     def parses(
-        cls, content: list[str], delimiter: str, strip: bool = True
+        cls,
+        content: list[str],
+        delimiter: str,
+        *,
+        strip: bool = True
     ) -> list[list[str]]:
         """
         Process multiple strings into lists of tokens.
@@ -75,10 +84,15 @@ class StringTokenizer:
             >>> StringTokenizer.parses(["a,b", "c,d"], ",")
             [['a', 'b'], ['c', 'd']]
         """
-        return [cls.parse(text, delimiter, strip) for text in content]
+        return [cls.parse(text, delimiter, strip=strip) for text in content]
 
     @staticmethod
-    def remove_bookends(content: str, bookend: str, strip: bool = True) -> str:
+    def remove_bookends(
+        content: str,
+        bookend: str,
+        *,
+        strip: bool = True
+    ) -> str:
         """
         Remove matching characters from both ends of a string.
 
@@ -94,7 +108,7 @@ class StringTokenizer:
             >>> StringTokenizer.remove_bookends("'hello'", "'")
             'hello'
         """
-        value = content.strip() if strip else content
+        value: str = content.strip() if strip else content
         if (
             value.startswith(bookend)
             and value.endswith(bookend)

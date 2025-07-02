@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "splurge-tools"
-version = "0.1.13"
+version = "0.2.0"
 description = "Python tools for data type handling and validation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -63,7 +63,7 @@ packages = ["splurge_tools"]
 splurge_tools = ["py.typed"]
 
 [tool.black]
-line-length = 88
+line-length = 120
 target-version = ['py310']
 include = '\.pyi?$'
 extend-exclude = '''
@@ -83,7 +83,7 @@ extend-exclude = '''
 [tool.isort]
 profile = "black"
 multi_line_output = 3
-line_length = 88
+line_length = 120
 known_first_party = ["splurge_tools"]
 
 [tool.mypy]
