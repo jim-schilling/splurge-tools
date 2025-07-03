@@ -100,6 +100,12 @@ python -m build
 
 ## Changelog
 
+### [0.2.1] - 2025-07-03
+
+#### Added
+- **DsvHelper.profile_columns**: Added `DsvHelper.profile_columns`, a new method that generates a simple data profile from parsed DSV data, inferring column names and datatypes.
+- **Test Coverage**: Added comprehensive test cases for `DsvHelper.profile_columns` and improved validation of DSV parsing logic, including edge cases for all supported datatypes.
+
 ### [0.2.0] - 2025-07-02
 
 #### Breaking Changes

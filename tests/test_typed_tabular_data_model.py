@@ -9,7 +9,7 @@ This module is licensed under the MIT License.
 """
 
 import unittest
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from splurge_tools.type_helper import DataType
 from splurge_tools.typed_tabular_data_model import TypeConfig, TypedTabularDataModel
@@ -21,11 +21,11 @@ class TestTypedTabularDataModel(unittest.TestCase):
     def setUp(self):
         """Set up test data."""
         self.test_data = [
-            ["name", "age", "is_active", "score", "birth_date", "created_at"],
-            ["John", "25", "true", "95.5", "1998-01-01", "2024-01-01T12:00:00"],
-            ["Jane", "", "false", "", "1993-05-15", "2024-01-02T13:00:00"],
-            ["Bob", "none", "none", "none", "none", "none"],
-            ["Alice", "30", "true", "88.0", "1995-12-31", "2024-01-03T14:00:00"],
+            ["name", "age", "is_active", "score", "birth_date", "created_at", "login_time"],
+            ["John", "25", "true", "95.5", "1998-01-01", "2024-01-01T12:00:00", "14:30:45"],
+            ["Jane", "", "false", "", "1993-05-15", "2024-01-02T13:00:00", "2:30 PM"],
+            ["Bob", "none", "none", "none", "none", "none", "none"],
+            ["Alice", "30", "true", "88.0", "1995-12-31", "2024-01-03T14:00:00", ""],
         ]
 
         # Custom type configurations
@@ -38,6 +38,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
             ),
             DataType.DATETIME: TypeConfig(
                 empty_default=datetime(1900, 1, 1), none_default=None
+            ),
+            DataType.TIME: TypeConfig(
+                empty_default=time(0, 0, 0), none_default=None
             ),
         }
 
@@ -57,6 +60,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.default_model.column_type("created_at"), DataType.DATETIME
         )
+        self.assertEqual(
+            self.default_model.column_type("login_time"), DataType.TIME
+        )
 
     def test_default_conversions(self):
         """Test type conversions with default configurations."""
@@ -71,6 +77,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.default_model.cell_value("created_at", 0), datetime(2024, 1, 1, 12, 0)
         )
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 0), time(14, 30, 45)
+        )
 
         # Test empty values
         self.assertEqual(
@@ -82,6 +91,18 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.default_model.cell_value("is_active", 1), False
         )  # empty_default for BOOLEAN
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 3), None
+        )  # none_default for TIME
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 1), time(14, 30)
+        )  # 12-hour format
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 2), None
+        )  # none_default for TIME
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 4-1), None
+        )  # empty string, default is None
 
         # Test none-like values
         self.assertEqual(
@@ -93,6 +114,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.default_model.cell_value("is_active", 2), False
         )  # none_default for BOOLEAN
+        self.assertEqual(
+            self.default_model.cell_value("login_time", 2), None
+        )  # none_default for TIME
 
     def test_custom_conversions(self):
         """Test type conversions with custom configurations."""
@@ -106,6 +130,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         )
         self.assertEqual(
             self.custom_model.cell_value("created_at", 0), datetime(2024, 1, 1, 12, 0)
+        )
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 0), time(14, 30, 45)
         )
 
         # Test empty values with custom defaults
@@ -121,6 +148,18 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.custom_model.cell_value("birth_date", 1), date(1993, 5, 15)
         )  # actual date value
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 3), time(0, 0, 0)
+        )  # custom empty_default for TIME
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 1), time(14, 30)
+        )  # 12-hour format
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 2), None
+        )  # custom none_default for TIME
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 4-1), time(0, 0, 0)
+        )  # custom empty_default for TIME
 
         # Test none-like values with custom defaults
         self.assertEqual(
@@ -135,6 +174,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(
             self.custom_model.cell_value("birth_date", 2), None
         )  # custom none_default for DATE
+        self.assertEqual(
+            self.custom_model.cell_value("login_time", 2), None
+        )  # custom none_default for TIME
 
     def test_column_values(self):
         """Test getting all values for a column."""
@@ -145,12 +187,18 @@ class TestTypedTabularDataModel(unittest.TestCase):
         scores = self.default_model.column_values("score")
         self.assertEqual(scores, [95.5, 0.0, 0.0, 88.0])
 
+        login_times = self.default_model.column_values("login_time")
+        self.assertEqual(login_times, [time(14, 30, 45), time(14, 30), None, None])
+
         # Test with custom configuration
         ages = self.custom_model.column_values("age")
         self.assertEqual(ages, [25, -1, 0, 30])
 
         scores = self.custom_model.column_values("score")
         self.assertEqual(scores, [95.5, 0.0, 0.0, 88.0])
+
+        login_times = self.custom_model.column_values("login_time")
+        self.assertEqual(login_times, [time(14, 30, 45), time(14, 30), None, time(0, 0, 0)])
 
     def test_row_access(self):
         """Test accessing rows in different formats."""
@@ -162,6 +210,7 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(row["score"], 95.5)
         self.assertEqual(row["birth_date"], date(1998, 1, 1))
         self.assertEqual(row["created_at"], datetime(2024, 1, 1, 12, 0))
+        self.assertEqual(row["login_time"], time(14, 30, 45))
 
         # Test list access
         row_list = self.default_model.row_as_list(0)
@@ -171,6 +220,7 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(row_list[3], 95.5)
         self.assertEqual(row_list[4], date(1998, 1, 1))
         self.assertEqual(row_list[5], datetime(2024, 1, 1, 12, 0))
+        self.assertEqual(row_list[6], time(14, 30, 45))
 
         # Test tuple access
         row_tuple = self.default_model.row_as_tuple(0)
@@ -180,6 +230,7 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(row_tuple[3], 95.5)
         self.assertEqual(row_tuple[4], date(1998, 1, 1))
         self.assertEqual(row_tuple[5], datetime(2024, 1, 1, 12, 0))
+        self.assertEqual(row_tuple[6], time(14, 30, 45))
 
     def test_iterators(self):
         """Test row iterators."""
@@ -188,12 +239,14 @@ class TestTypedTabularDataModel(unittest.TestCase):
         self.assertEqual(len(rows), 4)  # 4 data rows
         self.assertEqual(rows[0]["name"], "John")
         self.assertEqual(rows[0]["age"], 25)
+        self.assertEqual(rows[0]["login_time"], time(14, 30, 45))
 
         # Test tuple iterator
         rows = list(self.default_model.iter_rows_as_tuples())
         self.assertEqual(len(rows), 4)  # 4 data rows
         self.assertEqual(rows[0][0], "John")
         self.assertEqual(rows[0][1], 25)
+        self.assertEqual(rows[0][6], time(14, 30, 45))
 
     def test_invalid_column(self):
         """Test handling of invalid column names."""
