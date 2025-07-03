@@ -100,6 +100,9 @@ python -m build
 
 ## Changelog
 
+### [0.2.1] - 2025-07-03
+
+
 ### [0.2.0] - 2025-07-02
 
 #### Breaking Changes
