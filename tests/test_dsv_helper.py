@@ -1,5 +1,6 @@
 """Unit tests for DSVHelper class."""
 
+import math
 import tempfile
 import unittest
 from pathlib import Path
@@ -83,7 +84,6 @@ class TestDSVHelper(unittest.TestCase):
 
     def test_parse_stream_basic(self):
         """Test parse_stream yields correct chunks and parses all rows."""
-        import math
         total_rows = 2499
         chunk_size = 500
         lines = [f"a{i},b{i},c{i}" for i in range(total_rows)]
@@ -206,7 +206,6 @@ class TestDSVHelper(unittest.TestCase):
         """
         Test DsvHelper.profile_columns detects all supported datatypes.
         """
-        from datetime import datetime, date, time
         # Header row and one value row for each type
         data = [
             [
