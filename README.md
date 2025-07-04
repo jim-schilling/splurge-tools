@@ -102,6 +102,10 @@ python -m build
 
 ### [0.2.2] - 2025-07-04
 
+#### Fixed
+- **TabularDataModel No-Header Scenarios**: Fixed issue where column names were empty when `header_rows=0`. Column names are now properly generated as `["column_0", "column_1", "column_2"]` when no headers are provided.
+- **TabularDataModel Row Access**: Fixed `IndexError` in the `row()` method when accessing uneven data rows. Added proper padding logic to ensure row data has enough columns before access.
+- **TabularDataModel Data Normalization**: Improved consistency between column count and column names by ensuring column names always match the actual column count, regardless of header configuration.
 
 ### [0.2.1] - 2025-07-03
 
