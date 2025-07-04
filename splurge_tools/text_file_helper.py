@@ -20,6 +20,7 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
+from collections import deque
 from os import PathLike
 from typing import List, Union, Iterator
 
@@ -159,7 +160,7 @@ class TextFileHelper:
             # Use a sliding window to handle footer skipping efficiently
             if skip_footer_rows > 0:
                 # Buffer to hold the last skip_footer_rows lines
-                buffer: List[str] = []
+                buffer: deque[str] = deque(maxlen=skip_footer_rows)
                 current_chunk: List[str] = []
                 
                 for line in stream:
@@ -168,9 +169,9 @@ class TextFileHelper:
                     # Add to buffer for potential footer skipping
                     buffer.append(processed_line)
                     
-                    # If buffer exceeds footer skip size, move oldest line to current chunk
-                    if len(buffer) > skip_footer_rows:
-                        current_chunk.append(buffer.pop(0))
+                    # If buffer is full, move oldest line to current chunk
+                    if len(buffer) == skip_footer_rows:
+                        current_chunk.append(buffer.popleft())
                         
                         # Yield chunk when it reaches the desired size
                         if len(current_chunk) >= chunk_size:
@@ -178,8 +179,8 @@ class TextFileHelper:
                             current_chunk = []
                 
                 # Handle remaining lines (excluding the last skip_footer_rows)
-                remaining_lines = buffer[:-skip_footer_rows] if len(buffer) > skip_footer_rows else []
-                current_chunk.extend(remaining_lines)
+                # The buffer now contains exactly the footer rows to skip
+                # All other lines have already been processed and yielded
                 
                 # Yield any remaining lines in the final chunk
                 if current_chunk:
