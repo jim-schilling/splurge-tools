@@ -59,10 +59,44 @@ class TabularDataModel:
         self._columns = len(self._data[0]) if len(self._data) > 0 else 0
         self._rows = len(self._data) if len(self._data) > 0 else 0
 
+        # Process headers using the new public method
+        self._header_data, self._column_names = self.process_headers(
+            self._header_data,
+            header_rows=header_rows,
+            multi_row_headers=multi_row_headers
+        )
+        
+        # Ensure column names match the actual column count
+        while len(self._column_names) < self._columns:
+            self._column_names.append(f"column_{len(self._column_names)}")
+        self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
+        self._column_types = {}
+
+    @staticmethod
+    def process_headers(
+        header_data: list[list[str]],
+        *,
+        header_rows: int,
+        multi_row_headers: int
+    ) -> tuple[list[list[str]], list[str]]:
+        """
+        Process header data to create merged headers and column names.
+
+        Args:
+            header_data (list[list[str]]): Raw header data rows.
+            header_rows (int): Number of header rows.
+            multi_row_headers (int): Number of rows to merge for column names.
+
+        Returns:
+            tuple[list[list[str]], list[str]]: Processed header data and column names.
+        """
+        processed_header_data = header_data.copy()
+        
+        # Merge multi-row headers if needed
         if header_rows > 1 and multi_row_headers > 1:
             merged_headers: list[str] = []
-            for i in range(min(multi_row_headers, len(self._header_data))):
-                row = self._header_data[i]
+            for i in range(min(multi_row_headers, len(header_data))):
+                row = header_data[i]
                 while len(merged_headers) < len(row):
                     merged_headers.append("")
                 for j, name in enumerate(row):
@@ -70,20 +104,28 @@ class TabularDataModel:
                         merged_headers[j] = f"{merged_headers[j]}_{name}"
                     else:
                         merged_headers[j] = name
-            self._header_data = [merged_headers]
+            processed_header_data = [merged_headers]
 
-        self._column_names = self._header_data[0] if len(self._header_data) > 0 else []
-        self._column_names = [re.sub(r"\s+", " ", name).strip() for name in self._column_names]
+        # Extract and normalize column names
+        column_names = processed_header_data[0] if len(processed_header_data) > 0 else []
+        column_names = [re.sub(r"\s+", " ", name).strip() for name in column_names]
 
-        if len(self._column_names) == 0:
-            self._column_names = [f"column_{i}" for i in range(self._columns)]
+        # Determine column count from header data
+        column_count = 0
+        if header_data:
+            column_count = max(len(row) for row in header_data)
 
-        while len(self._column_names) < self._columns:
-            self._column_names.append(f"column_{len(self._column_names)}")
+        # Handle empty column names and ensure proper column count
+        if len(column_names) == 0:
+            column_names = [f"column_{i}" for i in range(column_count)]
 
-        self._column_names = [name if name else f"column_{i}" for i, name in enumerate(self._column_names)]
-        self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
-        self._column_types = {}
+        while len(column_names) < column_count:
+            column_names.append(f"column_{len(column_names)}")
+
+        # Handle empty individual column names
+        column_names = [name if name else f"column_{i}" for i, name in enumerate(column_names)]
+
+        return processed_header_data, column_names
 
     @property
     def column_names(self) -> list[str]:
@@ -232,8 +274,12 @@ class TabularDataModel:
         Returns:
             dict[str, str]: Row as a dictionary.
         """
+        row_data = self._data[index]
+        # Ensure row_data is properly padded to match column count
+        padded_row = row_data + [""] * (self._columns - len(row_data))
         return {
-            self._column_names[i]: self._data[index][i] for i in range(self._columns)
+            self._column_names[i]: padded_row[i]
+            for i in range(self._columns)
         }
 
     def row_as_list(
