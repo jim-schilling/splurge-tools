@@ -102,6 +102,13 @@ python -m build
 
 ### [0.2.2] - 2025-07-04
 
+#### Added
+- **TextFileHelper.load_as_stream**: Added new method for memory-efficient streaming of large text files with configurable chunk sizes. Supports header/footer row skipping and uses optimized deque-based sliding window for footer handling.
+- **TextFileHelper.preview skip_header_rows parameter**: Added `skip_header_rows` parameter to the `preview()` method, allowing users to skip header rows when previewing file contents.
+
+#### Performance
+- **TextFileHelper Footer Buffer Optimization**: Replaced list-based footer buffer with `collections.deque` in `load_as_stream()` method, improving performance from O(n) to O(1) for footer row operations.
+
 #### Fixed
 - **TabularDataModel No-Header Scenarios**: Fixed issue where column names were empty when `header_rows=0`. Column names are now properly generated as `["column_0", "column_1", "column_2"]` when no headers are provided.
 - **TabularDataModel Row Access**: Fixed `IndexError` in the `row()` method when accessing uneven data rows. Added proper padding logic to ensure row data has enough columns before access.
