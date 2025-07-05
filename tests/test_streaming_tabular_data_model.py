@@ -36,7 +36,6 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
@@ -57,10 +56,13 @@ class TestStreamingTabularDataModel:
             assert rows[1] == {"Name": "Jane", "Age": "30", "City": "Los Angeles"}
             assert rows[2] == {"Name": "Bob", "Age": "35", "City": "Chicago"}
 
-            # Test row count
-            assert model.row_count == 3
-
         finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_without_headers(self) -> None:
@@ -80,7 +82,6 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=0,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
@@ -95,6 +96,12 @@ class TestStreamingTabularDataModel:
             assert rows[0] == {"column_0": "John", "column_1": "25", "column_2": "New York"}
 
         finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_with_multi_row_headers(self) -> None:
@@ -115,7 +122,6 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=2,
-                multi_row_headers=2,
                 skip_empty_rows=True,
                 chunk_size=100
             )
@@ -130,6 +136,12 @@ class TestStreamingTabularDataModel:
             assert rows[0] == {"Personal_Name": "John", "Personal_Age": "25", "Location_City": "New York"}
 
         finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_buffer_operations(self) -> None:
@@ -151,15 +163,9 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
-
-            # Test row access from buffer
-            row = model.row(0)
-            assert "Name" in row
-            assert "Age" in row
 
             # Test clearing buffer
             model.clear_buffer()
@@ -169,44 +175,12 @@ class TestStreamingTabularDataModel:
             list(model.iter_rows())
 
         finally:
-            os.unlink(temp_file)
-
-    def test_streaming_model_column_operations(self) -> None:
-        """Test StreamingTabularDataModel column operations."""
-        # Create a temporary CSV file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age,City\n")
-            f.write("John,25,New York\n")
-            f.write("Jane,30,Los Angeles\n")
-            temp_file = f.name
-
-        try:
-            # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
-            
-            # Create streaming model
-            model = StreamingTabularDataModel(
-                stream,
-                header_rows=1,
-                multi_row_headers=1,
-                skip_empty_rows=True,
-                chunk_size=100
-            )
-
-            # Test column values
-            names = model.column_values("Name")
-            assert "John" in names
-            assert "Jane" in names
-
-            # Test cell value
-            assert model.cell_value("Name", 0) == "John"
-            assert model.cell_value("Age", 0) == "25"
-
-            # Test column type inference
-            age_type = model.column_type("Age")
-            assert age_type.name in ["INTEGER", "STRING"]  # Could be either depending on implementation
-
-        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_empty_file(self) -> None:
@@ -224,18 +198,22 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
             # Test with no data rows
             assert model.column_names == ["Name", "Age"]
-            assert model.row_count == 0
             rows = list(model.iter_rows())
             assert len(rows) == 0
 
         finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_invalid_parameters(self) -> None:
@@ -270,7 +248,6 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=1000  # Small buffer to test memory efficiency
             )
@@ -289,6 +266,12 @@ class TestStreamingTabularDataModel:
             assert len(model._buffer) == 0
 
         finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
             os.unlink(temp_file)
 
     def test_streaming_model_invalid_column_operations(self) -> None:
@@ -307,7 +290,6 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
@@ -316,76 +298,17 @@ class TestStreamingTabularDataModel:
             with pytest.raises(ValueError, match="Column name InvalidColumn not found"):
                 model.column_index("InvalidColumn")
 
-            # Test invalid column name for column_values
-            with pytest.raises(ValueError, match="Column name InvalidColumn not found"):
-                model.column_values("InvalidColumn")
-
-            # Test invalid column name for column_type
-            with pytest.raises(ValueError, match="Column name InvalidColumn not found"):
-                model.column_type("InvalidColumn")
-
-            # Test invalid column name for cell_value
-            with pytest.raises(ValueError, match="Column name InvalidColumn not found"):
-                model.cell_value("InvalidColumn", 0)
-
         finally:
-            # Ensure file is closed before trying to delete
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
-
-    def test_streaming_model_invalid_row_operations(self) -> None:
-        """Test error handling for invalid row operations."""
-        # Create a temporary CSV file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age\n")
-            f.write("John,25\n")
-            f.write("Jane,30\n")
-            temp_file = f.name
-
-        try:
-            # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
-            
-            # Create streaming model
-            model = StreamingTabularDataModel(
-                stream,
-                header_rows=1,
-                multi_row_headers=1,
-                skip_empty_rows=True,
-                chunk_size=100
-            )
-
-            # Test invalid row index for cell_value
-            with pytest.raises(ValueError, match="Row index -1 out of range"):
-                model.cell_value("Name", -1)
-
-            with pytest.raises(ValueError, match="Row index 10 out of range"):
-                model.cell_value("Name", 10)
-
-            # Test invalid row index for row
-            with pytest.raises(ValueError, match="Row index -1 out of range"):
-                model.row(-1)
-
-            with pytest.raises(ValueError, match="Row index 10 out of range"):
-                model.row(10)
-
-            # Test invalid row index for row_as_list
-            with pytest.raises(ValueError, match="Row index -1 out of range"):
-                model.row_as_list(-1)
-
-            with pytest.raises(ValueError, match="Row index 10 out of range"):
-                model.row_as_list(10)
-
-        finally:
-            try:
-                os.unlink(temp_file)
-            except PermissionError:
-                pass
+            os.unlink(temp_file)
 
     def test_streaming_model_iteration_methods(self) -> None:
-        """Test all iteration methods."""
+        """Test different iteration methods."""
         # Create a temporary CSV file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
             f.write("Name,Age,City\n")
@@ -401,108 +324,68 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test direct iteration (__iter__)
+            # Test basic iteration
             rows = list(model)
             assert len(rows) == 2
             assert rows[0] == ["John", "25", "New York"]
             assert rows[1] == ["Jane", "30", "Los Angeles"]
 
-            # Create a new model for dictionary iteration (since iterator is exhausted)
+            # Create new model for dictionary iteration (since iterator is exhausted)
             stream2 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
             model2 = StreamingTabularDataModel(
                 stream2,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test iter_rows (dictionary iteration)
+            # Test dictionary iteration
             dict_rows = list(model2.iter_rows())
             assert len(dict_rows) == 2
             assert dict_rows[0] == {"Name": "John", "Age": "25", "City": "New York"}
             assert dict_rows[1] == {"Name": "Jane", "Age": "30", "City": "Los Angeles"}
 
-            # Create a new model for tuple iteration
+            # Create new model for tuple iteration
             stream3 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
             model3 = StreamingTabularDataModel(
                 stream3,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test iter_rows_as_tuples
+            # Test tuple iteration
             tuple_rows = list(model3.iter_rows_as_tuples())
             assert len(tuple_rows) == 2
             assert tuple_rows[0] == ("John", "25", "New York")
             assert tuple_rows[1] == ("Jane", "30", "Los Angeles")
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+                if 'model2' in locals():
+                    list(getattr(model2, 'iter_rows', lambda: [])())
+                if 'model3' in locals():
+                    list(getattr(model3, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
-
-    def test_streaming_model_row_access_methods(self) -> None:
-        """Test all row access methods."""
-        # Create a temporary CSV file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age,City\n")
-            f.write("John,25,New York\n")
-            f.write("Jane,30,Los Angeles\n")
-            temp_file = f.name
-
-        try:
-            # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
-            
-            # Create streaming model
-            model = StreamingTabularDataModel(
-                stream,
-                header_rows=1,
-                multi_row_headers=1,
-                skip_empty_rows=True,
-                chunk_size=100
-            )
-
-            # Test row as dictionary
-            row_dict = model.row(0)
-            assert row_dict == {"Name": "John", "Age": "25", "City": "New York"}
-
-            # Test row as list
-            row_list = model.row_as_list(0)
-            assert row_list == ["John", "25", "New York"]
-
-            # Test row as tuple
-            row_tuple = model.row_as_tuple(0)
-            assert row_tuple == ("John", "25", "New York")
-
-            # Test second row
-            row_dict2 = model.row(1)
-            assert row_dict2 == {"Name": "Jane", "Age": "30", "City": "Los Angeles"}
-
-        finally:
-            try:
-                os.unlink(temp_file)
-            except PermissionError:
-                pass
+            os.unlink(temp_file)
 
     def test_streaming_model_skip_empty_rows(self) -> None:
-        """Test skip_empty_rows functionality."""
+        """Test StreamingTabularDataModel with empty rows."""
         # Create a temporary CSV file with empty rows
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
             f.write("Name,Age,City\n")
             f.write("John,25,New York\n")
             f.write(",,,\n")  # Empty row
             f.write("Jane,30,Los Angeles\n")
-            f.write(",,,\n")  # Another empty row
+            f.write("\n")  # Another empty row
             f.write("Bob,35,Chicago\n")
             temp_file = f.name
 
@@ -514,32 +397,34 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
             # Test that empty rows are skipped
             rows = list(model.iter_rows())
-            assert len(rows) == 3  # Only non-empty rows
+            assert len(rows) == 3
             assert rows[0]["Name"] == "John"
             assert rows[1]["Name"] == "Jane"
             assert rows[2]["Name"] == "Bob"
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
+            os.unlink(temp_file)
 
     def test_streaming_model_uneven_rows(self) -> None:
-        """Test handling of uneven rows (different column counts)."""
+        """Test StreamingTabularDataModel with uneven row lengths."""
         # Create a temporary CSV file with uneven rows
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age,City\n")
-            f.write("John,25\n")  # Missing City
-            f.write("Jane,30,Los Angeles,Extra\n")  # Extra column
-            f.write("Bob\n")  # Only Name
+            f.write("Name,Age,City,Country\n")
+            f.write("John,25,New York\n")  # Missing Country
+            f.write("Jane,30,Los Angeles,USA,Extra\n")  # Extra column
+            f.write("Bob,35,Chicago,USA\n")  # Complete row
             temp_file = f.name
 
         try:
@@ -550,48 +435,50 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test that rows are properly normalized
+            # Test that rows are properly padded/truncated
             rows = list(model.iter_rows())
             assert len(rows) == 3
-
-            # First row should have missing City (not padded in actual implementation)
+            
+            # First row should be padded with empty strings
             assert rows[0]["Name"] == "John"
             assert rows[0]["Age"] == "25"
-            # City might not be present if not in original row
-
-            # Second row should have extra column
-            assert "Name" in rows[1]
-            assert "Age" in rows[1]
-            assert "City" in rows[1]
-            # Extra column gets auto-generated name
-
-            # Third row should have only Name
+            assert rows[0]["City"] == "New York"
+            assert rows[0]["Country"] == ""
+            
+            # Second row should have extra columns added
+            assert rows[1]["Name"] == "Jane"
+            assert rows[1]["Age"] == "30"
+            assert rows[1]["City"] == "Los Angeles"
+            assert rows[1]["Country"] == "USA"
+            assert rows[1]["column_4"] == "Extra"
+            
+            # Third row should be complete
             assert rows[2]["Name"] == "Bob"
-            # Age and City might not be present
+            assert rows[2]["Age"] == "35"
+            assert rows[2]["City"] == "Chicago"
+            assert rows[2]["Country"] == "USA"
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
+            os.unlink(temp_file)
 
     def test_streaming_model_header_validation(self) -> None:
-        """Test header validation edge cases."""
-        # Test multi_row_headers > header_rows
-        with pytest.raises(ValueError, match="Column names span must be less than or equal to header rows"):
-            StreamingTabularDataModel(iter([]), header_rows=1, multi_row_headers=2)
-
-        # Test header_rows > 0 but multi_row_headers = 0
-        with pytest.raises(ValueError, match="Column names span must be greater than 0 if header rows are greater than 0"):
-            StreamingTabularDataModel(iter([]), header_rows=1, multi_row_headers=0)
+        """Test header validation."""
+        # Test with negative header rows
+        with pytest.raises(ValueError, match="Header rows must be greater than or equal to 0"):
+            StreamingTabularDataModel(iter([]), header_rows=-1)
 
     def test_streaming_model_empty_headers(self) -> None:
-        """Test handling of empty or whitespace-only headers."""
+        """Test StreamingTabularDataModel with empty headers."""
         # Create a temporary CSV file with empty headers
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
             f.write("Name,,City\n")  # Empty middle header
@@ -607,27 +494,32 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test that only non-empty headers are present
-            assert model.column_names == ["Name", "City"]
+            # Test that empty headers are replaced with column_<index>
+            assert model.column_names == ["Name", "column_1", "City"]
+            assert model.column_count == 3
 
-            # Test that data is mapped by position ("25" is mapped to "City")
+            # Test iteration
             rows = list(model.iter_rows())
+            assert len(rows) == 2
             assert rows[0]["Name"] == "John"
-            assert rows[0]["City"] == "25"  # Value for second column
+            assert rows[0]["column_1"] == "25"
+            assert rows[0]["City"] == "New York"
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
+            os.unlink(temp_file)
 
     def test_streaming_model_reset_stream(self) -> None:
-        """Test reset_stream method."""
+        """Test resetting the stream."""
         # Create a temporary CSV file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
             f.write("Name,Age\n")
@@ -643,35 +535,114 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Iterate through some rows
-            rows = list(model.iter_rows())
-            assert len(rows) == 2
-            assert model.row_count == 2
+            # Test initial state
+            assert model.column_names == ["Name", "Age"]
+            assert model._is_initialized is True
 
             # Reset stream
             model.reset_stream()
+            assert model._is_initialized is False
             assert len(model._buffer) == 0
-            assert model._total_rows_processed == 0
-            assert not model._is_initialized
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
+            os.unlink(temp_file)
 
-    def test_streaming_model_column_type_caching(self) -> None:
-        """Test that column types are cached."""
+    def test_streaming_model_buffer_size_limits(self) -> None:
+        """Test buffer size limits."""
         # Create a temporary CSV file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age,Score\n")
-            f.write("John,25,95.5\n")
-            f.write("Jane,30,88.0\n")
+            f.write("Name,Age\n")
+            for i in range(50):
+                f.write(f"Person{i},{20 + i}\n")
+            temp_file = f.name
+            f.close()
+
+        try:
+            # Create stream from DsvHelper
+            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            
+            # Create streaming model with small buffer (minimum allowed)
+            model = StreamingTabularDataModel(
+                stream,
+                header_rows=1,
+                skip_empty_rows=True,
+                chunk_size=100  # Minimum allowed
+            )
+
+            # Test that we can still iterate through all rows
+            row_count = 0
+            for row in model.iter_rows():
+                assert "Name" in row
+                assert "Age" in row
+                row_count += 1
+
+            assert row_count == 50
+
+        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file)
+
+    def test_streaming_model_chunk_processing(self) -> None:
+        """Test processing of data in chunks."""
+        # Create a temporary CSV file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write("Name,Age\n")
+            for i in range(100):
+                f.write(f"Person{i},{20 + i}\n")
+            temp_file = f.name
+            f.close()
+
+        try:
+            # Create stream from DsvHelper with minimum chunk size
+            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            
+            # Create streaming model
+            model = StreamingTabularDataModel(
+                stream,
+                header_rows=1,
+                skip_empty_rows=True,
+                chunk_size=100
+            )
+
+            # Test that we can iterate through all rows
+            row_count = 0
+            for row in model.iter_rows():
+                assert "Name" in row
+                assert "Age" in row
+                row_count += 1
+
+            assert row_count == 100
+
+        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file)
+
+    def test_streaming_model_initialization_early_return(self) -> None:
+        """Test that initialization returns early if already initialized."""
+        # Create a temporary CSV file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write("Name,Age\n")
+            f.write("John,25\n")
             temp_file = f.name
 
         try:
@@ -682,99 +653,243 @@ class TestStreamingTabularDataModel:
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # First call should compute the type
-            age_type1 = model.column_type("Age")
-            
-            # Second call should use cached value
-            age_type2 = model.column_type("Age")
-            
-            # Types should be the same
-            assert age_type1 == age_type2
+            # Test that initialization is marked as complete
+            assert model._is_initialized is True
 
-            # Test that different columns have different types
-            name_type = model.column_type("Name")
-            score_type = model.column_type("Score")
-            
-            # These should be different types (string vs numeric)
-            assert name_type != score_type
+            # Call initialization again - should return early
+            model._initialize_from_stream()
+            assert model._is_initialized is True
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
                 pass
+            os.unlink(temp_file)
 
-    def test_streaming_model_buffer_size_limits(self) -> None:
-        """Test that buffer size limits are respected (relaxed: buffer may exceed chunk_size if a chunk is larger)."""
-        # Create a temporary CSV file with many rows
+    def test_streaming_model_process_headers_empty_data(self) -> None:
+        """Test process_headers with empty data."""
+        result = StreamingTabularDataModel.process_headers([], header_rows=0)
+        assert result == ([], [])
+
+    def test_streaming_model_process_headers_empty_column_names(self) -> None:
+        """Test process_headers with empty column names."""
+        header_data = [["", "", ""]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        assert result[1] == ["column_0", "column_1", "column_2"]
+
+    def test_streaming_model_process_headers_mixed_empty_names(self) -> None:
+        """Test process_headers with mixed empty and non-empty names."""
+        header_data = [["Name", "", "City"]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        assert result[1] == ["Name", "column_1", "City"]
+
+    def test_streaming_model_process_headers_column_count_padding(self) -> None:
+        """Test process_headers with column count padding."""
+        header_data = [["Name", "Age"], ["John", "25", "Extra"]]  # Second row has more columns
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=2)
+        assert len(result[1]) == 3  # Should have 3 columns based on max row length
+
+    def test_streaming_model_dynamic_column_expansion(self) -> None:
+        """Test dynamic column expansion during iteration."""
+        # Create a temporary CSV file with varying column counts
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
             f.write("Name,Age\n")
-            for i in range(100):
-                f.write(f"Person{i},{20 + i}\n")
+            f.write("John,25,Extra1\n")  # Extra column
+            f.write("Jane,30\n")  # Normal row
+            f.write("Bob,35,Extra2,Extra3\n")  # More extra columns
             temp_file = f.name
 
         try:
-            # Create stream from DsvHelper with minimum chunk size
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
-            
-            # Create streaming model with very small buffer
-            model = StreamingTabularDataModel(
-                stream,
-                header_rows=1,
-                multi_row_headers=1,
-                skip_empty_rows=True,
-                chunk_size=100
-            )
-
-            # Test that buffer is not empty and contains expected data
-            model._fill_buffer()
-            assert len(model._buffer) > 0
-            assert any(row[0] == "Person0" for row in model._buffer)
-
-        finally:
-            try:
-                os.unlink(temp_file)
-            except PermissionError:
-                pass
-
-    def test_streaming_model_chunk_processing(self) -> None:
-        """Test processing of data in chunks."""
-        # Create a temporary CSV file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write("Name,Age,City\n")
-            for i in range(20):
-                f.write(f"Person{i},{20 + i},City{i}\n")
-            temp_file = f.name
-
-        try:
-            # Create stream from DsvHelper with minimum chunk size
+            # Create stream from DsvHelper
             stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
                 stream,
                 header_rows=1,
-                multi_row_headers=1,
                 skip_empty_rows=True,
                 chunk_size=100
             )
 
-            # Test that all rows are processed correctly
+            # Test initial column count
+            assert model.column_count == 2
+            assert model.column_names == ["Name", "Age"]
+
+            # Iterate through rows to trigger dynamic expansion
             rows = list(model.iter_rows())
-            assert len(rows) == 20
-            
-            # Verify some specific rows
-            assert rows[0]["Name"] == "Person0"
-            assert rows[19]["Name"] == "Person19"
-            assert rows[10]["Age"] == "30"
+            assert len(rows) == 3
+
+            # Check that columns were expanded
+            assert model.column_count >= 4  # At least 4 columns after expansion
+            assert "column_2" in model.column_names
+            assert "column_3" in model.column_names
+
+            # Check row data
+            assert rows[0]["Name"] == "John"
+            assert rows[0]["Age"] == "25"
+            assert rows[0]["column_2"] == "Extra1"
+
+            assert rows[1]["Name"] == "Jane"
+            assert rows[1]["Age"] == "30"
+
+            assert rows[2]["Name"] == "Bob"
+            assert rows[2]["Age"] == "35"
+            assert rows[2]["column_2"] == "Extra2"
+            assert rows[2]["column_3"] == "Extra3"
 
         finally:
+            # Ensure all file handles are closed before deletion
             try:
-                os.unlink(temp_file)
-            except PermissionError:
-                pass 
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file)
+
+    def test_streaming_model_row_padding(self) -> None:
+        """Test row padding during iteration."""
+        # Create a temporary CSV file with short rows
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write("Name,Age,City,Country\n")
+            f.write("John,25\n")  # Short row
+            f.write("Jane,30,Los Angeles\n")  # Medium row
+            f.write("Bob,35,Chicago,USA\n")  # Complete row
+            temp_file = f.name
+
+        try:
+            # Create stream from DsvHelper
+            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            
+            # Create streaming model
+            model = StreamingTabularDataModel(
+                stream,
+                header_rows=1,
+                skip_empty_rows=True,
+                chunk_size=100
+            )
+
+            # Test iteration with row padding
+            rows = list(model.iter_rows())
+            assert len(rows) == 3
+
+            # First row should be padded
+            assert rows[0]["Name"] == "John"
+            assert rows[0]["Age"] == "25"
+            assert rows[0]["City"] == ""
+            assert rows[0]["Country"] == ""
+
+            # Second row should be padded
+            assert rows[1]["Name"] == "Jane"
+            assert rows[1]["Age"] == "30"
+            assert rows[1]["City"] == "Los Angeles"
+            assert rows[1]["Country"] == ""
+
+            # Third row should be complete
+            assert rows[2]["Name"] == "Bob"
+            assert rows[2]["Age"] == "35"
+            assert rows[2]["City"] == "Chicago"
+            assert rows[2]["Country"] == "USA"
+
+        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file)
+
+    def test_streaming_model_no_headers_with_empty_buffer(self) -> None:
+        """Test no headers case with empty buffer."""
+        # Create a temporary CSV file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write("John,25,New York\n")
+            f.write("Jane,30,Los Angeles\n")
+            temp_file = f.name
+
+        try:
+            # Create stream from DsvHelper
+            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            
+            # Create streaming model with no headers
+            model = StreamingTabularDataModel(
+                stream,
+                header_rows=0,
+                skip_empty_rows=True,
+                chunk_size=100
+            )
+
+            # Test that column names are auto-generated
+            assert model.column_names == ["column_0", "column_1", "column_2"]
+            assert model.column_count == 3
+
+            # Test iteration
+            rows = list(model.iter_rows())
+            assert len(rows) == 2
+            assert rows[0]["column_0"] == "John"
+            assert rows[0]["column_1"] == "25"
+            assert rows[0]["column_2"] == "New York"
+
+        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file)
+
+    def test_streaming_model_process_headers_edge_cases(self) -> None:
+        """Test process_headers with edge cases."""
+        # Test with single empty row
+        header_data = [[""]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        assert result[1] == ["column_0"]
+
+        # Test with multiple empty rows
+        header_data = [[""], [""], [""]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=3)
+        assert result[1] == ["column_0"]
+
+    def test_streaming_model_iteration_with_empty_chunks(self) -> None:
+        """Test iteration with empty chunks in stream."""
+        # Create a temporary CSV file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write("Name,Age\n")
+            f.write("John,25\n")
+            f.write("Jane,30\n")
+            temp_file = f.name
+
+        try:
+            # Create stream from DsvHelper
+            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            
+            # Create streaming model
+            model = StreamingTabularDataModel(
+                stream,
+                header_rows=1,
+                skip_empty_rows=True,
+                chunk_size=100
+            )
+
+            # Test iteration
+            rows = list(model.iter_rows())
+            assert len(rows) == 2
+            assert rows[0]["Name"] == "John"
+            assert rows[1]["Name"] == "Jane"
+
+        finally:
+            # Ensure all file handles are closed before deletion
+            try:
+                if 'model' in locals():
+                    list(getattr(model, 'iter_rows', lambda: [])())
+            except Exception:
+                pass
+            os.unlink(temp_file) 

@@ -22,7 +22,6 @@ class TabularDataModel:
         data: list[list[str]],
         *,
         header_rows: int = 1,
-        multi_row_headers: int = 1,
         skip_empty_rows: bool = True
     ) -> None:
         """
@@ -30,8 +29,7 @@ class TabularDataModel:
 
         Args:
             data (list[list[str]]): Raw data rows.
-            header_rows (int): Number of header rows.
-            multi_row_headers (int): Number of rows to merge for column names.
+            header_rows (int): Number of header rows to merge into column names.
             skip_empty_rows (bool): Skip empty rows in data.
 
         Raises:
@@ -41,14 +39,9 @@ class TabularDataModel:
             raise ValueError("Data is required")
         if header_rows < 0:
             raise ValueError("Header rows must be greater than or equal to 0")
-        if header_rows > 0 and multi_row_headers > header_rows:
-            raise ValueError("Column names span must be less than or equal to header rows")
-        if header_rows > 0 and multi_row_headers == 0:
-            raise ValueError("Column names span must be greater than 0 if header rows are greater than 0")
 
         self._raw_data = data
         self._header_rows = header_rows
-        self._multi_row_headers = multi_row_headers
         self._header_data = data[:header_rows] if header_rows > 0 else []
         self._data = (
             self._normalize_data_model(data[header_rows:], skip_empty_rows)
@@ -62,8 +55,7 @@ class TabularDataModel:
         # Process headers using the new public method
         self._header_data, self._column_names = self.process_headers(
             self._header_data,
-            header_rows=header_rows,
-            multi_row_headers=multi_row_headers
+            header_rows=header_rows
         )
         
         # Ensure column names match the actual column count
@@ -76,16 +68,14 @@ class TabularDataModel:
     def process_headers(
         header_data: list[list[str]],
         *,
-        header_rows: int,
-        multi_row_headers: int
+        header_rows: int
     ) -> tuple[list[list[str]], list[str]]:
         """
         Process header data to create merged headers and column names.
 
         Args:
             header_data (list[list[str]]): Raw header data rows.
-            header_rows (int): Number of header rows.
-            multi_row_headers (int): Number of rows to merge for column names.
+            header_rows (int): Number of header rows to merge.
 
         Returns:
             tuple[list[list[str]], list[str]]: Processed header data and column names.
@@ -93,9 +83,9 @@ class TabularDataModel:
         processed_header_data = header_data.copy()
         
         # Merge multi-row headers if needed
-        if header_rows > 1 and multi_row_headers > 1:
+        if header_rows > 1:
             merged_headers: list[str] = []
-            for i in range(min(multi_row_headers, len(header_data))):
+            for i in range(len(header_data)):
                 row = header_data[i]
                 while len(merged_headers) < len(row):
                     merged_headers.append("")
@@ -106,24 +96,20 @@ class TabularDataModel:
                         merged_headers[j] = name
             processed_header_data = [merged_headers]
 
-        # Extract and normalize column names
-        column_names = processed_header_data[0] if len(processed_header_data) > 0 else []
-        column_names = [re.sub(r"\s+", " ", name).strip() for name in column_names]
+        # Extract and normalize column names, always fill empty with column_<index>
+        if processed_header_data and processed_header_data[0]:
+            raw_names = processed_header_data[0]
+            column_names = [
+                re.sub(r"\s+", " ", name).strip() if name and re.sub(r"\s+", " ", name).strip() else f"column_{i}"
+                for i, name in enumerate(raw_names)
+            ]
+        else:
+            column_names = []
 
-        # Determine column count from header data
-        column_count = 0
-        if header_data:
-            column_count = max(len(row) for row in header_data)
-
-        # Handle empty column names and ensure proper column count
-        if len(column_names) == 0:
-            column_names = [f"column_{i}" for i in range(column_count)]
-
+        # Ensure column_names matches the max column count
+        column_count = max(len(row) for row in header_data) if header_data else 0
         while len(column_names) < column_count:
             column_names.append(f"column_{len(column_names)}")
-
-        # Handle empty individual column names
-        column_names = [name if name else f"column_{i}" for i, name in enumerate(column_names)]
 
         return processed_header_data, column_names
 

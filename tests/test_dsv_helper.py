@@ -10,7 +10,7 @@ from splurge_tools.type_helper import DataType
 
 
 class TestDSVHelper(unittest.TestCase):
-    """Test cases for DSVHelper class."""
+    """Test cases for DsvHelper class."""
 
     def test_parse_basic(self):
         """Test basic parsing functionality."""
@@ -48,6 +48,20 @@ class TestDSVHelper(unittest.TestCase):
         result = DsvHelper.parses(content, ",", bookend='"')
         self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
 
+    def test_parses_invalid_content_type(self):
+        """Test parses method with invalid content type."""
+        # Test with non-list content
+        with self.assertRaises(TypeError):
+            DsvHelper.parses("not a list", ",")
+        
+        # Test with list containing non-string items
+        with self.assertRaises(TypeError):
+            DsvHelper.parses(["a,b,c", 123, "d,e,f"], ",")
+        
+        # Test with empty list
+        result = DsvHelper.parses([], ",")
+        self.assertEqual(result, [])
+
     def test_parse_file(self):
         """Test parsing from file."""
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
@@ -68,6 +82,20 @@ class TestDSVHelper(unittest.TestCase):
 
         try:
             result = DsvHelper.parse_file(temp_path, ",", bookend='"')
+            self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_file_with_skip_rows(self):
+        """Test parsing from file with header and footer skipping."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("header1,header2,header3\na,b,c\nd,e,f\nfooter1,footer2,footer3")
+            temp_path = Path(temp_file.name)
+
+        try:
+            result = DsvHelper.parse_file(
+                temp_path, ",", skip_header_rows=1, skip_footer_rows=1
+            )
             self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
         finally:
             temp_path.unlink()
@@ -184,6 +212,128 @@ class TestDSVHelper(unittest.TestCase):
         finally:
             temp_path.unlink()
 
+    def test_parse_stream_invalid_delimiter(self):
+        """Test parse_stream with invalid delimiter."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("a,b,c\nd,e,f")
+            temp_path = Path(temp_file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                list(DsvHelper.parse_stream(temp_path, ""))
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_invalid_chunk_size(self):
+        """Test parse_stream with invalid chunk size."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("a,b,c\nd,e,f")
+            temp_path = Path(temp_file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                list(DsvHelper.parse_stream(temp_path, ",", chunk_size=50))
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_invalid_skip_rows(self):
+        """Test parse_stream with invalid skip rows parameters."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("a,b,c\nd,e,f")
+            temp_path = Path(temp_file.name)
+
+        try:
+            with self.assertRaises(ValueError):
+                list(DsvHelper.parse_stream(temp_path, ",", skip_header_rows=-1))
+            
+            with self.assertRaises(ValueError):
+                list(DsvHelper.parse_stream(temp_path, ",", skip_footer_rows=-1))
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_header_exceeds_file(self):
+        """Test parse_stream when header rows exceed file content."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("a,b,c\nd,e,f")
+            temp_path = Path(temp_file.name)
+
+        try:
+            # Should return empty iterator when header rows exceed file content
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", skip_header_rows=10))
+            self.assertEqual(chunks, [])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_small_file(self):
+        """Test parse_stream with a small file that fits in one chunk."""
+        lines = ["a,b,c", "d,e,f", "g,h,i"]
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("\n".join(lines))
+            temp_path = Path(temp_file.name)
+
+        try:
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", chunk_size=100))
+            self.assertEqual(len(chunks), 1)
+            self.assertEqual(len(chunks[0]), 3)
+            self.assertEqual(chunks[0], [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_with_bookend(self):
+        """Test parse_stream with bookend processing."""
+        lines = ['"a","b","c"', '"d","e","f"', '"g","h","i"']
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("\n".join(lines))
+            temp_path = Path(temp_file.name)
+
+        try:
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", bookend='"', chunk_size=100))
+            self.assertEqual(len(chunks), 1)
+            self.assertEqual(chunks[0], [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_without_strip(self):
+        """Test parse_stream without stripping whitespace."""
+        lines = [" a , b , c ", " d , e , f "]
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("\n".join(lines))
+            temp_path = Path(temp_file.name)
+
+        try:
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", strip=False, chunk_size=100))
+            self.assertEqual(len(chunks), 1)
+            self.assertEqual(chunks[0], [[" a ", " b ", " c "], [" d ", " e ", " f "]])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_footer_only(self):
+        """Test parse_stream with only footer rows to skip."""
+        lines = ["a,b,c", "d,e,f", "footer1,footer2,footer3"]
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("\n".join(lines))
+            temp_path = Path(temp_file.name)
+
+        try:
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", skip_footer_rows=1, chunk_size=100))
+            self.assertEqual(len(chunks), 1)
+            self.assertEqual(len(chunks[0]), 2)
+            self.assertEqual(chunks[0], [["a", "b", "c"], ["d", "e", "f"]])
+        finally:
+            temp_path.unlink()
+
+    def test_parse_stream_empty_file(self):
+        """Test parse_stream with an empty file."""
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as temp_file:
+            temp_file.write("")
+            temp_path = Path(temp_file.name)
+
+        try:
+            chunks = list(DsvHelper.parse_stream(temp_path, ",", chunk_size=100))
+            self.assertEqual(chunks, [])
+        finally:
+            temp_path.unlink()
+
     def test_profile_columns_simple(self):
         """
         Test DsvHelper.profile_columns returns correct column names and datatypes for a simple DSV input.
@@ -235,6 +385,43 @@ class TestDSVHelper(unittest.TestCase):
         ]
         result = DsvHelper.profile_columns(data)
         self.assertEqual(result, expected)
+
+    def test_profile_columns_with_custom_header_rows(self):
+        """Test profile_columns with custom header rows count."""
+        data = [
+            ["Header1", "Header2", "Header3"],
+            ["SubHeader1", "SubHeader2", "SubHeader3"],
+            ["Alice", "30", "true"],
+            ["Bob", "25", "false"]
+        ]
+        expected = [
+            {"name": "Header1_SubHeader1", "datatype": DataType.STRING.name.upper()},
+            {"name": "Header2_SubHeader2", "datatype": DataType.INTEGER.name.upper()},
+            {"name": "Header3_SubHeader3", "datatype": DataType.BOOLEAN.name.upper()}
+        ]
+        result = DsvHelper.profile_columns(data, header_rows=2)
+        self.assertEqual(result, expected)
+
+    def test_profile_columns_with_empty_rows(self):
+        """Test profile_columns with empty rows handling."""
+        data = [
+            ["Name", "Age", "Active"],
+            ["Alice", "30", "true"],
+            ["", "", ""],  # Empty row
+            ["Bob", "25", "false"]
+        ]
+        expected = [
+            {"name": "Name", "datatype": DataType.STRING.name.upper()},
+            {"name": "Age", "datatype": DataType.INTEGER.name.upper()},
+            {"name": "Active", "datatype": DataType.BOOLEAN.name.upper()}
+        ]
+        result = DsvHelper.profile_columns(data, skip_empty_rows=True)
+        self.assertEqual(result, expected)
+
+        # Test without skipping empty rows
+        result_with_empty = DsvHelper.profile_columns(data, skip_empty_rows=False)
+        self.assertEqual(len(result_with_empty), 3)
+        # The empty row should affect the data type inference
 
 
 if __name__ == "__main__":
