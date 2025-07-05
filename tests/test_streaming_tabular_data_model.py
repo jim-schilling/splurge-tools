@@ -673,28 +673,36 @@ class TestStreamingTabularDataModel:
                 pass
             os.unlink(temp_file)
 
-    def test_streaming_model_process_headers_empty_data(self) -> None:
-        """Test process_headers with empty data."""
+    def test_streaming_model_process_headers_edge_cases(self) -> None:
+        """Test process_headers with various edge cases."""
+        # Test with empty data
         result = StreamingTabularDataModel.process_headers([], header_rows=0)
         assert result == ([], [])
-
-    def test_streaming_model_process_headers_empty_column_names(self) -> None:
-        """Test process_headers with empty column names."""
+        
+        # Test with empty column names
         header_data = [["", "", ""]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
         assert result[1] == ["column_0", "column_1", "column_2"]
-
-    def test_streaming_model_process_headers_mixed_empty_names(self) -> None:
-        """Test process_headers with mixed empty and non-empty names."""
+        
+        # Test with mixed empty and non-empty names
         header_data = [["Name", "", "City"]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
         assert result[1] == ["Name", "column_1", "City"]
-
-    def test_streaming_model_process_headers_column_count_padding(self) -> None:
-        """Test process_headers with column count padding."""
+        
+        # Test with column count padding
         header_data = [["Name", "Age"], ["John", "25", "Extra"]]  # Second row has more columns
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=2)
         assert len(result[1]) == 3  # Should have 3 columns based on max row length
+        
+        # Test with single empty row
+        header_data = [[""]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        assert result[1] == ["column_0"]
+        
+        # Test with multiple empty rows
+        header_data = [[""], [""], [""]]
+        result = StreamingTabularDataModel.process_headers(header_data, header_rows=3)
+        assert result[1] == ["column_0"]
 
     def test_streaming_model_dynamic_column_expansion(self) -> None:
         """Test dynamic column expansion during iteration."""
@@ -846,17 +854,7 @@ class TestStreamingTabularDataModel:
                 pass
             os.unlink(temp_file)
 
-    def test_streaming_model_process_headers_edge_cases(self) -> None:
-        """Test process_headers with edge cases."""
-        # Test with single empty row
-        header_data = [[""]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
-        assert result[1] == ["column_0"]
 
-        # Test with multiple empty rows
-        header_data = [[""], [""], [""]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=3)
-        assert result[1] == ["column_0"]
 
     def test_streaming_model_iteration_with_empty_chunks(self) -> None:
         """Test iteration with empty chunks in stream."""

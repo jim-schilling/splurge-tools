@@ -18,20 +18,19 @@ class TestDSVHelper(unittest.TestCase):
         result = DsvHelper.parse(content, ",")
         self.assertEqual(result, ["a", "b", "c"])
 
-    def test_parse_with_bookend(self):
-        """Test parsing with text bookends."""
+    def test_parse_with_options(self):
+        """Test parsing with various options."""
+        # Test with bookends
         content = '"a","b","c"'
         result = DsvHelper.parse(content, ",", bookend='"')
         self.assertEqual(result, ["a", "b", "c"])
-
-    def test_parse_with_strip(self):
-        """Test parsing with whitespace stripping."""
+        
+        # Test with whitespace stripping
         content = " a , b , c "
         result = DsvHelper.parse(content, ",", strip=True)
         self.assertEqual(result, ["a", "b", "c"])
-
-    def test_parse_without_strip(self):
-        """Test parsing without whitespace stripping."""
+        
+        # Test without whitespace stripping
         content = " a , b , c "
         result = DsvHelper.parse(content, ",", strip=False)
         self.assertEqual(result, [" a ", " b ", " c "])
@@ -41,9 +40,8 @@ class TestDSVHelper(unittest.TestCase):
         content = ["a,b,c", "d,e,f"]
         result = DsvHelper.parses(content, ",")
         self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
-
-    def test_parses_with_bookend(self):
-        """Test parsing multiple strings with bookends."""
+        
+        # Test with bookends
         content = ['"a","b","c"', '"d","e","f"']
         result = DsvHelper.parses(content, ",", bookend='"')
         self.assertEqual(result, [["a", "b", "c"], ["d", "e", "f"]])
