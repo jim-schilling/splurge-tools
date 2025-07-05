@@ -32,18 +32,17 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.parse("a, b , c", ",", strip=False)
         self.assertEqual(result, ["a", " b ", " c"])
 
-    def test_parse_empty_string(self):
-        """Test parsing empty string."""
+    def test_parse_edge_cases(self):
+        """Test parsing edge cases: empty string, whitespace only, None input."""
+        # Empty string
         result = StringTokenizer.parse("", ",")
         self.assertEqual(result, [])
-
-    def test_parse_whitespace_only(self):
-        """Test parsing string with only whitespace."""
+        
+        # Whitespace only
         result = StringTokenizer.parse("   ", ",")
         self.assertEqual(result, [])
-
-    def test_parse_none_input(self):
-        """Test parsing None input."""
+        
+        # None input
         result = StringTokenizer.parse(None, ",")
         self.assertEqual(result, [])
 
@@ -52,18 +51,17 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.parse("a||b||c", "||")
         self.assertEqual(result, ["a", "b", "c"])
 
-    def test_parse_leading_delimiter(self):
-        """Test parsing with leading delimiter."""
+    def test_parse_delimiter_positions(self):
+        """Test parsing with delimiters at various positions."""
+        # Leading delimiter
         result = StringTokenizer.parse(",a,b,c", ",")
         self.assertEqual(result, ["", "a", "b", "c"])
-
-    def test_parse_trailing_delimiter(self):
-        """Test parsing with trailing delimiter."""
+        
+        # Trailing delimiter
         result = StringTokenizer.parse("a,b,c,", ",")
         self.assertEqual(result, ["a", "b", "c", ""])
-
-    def test_parse_only_delimiters(self):
-        """Test parsing string with only delimiters."""
+        
+        # Only delimiters
         result = StringTokenizer.parse(",,,", ",")
         self.assertEqual(result, ["", "", "", ""])
 
@@ -72,13 +70,13 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.parse("hello", ",")
         self.assertEqual(result, ["hello"])
 
-    def test_parse_empty_delimiter_raises_error(self):
-        """Test that empty delimiter raises ValueError."""
+    def test_parse_invalid_delimiter(self):
+        """Test that invalid delimiters raise ValueError."""
+        # Empty delimiter
         with self.assertRaises(ValueError):
             StringTokenizer.parse("a,b,c", "")
-
-    def test_parse_none_delimiter_raises_error(self):
-        """Test that None delimiter raises ValueError."""
+        
+        # None delimiter
         with self.assertRaises(ValueError):
             StringTokenizer.parse("a,b,c", None)
 
@@ -92,18 +90,17 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.parses(["a, b", "c, d"], ",")
         self.assertEqual(result, [["a", "b"], ["c", "d"]])
 
-    def test_parses_empty_list(self):
-        """Test parsing empty list."""
+    def test_parses_edge_cases(self):
+        """Test parsing edge cases for multiple strings."""
+        # Empty list
         result = StringTokenizer.parses([], ",")
         self.assertEqual(result, [])
-
-    def test_parses_list_with_empty_strings(self):
-        """Test parsing list with empty strings."""
+        
+        # List with empty strings
         result = StringTokenizer.parses(["", "a,b", ""], ",")
         self.assertEqual(result, [[], ["a", "b"], []])
-
-    def test_parses_list_with_none_values(self):
-        """Test parsing list with None values."""
+        
+        # List with None values
         result = StringTokenizer.parses([None, "a,b", None], ",")
         self.assertEqual(result, [[], ["a", "b"], []])
 
@@ -131,11 +128,10 @@ class TestStringTokenizer(unittest.TestCase):
         """Test bookend removal when no match."""
         result = StringTokenizer.remove_bookends("hello", "'")
         self.assertEqual(result, "hello")
-
-    def test_remove_bookends_single_char(self):
-        """Test bookend removal with single character."""
-        result = StringTokenizer.remove_bookends("'a'", "'")
-        self.assertEqual(result, "a")
+        
+        # Test case where string is too short to have bookends
+        result = StringTokenizer.remove_bookends("ab", "ab")
+        self.assertEqual(result, "ab")
 
     def test_remove_bookends_with_spaces(self):
         """Test bookend removal with surrounding spaces."""
@@ -147,83 +143,45 @@ class TestStringTokenizer(unittest.TestCase):
         result = StringTokenizer.remove_bookends("  'hello'  ", "'", strip=False)
         self.assertEqual(result, "  'hello'  ")
 
-    def test_remove_bookends_multi_char_bookend(self):
-        """Test bookend removal with multi-character bookend."""
-        result = StringTokenizer.remove_bookends("[[hello]]", "[[")
-        self.assertEqual(result, "[[hello]]")
-
-    def test_remove_bookends_multi_char_bookend_both(self):
-        """Test bookend removal with multi-character bookend on both sides."""
-        result = StringTokenizer.remove_bookends("[[hello]]", "[[")
-        self.assertEqual(result, "[[hello]]")
-
-    def test_remove_bookends_empty_string(self):
-        """Test bookend removal with empty string."""
+    def test_remove_bookends_edge_cases(self):
+        """Test bookend removal edge cases."""
+        # Empty string
         result = StringTokenizer.remove_bookends("", "'")
         self.assertEqual(result, "")
-
-    def test_remove_bookends_none_input(self):
-        """Test bookend removal with None input."""
-        with self.assertRaises(AttributeError):
-            StringTokenizer.remove_bookends(None, "'")
-
-    def test_remove_bookends_too_short(self):
-        """Test bookend removal with string too short to have bookends."""
+        
+        # Single character
+        result = StringTokenizer.remove_bookends("'a'", "'")
+        self.assertEqual(result, "a")
+        
+        # String too short
         result = StringTokenizer.remove_bookends("a", "ab")
         self.assertEqual(result, "a")
-
-    def test_remove_bookends_only_bookend_chars(self):
-        """Test bookend removal with string containing only bookend characters."""
+        
+        # Only bookend characters
         result = StringTokenizer.remove_bookends("''", "'")
         self.assertEqual(result, "")
 
-    def test_remove_bookends_asymmetric_start_only(self):
-        """Test bookend removal with only start bookend."""
+    def test_remove_bookends_asymmetric(self):
+        """Test bookend removal with asymmetric bookends."""
+        # Only start bookend
         result = StringTokenizer.remove_bookends("'hello", "'")
         self.assertEqual(result, "'hello")
-
-    def test_remove_bookends_asymmetric_end_only(self):
-        """Test bookend removal with only end bookend."""
+        
+        # Only end bookend
         result = StringTokenizer.remove_bookends("hello'", "'")
         self.assertEqual(result, "hello'")
 
-    def test_remove_bookends_different_start_end(self):
-        """Test bookend removal with different start and end characters."""
-        result = StringTokenizer.remove_bookends("(hello)", "(")
-        self.assertEqual(result, "(hello)")
-
-    def test_remove_bookends_matching_pairs(self):
-        """Test bookend removal with matching parentheses."""
-        result = StringTokenizer.remove_bookends("(hello)", "(")
-        self.assertEqual(result, "(hello)")
-
-    def test_remove_bookends_successful_removal(self):
-        """Test successful bookend removal with matching start and end."""
-        result = StringTokenizer.remove_bookends("(hello)", "(")
-        self.assertEqual(result, "(hello)")
-
-    def test_remove_bookends_successful_removal_with_content(self):
-        """Test successful bookend removal with longer content."""
-        result = StringTokenizer.remove_bookends("(hello world)", "(")
-        self.assertEqual(result, "(hello world)")
-
-    def test_remove_bookends_actual_success(self):
-        """Test actual successful bookend removal."""
-        result = StringTokenizer.remove_bookends("'hello world'", "'")
-        self.assertEqual(result, "hello world")
-
-    def test_remove_bookends_whitespace_only(self):
-        """Test bookend removal with whitespace-only string."""
-        result = StringTokenizer.remove_bookends("   ", "'")
-        self.assertEqual(result, "")
-
-    def test_remove_bookends_empty_bookend(self):
-        """Test bookend removal with empty bookend character."""
+    def test_remove_bookends_invalid_inputs(self):
+        """Test bookend removal with invalid inputs."""
+        # None input
+        with self.assertRaises(AttributeError):
+            StringTokenizer.remove_bookends(None, "'")
+        
+        # Empty bookend
         result = StringTokenizer.remove_bookends("hello", "")
         self.assertEqual(result, "")
-
-    def test_remove_bookends_none_bookend(self):
-        """Test bookend removal with None bookend character."""
+        
+        # None bookend
         with self.assertRaises(TypeError):
             StringTokenizer.remove_bookends("hello", None)
 

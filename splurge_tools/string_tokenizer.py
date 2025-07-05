@@ -82,10 +82,16 @@ class StringTokenizer:
         Returns:
             list[list[str]]: List of token lists, one for each input string
 
+        Raises:
+            ValueError: If delimiter is empty or None
+
         Example:
             >>> StringTokenizer.parses(["a,b", "c,d"], ",")
             [['a', 'b'], ['c', 'd']]
         """
+        if not delimiter:
+            raise ValueError("Delimiter cannot be empty or None")
+
         return [cls.parse(text, delimiter, strip=strip) for text in content]
 
     @staticmethod

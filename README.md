@@ -106,6 +106,7 @@ python -m build
 - **API Simplification**: Removed the `multi_row_headers` parameter from `TabularDataModel`, `StreamingTabularDataModel`, `TypedTabularDataModel`, and `DsvHelper.profile_columns`. Multi-row header merging is now controlled solely by the `header_rows` parameter, which specifies how many rows to merge for column names. This change simplifies the API and eliminates redundant parameters.
 - **StreamingTabularDataModel API Refinement**: Streamlined the `StreamingTabularDataModel` API to focus on streaming functionality by removing random access methods (`row()`, `row_as_list()`, `row_as_tuple()`, `cell_value()`) and column analysis methods (`column_values()`, `column_type()`). This creates a cleaner, more consistent streaming paradigm.
 - **Tests and Examples Updated**: All tests and example scripts have been updated to use only the `header_rows` parameter for multi-row header merging. Any usage of `multi_row_headers` has been removed.
+- **StringTokenizer Tests Refactored**: Consolidated and removed redundant tests in `test_string_tokenizer.py` for improved maintainability and clarity. Test coverage and edge case handling remain comprehensive.
 
 #### Added
 - **StreamingTabularDataModel**: New streaming tabular data model for large datasets that don't fit in memory. Works with streams from `DsvHelper.parse_stream` to process data without loading the entire dataset into memory. Features include:
