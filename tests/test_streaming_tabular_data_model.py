@@ -285,8 +285,8 @@ class TestStreamingTabularDataModel:
 
             assert row_count == 1000
 
-            # Test that buffer size is respected
-            assert len(model._buffer) <= 50
+            # Test that buffer is empty after iteration (streaming behavior)
+            assert len(model._buffer) == 0
 
         finally:
             os.unlink(temp_file)
@@ -521,11 +521,10 @@ class TestStreamingTabularDataModel:
 
             # Test that empty rows are skipped
             rows = list(model.iter_rows())
-            # Note: The actual implementation includes empty rows, so we test for 5 rows
-            assert len(rows) == 5  # All rows including empty ones
+            assert len(rows) == 3  # Only non-empty rows
             assert rows[0]["Name"] == "John"
-            assert rows[2]["Name"] == "Jane"
-            assert rows[4]["Name"] == "Bob"
+            assert rows[1]["Name"] == "Jane"
+            assert rows[2]["Name"] == "Bob"
 
         finally:
             try:

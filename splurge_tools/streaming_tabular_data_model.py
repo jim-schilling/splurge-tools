@@ -94,9 +94,14 @@ class StreamingTabularDataModel:
                     header_data.append(row)
                     header_rows_collected += 1
                 else:
-                    # Buffer all remaining rows in this chunk (including current)
-                    self._buffer.append(row)
-                    self._buffer.extend(list(chunk_iter))
+                    # Buffer remaining rows in this chunk (including current), respecting skip_empty_rows
+                    if not (self._skip_empty_rows and all(cell.strip() == "" for cell in row)):
+                        self._buffer.append(row)
+                    
+                    # Process remaining rows in the chunk
+                    for remaining_row in chunk_iter:
+                        if not (self._skip_empty_rows and all(cell.strip() == "" for cell in remaining_row)):
+                            self._buffer.append(remaining_row)
                     break
             if header_rows_collected >= self._header_rows:
                 break
