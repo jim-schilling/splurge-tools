@@ -13,7 +13,7 @@ This module is licensed under the MIT License.
 
 import tempfile
 import os
-from typing import Iterator
+from typing import Iterator, Dict, List
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
@@ -21,22 +21,28 @@ from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 
 def create_large_csv_file(
     file_path: str,
+    *,
     num_rows: int = 10000
 ) -> None:
     """
     Create a large CSV file for testing.
     
     Args:
-        file_path (str): Path to create the CSV file.
-        num_rows (int): Number of data rows to create.
+        file_path: Path to create the CSV file.
+        num_rows: Number of data rows to create.
     """
-    with open(file_path, 'w') as f:
+    with open(file_path, 'w', encoding='utf-8') as f:
         # Write header
         f.write("ID,Name,Age,City,Salary,Department\n")
         
         # Write data rows
         for i in range(num_rows):
-            f.write(f"{i},Person{i},{20 + (i % 50)},{['NYC', 'LA', 'CHI', 'HOU'][i % 4]},{50000 + (i * 100)},{['IT', 'HR', 'Sales', 'Marketing'][i % 4]}\n")
+            f.write(
+                f"{i},Person{i},{20 + (i % 50)},"
+                f"{['NYC', 'LA', 'CHI', 'HOU'][i % 4]},"
+                f"{50000 + (i * 100)},"
+                f"{['IT', 'HR', 'Sales', 'Marketing'][i % 4]}\n"
+            )
 
 
 def process_large_dataset_streaming(
@@ -46,7 +52,7 @@ def process_large_dataset_streaming(
     Process a large dataset using streaming approach.
     
     Args:
-        file_path (str): Path to the CSV file to process.
+        file_path: Path to the CSV file to process.
     """
     print(f"Processing large dataset: {file_path}")
     
@@ -62,7 +68,6 @@ def process_large_dataset_streaming(
     model = StreamingTabularDataModel(
         stream,
         header_rows=1,
-        multi_row_headers=1,
         skip_empty_rows=True,
         chunk_size=100  # Keep only 100 rows in memory at a time
     )
@@ -73,7 +78,7 @@ def process_large_dataset_streaming(
     # Process data in streaming fashion
     total_rows = 0
     total_salary = 0
-    department_counts = {}
+    department_counts: Dict[str, int] = {}
     
     print("Processing rows...")
     for row in model.iter_rows():
@@ -109,7 +114,7 @@ def process_large_dataset_traditional(
     Process a large dataset using traditional approach (loads everything into memory).
     
     Args:
-        file_path (str): Path to the CSV file to process.
+        file_path: Path to the CSV file to process.
     """
     print(f"Processing large dataset (traditional): {file_path}")
     
@@ -121,7 +126,6 @@ def process_large_dataset_traditional(
     model = TabularDataModel(
         data,
         header_rows=1,
-        multi_row_headers=1,
         skip_empty_rows=True
     )
     
@@ -131,7 +135,7 @@ def process_large_dataset_traditional(
     
     # Process data
     total_salary = 0
-    department_counts = {}
+    department_counts: Dict[str, int] = {}
     
     print("Processing rows...")
     for row in model.iter_rows():
@@ -162,7 +166,7 @@ def compare_memory_usage() -> None:
     try:
         # Create a moderately large dataset
         print("Creating test dataset...")
-        create_large_csv_file(temp_file, 5000)
+        create_large_csv_file(temp_file, num_rows=5000)
         
         print("File size:", os.path.getsize(temp_file), "bytes")
         print()
@@ -190,39 +194,118 @@ def demonstrate_column_operations() -> None:
     """
     print("=== Column Operations Demo ===\n")
     
-    # Create a temporary CSV file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-        f.write("Name,Age,City,Salary\n")
-        f.write("John,25,NYC,50000\n")
-        f.write("Jane,30,LA,60000\n")
-        f.write("Bob,35,CHI,55000\n")
-        temp_file = f.name
-    
+    fd, temp_file = tempfile.mkstemp(suffix='.csv')
     try:
-        # Create stream and model
-        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=2)
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write("Name,Age,City,Salary\n")
+            f.write("John,25,NYC,50000\n")
+            f.write("Jane,30,LA,60000\n")
+            f.write("Bob,35,CHI,55000\n")
+        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
         model = StreamingTabularDataModel(
             stream,
             header_rows=1,
-            multi_row_headers=1,
             skip_empty_rows=True,
             chunk_size=100
         )
-        
         print(f"Column names: {model.column_names}")
         print(f"Column count: {model.column_count}")
-        
-        # Demonstrate column operations
         print(f"\nColumn 'Name' index: {model.column_index('Name')}")
-        print(f"Column 'Age' values: {model.column_values('Age')}")
-        print(f"Column 'Salary' type: {model.column_type('Salary')}")
-        
-        # Demonstrate row access
-        print(f"\nFirst row: {model.row(0)}")
-        print(f"Cell value (Name, row 1): {model.cell_value('Name', 1)}")
-        
+        print("Note: StreamingTabularDataModel doesn't support column_values()")
+        print("or column_type() as it doesn't keep all data in memory.")
+        print(f"\nFirst few rows:")
+        row_count = 0
+        for row in model.iter_rows():
+            print(f"Row {row_count}: {row}")
+            row_count += 1
+            if row_count >= 3:
+                break
     finally:
-        os.unlink(temp_file)
+        try:
+            os.unlink(temp_file)
+        except PermissionError:
+            pass
+
+
+def demonstrate_data_profiling() -> None:
+    """
+    Demonstrate data profiling capabilities.
+    """
+    print("=== Data Profiling Demo ===\n")
+    fd, temp_file = tempfile.mkstemp(suffix='.csv')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write("ID,Name,Age,Salary,Active,Date\n")
+            f.write("1,John,25,50000,true,2024-01-01\n")
+            f.write("2,Jane,30,60000,false,2024-01-02\n")
+            f.write("3,Bob,35,55000,true,2024-01-03\n")
+            f.write("4,Alice,28,52000,true,2024-01-04\n")
+        data = DsvHelper.parse_file(temp_file, ",")
+        from splurge_tools.tabular_data_model import TabularDataModel
+        model = TabularDataModel(
+            data,
+            header_rows=1,
+            skip_empty_rows=True
+        )
+        print("Data Profile:")
+        for column_name in model.column_names:
+            column_type = model.column_type(column_name)
+            print(f"  {column_name}: {column_type.name}")
+        print(f"\nAge values: {model.column_values('Age')}")
+        print(f"Active values: {model.column_values('Active')}")
+    finally:
+        try:
+            os.unlink(temp_file)
+        except PermissionError:
+            pass
+
+
+def demonstrate_error_handling() -> None:
+    """
+    Demonstrate error handling with streaming data.
+    """
+    print("=== Error Handling Demo ===\n")
+    fd, temp_file = tempfile.mkstemp(suffix='.csv')
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write("ID,Name,Age,Salary\n")
+            f.write("1,John,25,50000\n")
+            f.write("2,Jane,invalid_age,60000\n")  # Invalid age
+            f.write("3,Bob,35,invalid_salary\n")   # Invalid salary
+            f.write("4,Alice,28,52000\n")
+        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+        model = StreamingTabularDataModel(
+            stream,
+            header_rows=1,
+            skip_empty_rows=True,
+            chunk_size=100
+        )
+        print("Processing rows with error handling:")
+        total_rows = 0
+        valid_salaries = 0
+        total_salary = 0
+        for row in model.iter_rows():
+            total_rows += 1
+            try:
+                salary = int(row['Salary'])
+                total_salary += salary
+                valid_salaries += 1
+            except ValueError:
+                print(f"  Warning: Invalid salary in row {total_rows}: {row['Salary']}")
+            try:
+                age = int(row['Age'])
+            except ValueError:
+                print(f"  Warning: Invalid age in row {total_rows}: {row['Age']}")
+        print(f"\nProcessing complete!")
+        print(f"Total rows processed: {total_rows}")
+        print(f"Valid salaries: {valid_salaries}")
+        if valid_salaries > 0:
+            print(f"Average valid salary: ${total_salary / valid_salaries:,.2f}")
+    finally:
+        try:
+            os.unlink(temp_file)
+        except PermissionError:
+            pass
 
 
 if __name__ == "__main__":
@@ -232,6 +315,14 @@ if __name__ == "__main__":
     
     # Demonstrate column operations
     demonstrate_column_operations()
+    print()
+    
+    # Demonstrate data profiling
+    demonstrate_data_profiling()
+    print()
+    
+    # Demonstrate error handling
+    demonstrate_error_handling()
     print()
     
     # Compare memory usage
