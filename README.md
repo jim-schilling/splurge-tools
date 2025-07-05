@@ -100,6 +100,51 @@ python -m build
 
 ## Changelog
 
+### [0.2.3] - 2025-07-05
+
+#### Changed
+- **API Simplification**: Removed the `multi_row_headers` parameter from `TabularDataModel`, `StreamingTabularDataModel`, `TypedTabularDataModel`, and `DsvHelper.profile_columns`. Multi-row header merging is now controlled solely by the `header_rows` parameter, which specifies how many rows to merge for column names. This change simplifies the API and eliminates redundant parameters.
+- **StreamingTabularDataModel API Refinement**: Streamlined the `StreamingTabularDataModel` API to focus on streaming functionality by removing random access methods (`row()`, `row_as_list()`, `row_as_tuple()`, `cell_value()`) and column analysis methods (`column_values()`, `column_type()`). This creates a cleaner, more consistent streaming paradigm.
+- **Tests and Examples Updated**: All tests and example scripts have been updated to use only the `header_rows` parameter for multi-row header merging. Any usage of `multi_row_headers` has been removed.
+- **StringTokenizer Tests Refactored**: Consolidated and removed redundant tests in `test_string_tokenizer.py` for improved maintainability and clarity. Test coverage and edge case handling remain comprehensive.
+
+#### Added
+- **StreamingTabularDataModel**: New streaming tabular data model for large datasets that don't fit in memory. Works with streams from `DsvHelper.parse_stream` to process data without loading the entire dataset into memory. Features include:
+  - Memory-efficient streaming processing with configurable chunk sizes (minimum 100 rows)
+  - Support for multi-row headers with automatic merging
+  - Multiple iteration methods (as lists, dictionaries, tuples)
+  - Empty row skipping and uneven row handling
+  - Comprehensive error handling and validation
+  - Dynamic column expansion during iteration
+  - Row padding for uneven data
+- **Comprehensive Test Coverage**: Added extensive test suite for `StreamingTabularDataModel` with 26 test methods covering:
+  - Basic functionality with and without headers
+  - Multi-row header processing
+  - Buffer operations and memory management
+  - Iteration methods (direct, dict, tuple)
+  - Error handling for invalid parameters and columns
+  - Edge cases (empty files, large datasets, uneven rows, empty headers)
+  - Header validation and initialization
+  - Chunk processing and buffer size limits
+  - Dynamic column expansion and row padding
+- **Streaming Data Example**: Added comprehensive example demonstrating `StreamingTabularDataModel` usage, including memory usage comparison with traditional loading methods.
+
+#### Fixed
+- **Header Processing**: Fixed header processing logic in all data models (`StreamingTabularDataModel`, `TabularDataModel`, `TypedTabularDataModel`) to properly handle empty headers by filling them with `column_<index>` names. Headers like `"Name,,City"` now correctly become `["Name", "column_1", "City"]`.
+- **DSV Parsing**: Fixed `StringTokenizer.parse` to preserve empty fields instead of filtering them out. This ensures that `"Name,,City"` is parsed as `["Name", "", "City"]` instead of `["Name", "City"]`, maintaining data integrity.
+- **Row Padding and Dynamic Column Expansion**: Fixed row padding logic in `StreamingTabularDataModel` to properly handle uneven rows and dynamically expand columns during iteration.
+- **File Handling**: Fixed file permission errors in tests by ensuring proper cleanup of temporary files and stream exhaustion.
+
+#### Performance
+- **Memory Efficiency**: `StreamingTabularDataModel` provides significant memory savings for large datasets by processing data in configurable chunks rather than loading entire files into memory.
+- **Streaming Processing**: Enables processing of datasets larger than available RAM through efficient streaming and buffer management.
+
+#### Testing
+- **94% Test Coverage**: Achieved 94% test coverage for `StreamingTabularDataModel` with comprehensive edge case testing.
+- **Error Condition Testing**: Added thorough testing of error conditions including invalid parameters and missing columns.
+- **Integration Testing**: Tests cover integration with `DsvHelper.parse_stream` and various data formats.
+- **StringTokenizer Tests Updated**: Updated `StringTokenizer` tests to reflect the new behavior of preserving empty fields.
+
 ### [0.2.2] - 2025-07-04
 
 #### Added

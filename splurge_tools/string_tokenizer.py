@@ -38,7 +38,7 @@ class StringTokenizer:
             strip (bool, optional): Whether to strip whitespace from tokens. Defaults to True.
 
         Returns:
-            list[str]: List of tokens, with empty tokens removed if strip is True
+            list[str]: List of tokens, preserving empty tokens
 
         Raises:
             ValueError: If delimiter is empty or None
@@ -46,6 +46,8 @@ class StringTokenizer:
         Example:
             >>> StringTokenizer.parse("a,b,c", ",")
             ['a', 'b', 'c']
+            >>> StringTokenizer.parse("a,,c", ",")
+            ['a', '', 'c']
         """
         if not delimiter:
             raise ValueError("Delimiter cannot be empty or None")
@@ -58,7 +60,7 @@ class StringTokenizer:
 
         result: list[str] = content.split(delimiter)
         if strip:
-            result = [token.strip() for token in result if token.strip()]
+            result = [token.strip() for token in result]
         return result
 
     @classmethod
@@ -80,10 +82,16 @@ class StringTokenizer:
         Returns:
             list[list[str]]: List of token lists, one for each input string
 
+        Raises:
+            ValueError: If delimiter is empty or None
+
         Example:
             >>> StringTokenizer.parses(["a,b", "c,d"], ",")
             [['a', 'b'], ['c', 'd']]
         """
+        if not delimiter:
+            raise ValueError("Delimiter cannot be empty or None")
+
         return [cls.parse(text, delimiter, strip=strip) for text in content]
 
     @staticmethod

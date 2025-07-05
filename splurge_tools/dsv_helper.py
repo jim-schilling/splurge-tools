@@ -264,7 +264,6 @@ class DsvHelper:
         data: list[list[str]],
         *,
         header_rows: int = 1,
-        multi_row_headers: int = 1,
         skip_empty_rows: bool = True
     ) -> list[dict[str, str]]:
         """
@@ -273,7 +272,6 @@ class DsvHelper:
         Args:
             data (list[list[str]]): Parsed DSV data (including header row).
             header_rows (int): Number of header rows (default: 1).
-            multi_row_headers (int): Number of rows to merge for column names (default: 1).
             skip_empty_rows (bool): Whether to skip empty rows (default: True).
 
         Returns:
@@ -283,7 +281,6 @@ class DsvHelper:
         model = TabularDataModel(
             data,
             header_rows=header_rows,
-            multi_row_headers=multi_row_headers,
             skip_empty_rows=skip_empty_rows
         )
 

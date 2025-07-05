@@ -36,14 +36,12 @@ class TypedTabularDataModel(TabularDataModel):
         data: list[list[str]],
         *,
         header_rows: int = 1,
-        multi_row_headers: int = 1,
         skip_empty_rows: bool = True,
         type_configs: Optional[dict[DataType, TypeConfig]] = None
     ) -> None:
         super().__init__(
             data,
             header_rows=header_rows,
-            multi_row_headers=multi_row_headers,
             skip_empty_rows=skip_empty_rows
         )
         self._typed_data = []
