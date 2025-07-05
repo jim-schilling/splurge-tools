@@ -102,6 +102,37 @@ python -m build
 
 ### [0.2.3] - 2025-07-05
 
+#### Added
+- **StreamingTabularDataModel**: New streaming tabular data model for large datasets that don't fit in memory. Works with streams from `DsvHelper.parse_stream` to process data without loading the entire dataset into memory. Features include:
+  - Memory-efficient streaming processing with configurable chunk sizes (minimum 100 rows)
+  - Support for multi-row headers with automatic merging
+  - Column type inference and caching
+  - Multiple iteration methods (as lists, dictionaries, tuples)
+  - Row access methods with buffer management
+  - Empty row skipping and uneven row handling
+  - Comprehensive error handling and validation
+- **Comprehensive Test Coverage**: Added extensive test suite for `StreamingTabularDataModel` with 20 test methods covering:
+  - Basic functionality with and without headers
+  - Multi-row header processing
+  - Buffer operations and memory management
+  - Column operations (index, values, types, cell access)
+  - Row access methods (as dict, list, tuple)
+  - Iteration methods (direct, dict, tuple)
+  - Error handling for invalid parameters, columns, and row indices
+  - Edge cases (empty files, large datasets, uneven rows, empty headers)
+  - Header validation and type caching
+  - Chunk processing and buffer size limits
+- **Streaming Data Example**: Added comprehensive example demonstrating `StreamingTabularDataModel` usage, including memory usage comparison with traditional loading methods.
+
+#### Performance
+- **Memory Efficiency**: `StreamingTabularDataModel` provides significant memory savings for large datasets by processing data in configurable chunks rather than loading entire files into memory.
+- **Streaming Processing**: Enables processing of datasets larger than available RAM through efficient streaming and buffer management.
+
+#### Testing
+- **92% Test Coverage**: Achieved 92% test coverage for `StreamingTabularDataModel` with comprehensive edge case testing.
+- **Error Condition Testing**: Added thorough testing of error conditions including invalid parameters, missing columns, and out-of-range row access.
+- **Integration Testing**: Tests cover integration with `DsvHelper.parse_stream` and various data formats.
+
 ### [0.2.2] - 2025-07-04
 
 #### Added
