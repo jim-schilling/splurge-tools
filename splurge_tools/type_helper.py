@@ -967,9 +967,11 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
     if not is_iterable_not_string(values):
         raise ValueError("values must be iterable")
 
+    # Convert to list to allow multiple iterations (in case values is a generator)
+    tmp_values: list = list(values)
     count = 0
 
-    for value in values:
+    for value in tmp_values:
         inferred_type = String.infer_type(value, trim=trim)
         types[inferred_type.name] += 1
         count += 1
@@ -1008,7 +1010,7 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         
         # Check if all values are all-digit strings (with optional +/- signs)
         all_digit_values = True
-        for value in values:
+        for value in tmp_values:
             if not String.is_int_like(value, trim=trim):
                 all_digit_values = False
                 break
