@@ -15,7 +15,7 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
-import collections.abc
+from collections import abc
 import re
 import typing
 from datetime import date, datetime, time
@@ -952,6 +952,12 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         >>> profile_values(['1', '2.2', 'abc'])       # DataType.MIXED
         >>> profile_values(['true', 'false'])         # DataType.BOOLEAN
     """
+    if not is_iterable_not_string(values):
+        raise ValueError("values must be iterable")
+
+    # Convert to list to handle generators and ensure we can iterate multiple times
+    values_list: list = list(values)
+    
     types = {
         DataType.BOOLEAN.name: 0,
         DataType.DATE.name: 0,
@@ -964,13 +970,12 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         DataType.NONE.name: 0,
     }
 
-    if not is_iterable_not_string(values):
-        raise ValueError("values must be iterable")
-
     count = 0
 
-    for value in values:
-        types[String.infer_type(value, trim=trim).name] += 1
+    # First pass: count types
+    for value in values_list:
+        inferred_type = String.infer_type(value, trim=trim)
+        types[inferred_type.name] += 1
         count += 1
 
     if types[DataType.EMPTY.name] == count:
@@ -996,6 +1001,24 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
 
     if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.INTEGER
+
+    # Special case: if we have mixed DATE, TIME, DATETIME, INTEGER types,
+    # check if all values are all-digit strings and prioritize INTEGER
+    if (types[DataType.DATE.name] + types[DataType.TIME.name] + 
+        types[DataType.DATETIME.name] + types[DataType.INTEGER.name] + 
+        types[DataType.EMPTY.name] == count and
+        (types[DataType.DATE.name] > 0 or types[DataType.TIME.name] > 0 or 
+         types[DataType.DATETIME.name] > 0 or types[DataType.EMPTY.name] > 0)):
+        
+        # Second pass: check if all non-empty values are all-digit strings (with optional +/- signs)
+        all_digit_values = True
+        for value in values_list:
+            if not String.is_empty_like(value, trim=trim) and not String.is_int_like(value, trim=trim):
+                all_digit_values = False
+                break
+        
+        if all_digit_values:
+            return DataType.INTEGER
 
     if (
         types[DataType.FLOAT.name]
@@ -1080,7 +1103,7 @@ def is_iterable(value: Any) -> bool:
         >>> is_iterable('abc')             # True
         >>> is_iterable(123)               # False
     """
-    if isinstance(value, (collections.abc.Iterable, typing.Iterable)):
+    if isinstance(value, (abc.Iterable, typing.Iterable)):
         return True
 
     if (
