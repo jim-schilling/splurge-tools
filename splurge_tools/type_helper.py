@@ -967,8 +967,8 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
     if not is_iterable_not_string(values):
         raise ValueError("values must be iterable")
 
-    # Convert to list to allow multiple iterations (in case values is a generator)
-    tmp_values: list = list(values)
+    # Convert to list only if needed to allow multiple iterations (in case values is a generator)
+    tmp_values: Union[Sequence, list] = values if isinstance(values, collections.abc.Sequence) else list(values)
     count = 0
 
     for value in tmp_values:
