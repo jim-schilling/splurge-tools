@@ -952,6 +952,12 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         >>> profile_values(['1', '2.2', 'abc'])       # DataType.MIXED
         >>> profile_values(['true', 'false'])         # DataType.BOOLEAN
     """
+    if not is_iterable_not_string(values):
+        raise ValueError("values must be iterable")
+
+    # Convert to list to handle generators and ensure we can iterate multiple times
+    values_list: list = list(values)
+    
     types = {
         DataType.BOOLEAN.name: 0,
         DataType.DATE.name: 0,
@@ -964,13 +970,10 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         DataType.NONE.name: 0,
     }
 
-    if not is_iterable_not_string(values):
-        raise ValueError("values must be iterable")
-
     count = 0
 
     # First pass: count types
-    for value in values:
+    for value in values_list:
         inferred_type = String.infer_type(value, trim=trim)
         types[inferred_type.name] += 1
         count += 1
@@ -1007,12 +1010,9 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         (types[DataType.DATE.name] > 0 or types[DataType.TIME.name] > 0 or 
          types[DataType.DATETIME.name] > 0 or types[DataType.EMPTY.name] > 0)):
         
-        # Convert to list only if needed for second pass (in case values is a generator)
-        tmp_values: Union[Sequence, list] = values if isinstance(values, abc.Sequence) else list(values)
-        
         # Second pass: check if all non-empty values are all-digit strings (with optional +/- signs)
         all_digit_values = True
-        for value in tmp_values:
+        for value in values_list:
             if not String.is_empty_like(value, trim=trim) and not String.is_int_like(value, trim=trim):
                 all_digit_values = False
                 break

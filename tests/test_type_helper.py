@@ -650,6 +650,22 @@ class TestProfileValues(unittest.TestCase):
         
         # Test with tuples (reusable sequences)
         self.assertEqual(profile_values(("20230101", "143000", "12345")), DataType.INTEGER)
+        
+        # Test generator with pure integer values
+        def gen_integers():
+            yield "123"
+            yield "456"
+            yield "789"
+        
+        self.assertEqual(profile_values(gen_integers()), DataType.INTEGER)
+        
+        # Test generator with mixed types
+        def gen_mixed():
+            yield "123"
+            yield "abc"
+            yield "456"
+        
+        self.assertEqual(profile_values(gen_mixed()), DataType.MIXED)
 
 
 class TestUtilityFunctions(unittest.TestCase):
