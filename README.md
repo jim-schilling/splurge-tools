@@ -104,7 +104,7 @@ python -m build
 
 #### Fixed
 - **profile_values Edge Case**: Fixed edge case in `profile_values` function where collections of all-digit strings that could be interpreted as different types (DATE, TIME, DATETIME, INTEGER) were being classified as MIXED instead of INTEGER. The function now prioritizes INTEGER type when all values are all-digit strings (with optional +/- signs) and there's a mix of DATE, TIME, DATETIME, and INTEGER interpretations.
-- **profile_values Iterator Safety**: Fixed issue where `profile_values` function would fail when given a non-reusable iterator (e.g., generator). The function now uses a 2-pass approach that only converts to a list when the special case logic is needed, ensuring both correctness with generators and memory efficiency for large datasets.
+- **profile_values Iterator Safety**: Fixed issue where `profile_values` function would fail when given a non-reusable iterator (e.g., generator). The function now uses a 2-pass approach that always uses a list for the special case logic is needed, ensuring both correctness with generators.
 
 ### [0.2.3] - 2025-07-05
 
