@@ -970,7 +970,8 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
     count = 0
 
     for value in values:
-        types[String.infer_type(value, trim=trim).name] += 1
+        inferred_type = String.infer_type(value, trim=trim)
+        types[inferred_type.name] += 1
         count += 1
 
     if types[DataType.EMPTY.name] == count:
@@ -996,6 +997,24 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
 
     if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.INTEGER
+
+    # Special case: if we have mixed DATE, TIME, DATETIME, INTEGER types,
+    # check if all values are all-digit strings and prioritize INTEGER
+    if (types[DataType.DATE.name] + types[DataType.TIME.name] + 
+        types[DataType.DATETIME.name] + types[DataType.INTEGER.name] + 
+        types[DataType.EMPTY.name] == count and
+        (types[DataType.DATE.name] > 0 or types[DataType.TIME.name] > 0 or 
+         types[DataType.DATETIME.name] > 0)):
+        
+        # Check if all values are all-digit strings (with optional +/- signs)
+        all_digit_values = True
+        for value in values:
+            if not String.is_int_like(value, trim=trim):
+                all_digit_values = False
+                break
+        
+        if all_digit_values:
+            return DataType.INTEGER
 
     if (
         types[DataType.FLOAT.name]

@@ -579,6 +579,41 @@ class TestProfileValues(unittest.TestCase):
             profile_values(["  1  ", "  2  "], trim=False), DataType.STRING
         )
 
+    def test_profile_values_all_digit_edge_case(self):
+        """Test edge case where all-digit strings could be interpreted as multiple types."""
+        # Test case where all-digit strings could be interpreted as DATE, TIME, DATETIME, or INTEGER
+        # Should prioritize INTEGER when all values are all-digit strings
+        
+        # Test all-digit strings that could be dates (YYYYMMDD format)
+        self.assertEqual(profile_values(["20230101", "20230102", "20230103"]), DataType.DATE)
+        
+        # Test all-digit strings that could be times (HHMMSS format)
+        self.assertEqual(profile_values(["143000", "154500", "120000"]), DataType.TIME)
+        
+        # Test all-digit strings that could be datetimes (YYYYMMDDHHMMSS format)
+        self.assertEqual(profile_values(["20230101143000", "20230102154500"]), DataType.DATETIME)
+        
+        # Test mixed all-digit strings with different interpretations
+        self.assertEqual(profile_values(["20230101", "143000", "12345"]), DataType.INTEGER)
+        
+        # Test with negative numbers
+        self.assertEqual(profile_values(["-20230101", "-143000", "-12345"]), DataType.INTEGER)
+        
+        # Test with positive signs
+        self.assertEqual(profile_values(["+20230101", "+143000", "+12345"]), DataType.INTEGER)
+        
+        # Test mixed positive and negative
+        self.assertEqual(profile_values(["+20230101", "-143000", "12345"]), DataType.INTEGER)
+        
+        # Test that non-all-digit strings still result in MIXED when appropriate
+        self.assertEqual(profile_values(["20230101", "143000", "abc"]), DataType.MIXED)
+        self.assertEqual(profile_values(["20230101", "143000", "1.23"]), DataType.MIXED)
+        
+        # Test that regular date/time formats still work correctly
+        self.assertEqual(profile_values(["2023-01-01", "2023-01-02"]), DataType.DATE)
+        self.assertEqual(profile_values(["14:30:00", "15:45:00"]), DataType.TIME)
+        self.assertEqual(profile_values(["2023-01-01T14:30:00", "2023-01-02T15:45:00"]), DataType.DATETIME)
+
 
 class TestUtilityFunctions(unittest.TestCase):
     """Test cases for utility functions"""
