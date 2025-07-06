@@ -614,6 +614,43 @@ class TestProfileValues(unittest.TestCase):
         self.assertEqual(profile_values(["14:30:00", "15:45:00"]), DataType.TIME)
         self.assertEqual(profile_values(["2023-01-01T14:30:00", "2023-01-02T15:45:00"]), DataType.DATETIME)
 
+    def test_profile_values_pure_vs_mixed_sequences(self):
+        """Test that pure sequences are classified correctly while mixed sequences prioritize INTEGER."""
+        # Test pure sequences (should be classified as their actual type)
+        self.assertEqual(profile_values(["20230101", "20230102", "20230103"]), DataType.DATE)
+        self.assertEqual(profile_values(["143000", "154500", "120000"]), DataType.TIME)
+        self.assertEqual(profile_values(["20230101143000", "20230102154500"]), DataType.DATETIME)
+        self.assertEqual(profile_values(["123", "456", "789"]), DataType.INTEGER)
+        
+        # Test mixed sequences (should prioritize INTEGER)
+        self.assertEqual(profile_values(["20230101", "143000", "12345"]), DataType.INTEGER)
+        self.assertEqual(profile_values(["20230101", "12345", "143000"]), DataType.INTEGER)
+        self.assertEqual(profile_values(["143000", "20230101", "12345"]), DataType.INTEGER)
+        self.assertEqual(profile_values(["20230101143000", "12345", "20230101"]), DataType.INTEGER)
+        
+        # Test edge cases with empty values
+        self.assertEqual(profile_values(["20230101", "143000", ""]), DataType.INTEGER)
+        self.assertEqual(profile_values(["20230101", "", "143000"]), DataType.INTEGER)
+        
+        # Test INTEGER + EMPTY (should be INTEGER)
+        self.assertEqual(profile_values(["123", "456", ""]), DataType.INTEGER)
+        self.assertEqual(profile_values(["123", "", "456"]), DataType.INTEGER)
+        
+        # Test that non-all-digit strings still result in MIXED
+        self.assertEqual(profile_values(["20230101", "143000", "abc"]), DataType.MIXED)
+        self.assertEqual(profile_values(["20230101", "143000", "1.23"]), DataType.MIXED)
+        
+        # Test with generators (non-reusable iterators)
+        def gen_values():
+            yield "20230101"
+            yield "143000"
+            yield "12345"
+        
+        self.assertEqual(profile_values(gen_values()), DataType.INTEGER)
+        
+        # Test with tuples (reusable sequences)
+        self.assertEqual(profile_values(("20230101", "143000", "12345")), DataType.INTEGER)
+
 
 class TestUtilityFunctions(unittest.TestCase):
     """Test cases for utility functions"""

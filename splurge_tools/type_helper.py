@@ -1006,12 +1006,12 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         types[DataType.DATETIME.name] + types[DataType.INTEGER.name] + 
         types[DataType.EMPTY.name] == count and
         (types[DataType.DATE.name] > 0 or types[DataType.TIME.name] > 0 or 
-         types[DataType.DATETIME.name] > 0)):
+         types[DataType.DATETIME.name] > 0 or types[DataType.EMPTY.name] > 0)):
         
-        # Check if all values are all-digit strings (with optional +/- signs)
+        # Check if all non-empty values are all-digit strings (with optional +/- signs)
         all_digit_values = True
         for value in tmp_values:
-            if not String.is_int_like(value, trim=trim):
+            if not String.is_empty_like(value, trim=trim) and not String.is_int_like(value, trim=trim):
                 all_digit_values = False
                 break
         
