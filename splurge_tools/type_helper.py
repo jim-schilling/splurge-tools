@@ -20,7 +20,7 @@ import re
 import typing
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Union, Sequence
 
 
 class DataType(Enum):
