@@ -15,7 +15,7 @@ Please preserve this header and all related material when sharing!
 This software is licensed under the MIT License.
 """
 
-import collections.abc
+from collections import abc
 import re
 import typing
 from datetime import date, datetime, time
@@ -1008,7 +1008,7 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
          types[DataType.DATETIME.name] > 0 or types[DataType.EMPTY.name] > 0)):
         
         # Convert to list only if needed for second pass (in case values is a generator)
-        tmp_values: Union[Sequence, list] = values if isinstance(values, collections.abc.Sequence) else list(values)
+        tmp_values: Union[Sequence, list] = values if isinstance(values, abc.Sequence) else list(values)
         
         # Second pass: check if all non-empty values are all-digit strings (with optional +/- signs)
         all_digit_values = True
@@ -1103,7 +1103,7 @@ def is_iterable(value: Any) -> bool:
         >>> is_iterable('abc')             # True
         >>> is_iterable(123)               # False
     """
-    if isinstance(value, (collections.abc.Iterable, typing.Iterable)):
+    if isinstance(value, (abc.Iterable, typing.Iterable)):
         return True
 
     if (
