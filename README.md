@@ -102,6 +102,27 @@ python -m build
 
 # [0.2.5] - 2025-07-10
 
+#### Changed
+- **Test Organization**: Reorganized test files to improve clarity and maintainability by separating core functionality tests from complex/integration tests. Split the following test files:
+  - `test_dsv_helper.py`: Kept core parsing tests; moved file I/O and streaming tests to `test_dsv_helper_file_stream.py`
+  - `test_streaming_tabular_data_model.py`: Kept core streaming model tests; moved complex scenarios and edge cases to `test_streaming_tabular_data_model_complex.py`
+  - `test_text_file_helper.py`: Kept core text file operations; moved streaming tests to `test_text_file_helper_streaming.py`
+- **Import Cleanup**: Removed unused import statements from all test files to improve code quality and maintainability:
+  - Removed unused `DataType` import from `test_dsv_helper.py`
+  - Removed unused `Iterator` imports from streaming tabular data model test files
+- **String Class Refactoring**: Migrated method-level constants to class-level constants in `type_helper.py` String class for improved performance and maintainability:
+  - Moved date/time/datetime pattern lists to class-level constants (`_DATE_PATTERNS`, `_TIME_PATTERNS`, `_DATETIME_PATTERNS`)
+  - Moved regex patterns to class-level constants (`_FLOAT_REGEX`, `_INTEGER_REGEX`, `_DATE_YYYY_MM_DD_REGEX`, etc.)
+  - This eliminates repeated pattern compilation on each method call and improves code organization
+
+#### Fixed
+- **Test Expectations**: Fixed test failures related to incorrect expectations for `profile_columns` method keys (`datatype` instead of `type` and no `count` key) and adjusted error message regex in streaming tabular data model tests.
+- **String Class Regex Patterns**: Fixed regex patterns in `type_helper.py` String class for datetime parsing. Updated `_DATETIME_YYYY_MM_DD_REGEX` and `_DATETIME_MM_DD_YYYY_REGEX` patterns to properly handle microseconds with `[.]?\d+` instead of the incorrect `[.]?\d{5}` pattern.
+
+#### Testing
+- **Maintained Coverage**: All 167 tests continue to pass with 96% code coverage after reorganization and cleanup.
+- **Improved Maintainability**: Test organization now provides clearer separation between core functionality and complex scenarios, enabling selective test execution and better code organization.
+
 ### [0.2.4] - 2025-07-05
 
 #### Fixed
