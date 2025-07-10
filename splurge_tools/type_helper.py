@@ -63,6 +63,73 @@ class String:
     - String format validation
     """
 
+    # Private class-level constants for datetime patterns
+    _DATE_PATTERNS: list[str] = [
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%Y.%m.%d",
+        "%Y%m%d",
+        "%Y-%d-%m",
+        "%Y/%d/%m",
+        "%Y.%d.%m",
+        "%Y%d%m",
+        "%m-%d-%Y",
+        "%m/%d/%Y",
+        "%m.%d.%Y",
+        "%m%d%Y",
+    ]
+
+    _TIME_PATTERNS: list[str] = [
+        "%H:%M:%S",
+        "%H:%M:%S.%f",
+        "%H:%M",
+        "%H%M",
+        "%H%M%S",
+        "%I:%M:%S.%f %p",
+        "%I:%M:%S %p",
+        "%I:%M %p",
+        "%I:%M:%S%p",
+        "%I:%M%p",
+    ]
+
+    _DATETIME_PATTERNS: list[str] = [
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y/%m/%dT%H:%M:%S",
+        "%Y.%m.%dT%H:%M:%S",
+        "%Y%m%d%H%M%S",
+        "%Y-%d-%mT%H:%M:%S",
+        "%Y/%d/%mT%H:%M:%S",
+        "%Y.%d.%mT%H:%M:%S",
+        "%Y%d%m%H%M%S",
+        "%m-%d-%YT%H:%M:%S",
+        "%m/%d/%YT%H:%M:%S",
+        "%m.%d.%YT%H:%M:%S",
+        "%m%d%Y%H%M%S",
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y/%m/%dT%H:%M:%S.%f",
+        "%Y.%m.%dT%H:%M:%S.%f",
+        "%Y%m%d%H%M%S%f",
+        "%Y-%d-%mT%H:%M:%S.%f",
+        "%Y/%d/%mT%H:%M:%S.%f",
+        "%Y.%d.%mT%H:%M:%S.%f",
+        "%Y%d%m%H%M%S%f",
+        "%m-%d-%YT%H:%M:%S.%f",
+        "%m/%d/%YT%H:%M:%S.%f",
+        "%m.%d.%YT%H:%M:%S.%f",
+        "%m%d%Y%H%M%S%f",
+    ]
+
+    # Private class-level constants for regex patterns
+    _FLOAT_REGEX = re.compile(r"""^[-+]?(\d+)?\.(\d+)?$""")
+    _INTEGER_REGEX = re.compile(r"""^[-+]?\d+$""")
+    _DATE_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""")
+    _DATE_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""")
+    _DATETIME_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
+    _DATETIME_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
+    _TIME_24HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""")
+    _TIME_12HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""")
+    _TIME_COMPACT_REGEX = re.compile(r"""^(\d{2})(\d{2})(\d{2})?$""")
+
     @staticmethod
     def is_bool_like(
         value: Union[str, bool, None],
@@ -181,7 +248,7 @@ class String:
             return False
 
         return (
-            re.match(r"""^[-+]?(\d+)?\.(\d+)?$""", value.strip() if trim else value)
+            String._FLOAT_REGEX.match(value.strip() if trim else value)
             is not None
         )
 
@@ -216,7 +283,7 @@ class String:
             return False
 
         tmp_value: str = value.strip() if trim else value
-        return re.match(r"""^[-+]?\d+$""", tmp_value) is not None
+        return String._INTEGER_REGEX.match(tmp_value) is not None
 
     @classmethod
     def is_numeric_like(
@@ -272,10 +339,8 @@ class String:
 
         return not cls.is_numeric_like(value, trim=trim)
 
-    @staticmethod
-    def _is_date_like(
-        value: str
-    ) -> bool:
+    @classmethod
+    def _is_date_like(cls, value: str) -> bool:
         """
         Internal method to check if string matches common date formats.
 
@@ -293,22 +358,7 @@ class String:
             - YYYYMMDD
             And their variations with different date component orders
         """
-        patterns: list[str] = [
-            "%Y-%m-%d",
-            "%Y/%m/%d",
-            "%Y.%m.%d",
-            "%Y%m%d",
-            "%Y-%d-%m",
-            "%Y/%d/%m",
-            "%Y.%d.%m",
-            "%Y%d%m",
-            "%m-%d-%Y",
-            "%m/%d/%Y",
-            "%m.%d.%Y",
-            "%m%d%Y",
-        ]
-
-        for pattern in patterns:
+        for pattern in cls._DATE_PATTERNS:
             try:
                 datetime.strptime(value, pattern)
                 return True
@@ -317,10 +367,8 @@ class String:
 
         return False
 
-    @staticmethod
-    def _is_time_like(
-        value: str
-    ) -> bool:
+    @classmethod
+    def _is_time_like(cls, value: str) -> bool:
         """
         Internal method to check if string matches common time formats.
 
@@ -339,20 +387,7 @@ class String:
             - HHMM
             And 12-hour format variations with AM/PM
         """
-        patterns: list[str] = [
-            "%H:%M:%S",
-            "%H:%M:%S.%f",
-            "%H:%M",
-            "%H%M",
-            "%H%M%S",
-            "%I:%M:%S.%f %p",
-            "%I:%M:%S %p",
-            "%I:%M %p",
-            "%I:%M:%S%p",
-            "%I:%M%p",
-        ]
-
-        for pattern in patterns:
+        for pattern in cls._TIME_PATTERNS:
             try:
                 datetime.strptime(value, pattern)
                 return True
@@ -394,22 +429,16 @@ class String:
 
         tmp_value: str = value.strip() if trim else value
 
-        if re.match(
-            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""", tmp_value
-        ) and cls._is_date_like(tmp_value):
+        if String._DATE_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
             return True
 
-        if re.match(
-            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""", tmp_value
-        ) and cls._is_date_like(tmp_value):
+        if String._DATE_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
             return True
 
         return False
 
-    @staticmethod
-    def _is_datetime_like(
-        value: str
-    ) -> bool:
+    @classmethod
+    def _is_datetime_like(cls, value: str) -> bool:
         """
         Internal method to check if string matches common datetime formats.
 
@@ -427,34 +456,7 @@ class String:
             - YYYYMMDDHHMMSS
             And their variations with different date component orders and optional microseconds
         """
-        patterns: list[str] = [
-            "%Y-%m-%dT%H:%M:%S",
-            "%Y/%m/%dT%H:%M:%S",
-            "%Y.%m.%dT%H:%M:%S",
-            "%Y%m%d%H%M%S",
-            "%Y-%d-%mT%H:%M:%S",
-            "%Y/%d/%mT%H:%M:%S",
-            "%Y.%d.%mT%H:%M:%S",
-            "%Y%d%m%H%M%S",
-            "%m-%d-%YT%H:%M:%S",
-            "%m/%d/%YT%H:%M:%S",
-            "%m.%d.%YT%H:%M:%S",
-            "%m%d%Y%H%M%S",
-            "%Y-%m-%dT%H:%M:%S.%f",
-            "%Y/%m/%dT%H:%M:%S.%f",
-            "%Y.%m.%dT%H:%M:%S.%f",
-            "%Y%m%d%H%M%S%f",
-            "%Y-%d-%mT%H:%M:%S.%f",
-            "%Y/%d/%mT%H:%M:%S.%f",
-            "%Y.%d.%mT%H:%M:%S.%f",
-            "%Y%d%m%H%M%S%f",
-            "%m-%d-%YT%H:%M:%S.%f",
-            "%m/%d/%YT%H:%M:%S.%f",
-            "%m.%d.%YT%H:%M:%S.%f",
-            "%m%d%Y%H%M%S%f",
-        ]
-
-        for pattern in patterns:
+        for pattern in cls._DATETIME_PATTERNS:
             try:
                 datetime.strptime(value, pattern)
                 return True
@@ -496,16 +498,10 @@ class String:
 
         tmp_value: str = value.strip() if trim else value
 
-        if re.match(
-            r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
-            tmp_value,
-        ) and cls._is_datetime_like(tmp_value):
+        if String._DATETIME_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
             return True
 
-        if re.match(
-            r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
-            tmp_value,
-        ) and cls._is_datetime_like(tmp_value):
+        if String._DATETIME_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
             return True
 
         return False
@@ -545,19 +541,13 @@ class String:
 
         tmp_value: str = value.strip() if trim else value
 
-        if re.match(
-            r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""", tmp_value
-        ) and cls._is_time_like(tmp_value):
+        if String._TIME_24HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
             return True
 
-        if re.match(
-            r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""", tmp_value
-        ) and cls._is_time_like(tmp_value):
+        if String._TIME_12HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
             return True
 
-        if re.match(
-            r"""^(\d{2})(\d{2})(\d{2})?$""", tmp_value
-        ) and cls._is_time_like(tmp_value):
+        if String._TIME_COMPACT_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
             return True
 
         return False
@@ -677,24 +667,9 @@ class String:
         if not cls.is_date_like(value, trim=trim):
             return default
 
-        patterns: list[str] = [
-            "%Y-%m-%d",
-            "%Y/%m/%d",
-            "%Y.%m.%d",
-            "%Y%m%d",
-            "%Y-%d-%m",
-            "%Y/%d/%m",
-            "%Y.%d.%m",
-            "%Y%d%m",
-            "%m-%d-%Y",
-            "%m/%d/%Y",
-            "%m.%d.%Y",
-            "%m%d%Y",
-        ]
-
         dvalue: str = value.strip() if trim else value
 
-        for pattern in patterns:
+        for pattern in cls._DATE_PATTERNS:
             try:
                 tmp_value = datetime.strptime(dvalue, pattern)
                 return tmp_value.date()
@@ -733,36 +708,9 @@ class String:
         if not cls.is_datetime_like(value, trim=trim):
             return default
 
-        patterns: list[str] = [
-            "%Y-%m-%dT%H:%M:%S",
-            "%Y/%m/%dT%H:%M:%S",
-            "%Y.%m.%dT%H:%M:%S",
-            "%Y%m%d%H%M%S",
-            "%Y-%d-%mT%H:%M:%S",
-            "%Y/%d/%mT%H:%M:%S",
-            "%Y.%d.%mT%H:%M:%S",
-            "%Y%d%m%H%M%S",
-            "%m-%d-%YT%H:%M:%S",
-            "%m/%d/%YT%H:%M:%S",
-            "%m.%d.%YT%H:%M:%S",
-            "%m%d%Y%H%M%S",
-            "%Y-%m-%dT%H:%M:%S.%f",
-            "%Y/%m/%dT%H:%M:%S.%f",
-            "%Y.%m.%dT%H:%M:%S.%f",
-            "%Y%m%d%H%M%S%f",
-            "%Y-%d-%mT%H:%M:%S.%f",
-            "%Y/%d/%mT%H:%M:%S.%f",
-            "%Y.%d.%mT%H:%M:%S.%f",
-            "%Y%d%m%H%M%S%f",
-            "%m-%d-%YT%H:%M:%S.%f",
-            "%m/%d/%YT%H:%M:%S.%f",
-            "%m.%d.%YT%H:%M:%S.%f",
-            "%m%d%Y%H%M%S%f",
-        ]
-
         tmp_value: str = value.strip() if trim else value
 
-        for pattern in patterns:
+        for pattern in cls._DATETIME_PATTERNS:
             try:
                 tvalue = datetime.strptime(tmp_value, pattern)
                 return tvalue
@@ -802,22 +750,9 @@ class String:
         if not cls.is_time_like(value, trim=trim):
             return default
 
-        patterns: list[str] = [
-            "%H:%M:%S",
-            "%H:%M:%S.%f",
-            "%H:%M",
-            "%H%M",
-            "%H%M%S",
-            "%I:%M:%S.%f %p",
-            "%I:%M:%S %p",
-            "%I:%M %p",
-            "%I:%M:%S%p",
-            "%I:%M%p",
-        ]
-
         tmp_value: str = value.strip() if trim else value
 
-        for pattern in patterns:
+        for pattern in cls._TIME_PATTERNS:
             try:
                 tvalue = datetime.strptime(tmp_value, pattern)
                 return tvalue.time()
