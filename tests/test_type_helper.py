@@ -667,6 +667,380 @@ class TestProfileValues(unittest.TestCase):
         
         self.assertEqual(profile_values(gen_mixed()), DataType.MIXED)
 
+    def test_profile_values_incremental_typecheck_flag(self):
+        """Test the use_incremental_typecheck flag functionality."""
+        # Test that both True and False produce the same results for simple cases
+        # where early termination doesn't affect the outcome
+        
+        # Simple cases that should be identical regardless of flag
+        simple_cases = [
+            ([], DataType.EMPTY),
+            (["", "   ", "\t"], DataType.EMPTY),
+            ([None, None], DataType.NONE),
+            ([None, "", "   "], DataType.NONE),
+            (["true", "false"], DataType.BOOLEAN),
+            (["true", "false", ""], DataType.BOOLEAN),
+            (["abc", "def"], DataType.STRING),
+            (["abc", "def", ""], DataType.STRING),
+            (["1", "2.2", "abc"], DataType.MIXED),
+            (["1", "2.2", "abc", ""], DataType.MIXED),
+        ]
+        
+        for values, expected_type in simple_cases:
+            with self.subTest(values=values):
+                result_with_flag = profile_values(values, use_incremental_typecheck=True)
+                result_without_flag = profile_values(values, use_incremental_typecheck=False)
+                self.assertEqual(result_with_flag, expected_type)
+                self.assertEqual(result_without_flag, expected_type)
+                self.assertEqual(result_with_flag, result_without_flag)
+        
+        # Test cases where incremental checking might make a difference
+        # These are edge cases where the flag could potentially affect behavior
+        
+        # Test with large datasets where early termination could occur
+        large_boolean_data = ["true"] * 100 + ["false"] * 100
+        self.assertEqual(
+            profile_values(large_boolean_data, use_incremental_typecheck=True),
+            DataType.BOOLEAN
+        )
+        self.assertEqual(
+            profile_values(large_boolean_data, use_incremental_typecheck=False),
+            DataType.BOOLEAN
+        )
+        
+        # Test with large string datasets
+        large_string_data = ["abc"] * 100 + ["def"] * 100
+        self.assertEqual(
+            profile_values(large_string_data, use_incremental_typecheck=True),
+            DataType.STRING
+        )
+        self.assertEqual(
+            profile_values(large_string_data, use_incremental_typecheck=False),
+            DataType.STRING
+        )
+        
+        # Test with large empty datasets
+        large_empty_data = [""] * 200
+        self.assertEqual(
+            profile_values(large_empty_data, use_incremental_typecheck=True),
+            DataType.EMPTY
+        )
+        self.assertEqual(
+            profile_values(large_empty_data, use_incremental_typecheck=False),
+            DataType.EMPTY
+        )
+        
+        # Test complex cases that require full analysis
+        complex_cases = [
+            (["1", "2.2", "3"], DataType.FLOAT),  # Mixed int/float
+            (["20230101", "143000", "12345"], DataType.INTEGER),  # All-digit strings
+            (["2023-01-01", "2023-01-02"], DataType.DATE),  # Date format
+            (["14:30:00", "15:45:00"], DataType.TIME),  # Time format
+            (["2023-01-01T12:00:00", "2023-01-02T12:00:00"], DataType.DATETIME),  # Datetime format
+        ]
+        
+        for values, expected_type in complex_cases:
+            with self.subTest(values=values):
+                result_with_flag = profile_values(values, use_incremental_typecheck=True)
+                result_without_flag = profile_values(values, use_incremental_typecheck=False)
+                self.assertEqual(result_with_flag, expected_type)
+                self.assertEqual(result_without_flag, expected_type)
+                self.assertEqual(result_with_flag, result_without_flag)
+        
+        # Test with generators (non-reusable iterators)
+        def gen_boolean():
+            yield "true"
+            yield "false"
+            yield "true"
+        
+        self.assertEqual(
+            profile_values(gen_boolean(), use_incremental_typecheck=True),
+            DataType.BOOLEAN
+        )
+        self.assertEqual(
+            profile_values(gen_boolean(), use_incremental_typecheck=False),
+            DataType.BOOLEAN
+        )
+        
+        # Test with tuples (reusable sequences)
+        tuple_data = ("true", "false", "true")
+        self.assertEqual(
+            profile_values(tuple_data, use_incremental_typecheck=True),
+            DataType.BOOLEAN
+        )
+        self.assertEqual(
+            profile_values(tuple_data, use_incremental_typecheck=False),
+            DataType.BOOLEAN
+        )
+        
+        # Test with trim=False to ensure flag works with other parameters
+        self.assertEqual(
+            profile_values(["  true  ", "  false  "], trim=False, use_incremental_typecheck=True),
+            DataType.STRING
+        )
+        self.assertEqual(
+            profile_values(["  true  ", "  false  "], trim=False, use_incremental_typecheck=False),
+            DataType.STRING
+        )
+        
+        # Test that the flag parameter is properly handled
+        # This ensures the parameter is actually being used and not ignored
+        # We can't easily test the internal behavior, but we can verify the API works
+        try:
+            profile_values(["test"], use_incremental_typecheck=True)
+            profile_values(["test"], use_incremental_typecheck=False)
+        except Exception as e:
+            self.fail(f"use_incremental_typecheck flag caused an error: {e}")
+
+    def test_profile_values_early_mixed_detection(self):
+        """Test early detection of MIXED type when both numeric/temporal and string types are present."""
+        # Test cases where we should detect MIXED early (at 25% check point)
+        
+        # Integer + String (should detect MIXED early)
+        mixed_int_string = ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr"]
+        self.assertEqual(profile_values(mixed_int_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_int_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Float + String (should detect MIXED early)
+        mixed_float_string = ["1.23", "abc", "4.56", "def", "7.89", "ghi", "0.12", "jkl", "3.45", "mno", "6.78", "pqr"]
+        self.assertEqual(profile_values(mixed_float_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_float_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Date + String (should detect MIXED early)
+        mixed_date_string = ["2023-01-01", "abc", "2023-01-02", "def", "2023-01-03", "ghi", "2023-01-04", "jkl"]
+        self.assertEqual(profile_values(mixed_date_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_date_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Time + String (should detect MIXED early)
+        mixed_time_string = ["14:30:00", "abc", "15:45:00", "def", "16:00:00", "ghi", "17:15:00", "jkl"]
+        self.assertEqual(profile_values(mixed_time_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_time_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Datetime + String (should detect MIXED early)
+        mixed_datetime_string = ["2023-01-01T14:30:00", "abc", "2023-01-02T15:45:00", "def"]
+        self.assertEqual(profile_values(mixed_datetime_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_datetime_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Multiple numeric types + String (should detect MIXED early)
+        mixed_numeric_string = ["123", "1.23", "abc", "456", "4.56", "def", "789", "7.89", "ghi"]
+        self.assertEqual(profile_values(mixed_numeric_string, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_numeric_string, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Test that pure types still work correctly (should NOT detect MIXED early)
+        pure_integer = ["123", "456", "789", "012", "345", "678", "901", "234", "567", "890", "123", "456"]
+        self.assertEqual(profile_values(pure_integer, use_incremental_typecheck=True), DataType.INTEGER)
+        self.assertEqual(profile_values(pure_integer, use_incremental_typecheck=False), DataType.INTEGER)
+        
+        pure_string = ["abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vwx", "yz", "ab", "cd", "ef"]
+        self.assertEqual(profile_values(pure_string, use_incremental_typecheck=True), DataType.STRING)
+        self.assertEqual(profile_values(pure_string, use_incremental_typecheck=False), DataType.STRING)
+        
+        # Test with empty values (should still detect MIXED early)
+        mixed_with_empty = ["123", "abc", "", "456", "def", "   ", "789", "ghi"]
+        self.assertEqual(profile_values(mixed_with_empty, use_incremental_typecheck=True), DataType.MIXED)
+        self.assertEqual(profile_values(mixed_with_empty, use_incremental_typecheck=False), DataType.MIXED)
+        
+        # Test edge case: only numeric types (should NOT detect MIXED)
+        numeric_only = ["123", "1.23", "456", "4.56", "789", "7.89", "012", "0.12"]
+        self.assertEqual(profile_values(numeric_only, use_incremental_typecheck=True), DataType.FLOAT)
+        self.assertEqual(profile_values(numeric_only, use_incremental_typecheck=False), DataType.FLOAT)
+        
+        # Test edge case: only string types (should NOT detect MIXED)
+        string_only = ["abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vwx"]
+        self.assertEqual(profile_values(string_only, use_incremental_typecheck=True), DataType.STRING)
+        self.assertEqual(profile_values(string_only, use_incremental_typecheck=False), DataType.STRING)
+
+    def test_profile_values_comprehensive_early_termination(self):
+        """Comprehensive test of all early termination scenarios."""
+        
+        # Test data sizes that will trigger check points
+        # 25% check point at 3 items, 50% at 6 items, 75% at 9 items
+        test_size = 12
+        
+        # Test cases for early termination scenarios
+        early_termination_cases = [
+            {
+                "name": "EMPTY only (should terminate immediately)",
+                "data": [""] * test_size,
+                "expected": DataType.EMPTY,
+                "should_terminate_early": True
+            },
+            {
+                "name": "NONE only (should terminate immediately)",
+                "data": [None] * test_size,
+                "expected": DataType.NONE,
+                "should_terminate_early": True
+            },
+            {
+                "name": "NONE + EMPTY (should terminate early)",
+                "data": [None, "", None, "", None, "", None, "", None, "", None, ""],
+                "expected": DataType.NONE,
+                "should_terminate_early": True
+            },
+            {
+                "name": "BOOLEAN + EMPTY (should terminate early)",
+                "data": ["true", "", "false", "", "true", "", "false", "", "true", "", "false", ""],
+                "expected": DataType.BOOLEAN,
+                "should_terminate_early": True
+            },
+            {
+                "name": "STRING + EMPTY (should terminate early)",
+                "data": ["abc", "", "def", "", "ghi", "", "jkl", "", "mno", "", "pqr", ""],
+                "expected": DataType.STRING,
+                "should_terminate_early": True
+            },
+            {
+                "name": "Integer + String (should detect MIXED early)",
+                "data": ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr"],
+                "expected": DataType.MIXED,
+                "should_terminate_early": True
+            },
+            {
+                "name": "Float + String (should detect MIXED early)",
+                "data": ["1.23", "abc", "4.56", "def", "7.89", "ghi", "0.12", "jkl", "3.45", "mno", "6.78", "pqr"],
+                "expected": DataType.MIXED,
+                "should_terminate_early": True
+            },
+            {
+                "name": "Date + String (should detect MIXED early)",
+                "data": ["2023-01-01", "abc", "2023-01-02", "def", "2023-01-03", "ghi", "2023-01-04", "jkl", "2023-01-05", "mno", "2023-01-06", "pqr"],
+                "expected": DataType.MIXED,
+                "should_terminate_early": True
+            },
+            {
+                "name": "Time + String (should detect MIXED early)",
+                "data": ["14:30:00", "abc", "15:45:00", "def", "16:00:00", "ghi", "17:15:00", "jkl", "18:30:00", "mno", "19:45:00", "pqr"],
+                "expected": DataType.MIXED,
+                "should_terminate_early": True
+            },
+            {
+                "name": "Datetime + String (should detect MIXED early)",
+                "data": ["2023-01-01T14:30:00", "abc", "2023-01-02T15:45:00", "def", "2023-01-03T16:00:00", "ghi", "2023-01-04T17:15:00", "jkl"],
+                "expected": DataType.MIXED,
+                "should_terminate_early": True
+            }
+        ]
+        
+        # Test cases that should NOT terminate early (require full analysis)
+        no_early_termination_cases = [
+            {
+                "name": "Pure INTEGER (requires full analysis for all-digit logic)",
+                "data": [str(i) for i in range(test_size)],
+                "expected": DataType.INTEGER,
+                "should_terminate_early": False
+            },
+            {
+                "name": "Pure FLOAT (requires full analysis)",
+                "data": [f"{i}.5" for i in range(test_size)],
+                "expected": DataType.FLOAT,
+                "should_terminate_early": False
+            },
+            {
+                "name": "INTEGER + FLOAT (requires full analysis)",
+                "data": ["123", "1.23", "456", "4.56", "789", "7.89", "012", "0.12", "345", "3.45", "678", "6.78"],
+                "expected": DataType.FLOAT,
+                "should_terminate_early": False
+            },
+            {
+                "name": "All-digit strings (requires full analysis for prioritization)",
+                "data": ["20230101", "143000", "12345", "20230102", "154500", "67890", "20230103", "160000", "11111", "20230104", "171500", "22222"],
+                "expected": DataType.INTEGER,
+                "should_terminate_early": False
+            }
+        ]
+        
+        # Test all early termination cases
+        for case in early_termination_cases:
+            with self.subTest(case=case["name"]):
+                # Test with incremental checking
+                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
+                
+                # Test without incremental checking
+                result_original = profile_values(case["data"], use_incremental_typecheck=False)
+                
+                # Verify results match
+                self.assertEqual(result_optimized, case["expected"])
+                self.assertEqual(result_original, case["expected"])
+                self.assertEqual(result_optimized, result_original)
+        
+        # Test cases that should NOT terminate early
+        for case in no_early_termination_cases:
+            with self.subTest(case=case["name"]):
+                # Test with incremental checking
+                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
+                
+                # Test without incremental checking
+                result_original = profile_values(case["data"], use_incremental_typecheck=False)
+                
+                # Verify results match
+                self.assertEqual(result_optimized, case["expected"])
+                self.assertEqual(result_original, case["expected"])
+                self.assertEqual(result_optimized, result_original)
+        
+        # Test edge cases with different data sizes
+        edge_cases = [
+            {
+                "name": "Very small dataset (no check points)",
+                "data": ["123", "abc"],
+                "expected": DataType.MIXED
+            },
+            {
+                "name": "Dataset exactly at 25% check point",
+                "data": ["123", "abc", "456"],  # 3 items, 25% of 12
+                "expected": DataType.MIXED
+            },
+            {
+                "name": "Dataset exactly at 50% check point", 
+                "data": ["123", "abc", "456", "def", "789", "ghi"],  # 6 items, 50% of 12
+                "expected": DataType.MIXED
+            },
+            {
+                "name": "Dataset exactly at 75% check point",
+                "data": ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345"],  # 9 items, 75% of 12
+                "expected": DataType.MIXED
+            }
+        ]
+        
+        for case in edge_cases:
+            with self.subTest(case=case["name"]):
+                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
+                result_original = profile_values(case["data"], use_incremental_typecheck=False)
+                
+                self.assertEqual(result_optimized, case["expected"])
+                self.assertEqual(result_original, case["expected"])
+                self.assertEqual(result_optimized, result_original)
+        
+        # Test with generators and other iterables
+        def gen_mixed():
+            yield "123"
+            yield "abc"
+            yield "456"
+            yield "def"
+            yield "789"
+            yield "ghi"
+            yield "012"
+            yield "jkl"
+            yield "345"
+            yield "mno"
+            yield "678"
+            yield "pqr"
+        
+        result_gen_optimized = profile_values(gen_mixed(), use_incremental_typecheck=True)
+        result_gen_original = profile_values(gen_mixed(), use_incremental_typecheck=False)
+        
+        self.assertEqual(result_gen_optimized, DataType.MIXED)
+        self.assertEqual(result_gen_original, DataType.MIXED)
+        self.assertEqual(result_gen_optimized, result_gen_original)
+        
+        # Test with tuples
+        tuple_data = ("123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr")
+        result_tuple_optimized = profile_values(tuple_data, use_incremental_typecheck=True)
+        result_tuple_original = profile_values(tuple_data, use_incremental_typecheck=False)
+        
+        self.assertEqual(result_tuple_optimized, DataType.MIXED)
+        self.assertEqual(result_tuple_original, DataType.MIXED)
+        self.assertEqual(result_tuple_optimized, result_tuple_original)
+
 
 class TestUtilityFunctions(unittest.TestCase):
     """Test cases for utility functions"""

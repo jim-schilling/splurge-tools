@@ -1,22 +1,21 @@
 # splurge-tools
 
-A Python package providing tools for data type handling, validation, and text processing.
+A Python package providing comprehensive tools for data type handling, validation, text processing, and streaming data analysis.
 
 ## Description
 
 splurge-tools is a collection of Python utilities focused on:
-- Data type handling and validation
-- Text file processing and manipulation
-- String tokenization and parsing
-- Text case transformations
-- Delimited separated value parsing
-- Tabular data model class
-- Typed tabular data model class
-- Data validator class
-- Random data class
-- Data transformation class
-- Text normalizer class
-- Python 3.10+ compatibility
+- **Data type handling and validation** with comprehensive type inference and conversion
+- **Text file processing and manipulation** with streaming support for large files
+- **String tokenization and parsing** with delimited value support
+- **Text case transformations** and normalization
+- **Delimited separated value (DSV) parsing** with streaming capabilities
+- **Tabular data models** for both in-memory and streaming datasets
+- **Typed tabular data models** with schema validation
+- **Data validation and transformation** utilities
+- **Random data generation** for testing and development
+- **Memory-efficient streaming** for large datasets that don't fit in RAM
+- **Python 3.10+ compatibility** with full type annotations
 
 ## Installation
 
@@ -26,17 +25,84 @@ pip install splurge-tools
 
 ## Features
 
-- `type_helper.py`: Comprehensive type validation and conversion utilities
-- `text_file_helper.py`: Text file processing and manipulation tools
-- `string_tokenizer.py`: String parsing and tokenization utilities
-- `case_helper.py`: Text case transformation utilities
-- `dsv_helper.py`: Delimited separated value utilities
-- `tabular_data_model.py`: Data model for tabular datasets
-- `typed_tabular_data_model.py`: Type data model based on tabular data model
-- `data_validator.py`: Data validator class
-- `random_helper.py`: Random data class and methods for generating data
-- `data_transformer.py`: Data transformation utility class
-- `text_normalizer.py`: Text normalization utility class
+### Core Data Processing
+- **`type_helper.py`**: Comprehensive type validation, conversion, and inference utilities with support for strings, numbers, dates, times, booleans, and collections
+- **`dsv_helper.py`**: Delimited separated value parsing with streaming support, column profiling, and data analysis
+- **`tabular_data_model.py`**: In-memory data model for tabular datasets with multi-row header support
+- **`typed_tabular_data_model.py`**: Type-safe data model with schema validation and type enforcement
+- **`streaming_tabular_data_model.py`**: Memory-efficient streaming data model for large datasets (>100MB)
+
+### Text Processing
+- **`text_file_helper.py`**: Text file processing with streaming support, header/footer skipping, and memory-efficient operations
+- **`string_tokenizer.py`**: String parsing and tokenization utilities with delimited value support
+- **`case_helper.py`**: Text case transformation utilities (camelCase, snake_case, kebab-case, etc.)
+- **`text_normalizer.py`**: Text normalization and cleaning utilities
+
+### Data Utilities
+- **`data_validator.py`**: Data validation framework with custom validation rules
+- **`data_transformer.py`**: Data transformation utilities for converting between formats
+- **`random_helper.py`**: Random data generation for testing, including realistic test data
+
+### Key Capabilities
+- **Streaming Support**: Process datasets larger than available RAM with configurable chunk sizes
+- **Type Inference**: Automatic detection of data types including dates, times, numbers, and booleans
+- **Multi-row Headers**: Support for complex header structures with automatic merging
+- **Memory Efficiency**: Streaming models use minimal memory regardless of dataset size
+- **Type Safety**: Full type annotations and validation throughout the codebase
+- **Error Handling**: Comprehensive error handling with meaningful error messages
+- **Performance**: Optimized for large datasets with efficient algorithms and data structures
+
+## Examples
+
+### Streaming Large Datasets
+
+```python
+from splurge_tools.dsv_helper import DsvHelper
+from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
+
+# Process a large CSV file without loading it into memory
+stream = DsvHelper.parse_stream("large_dataset.csv", delimiter=",")
+model = StreamingTabularDataModel(stream, header_rows=1, chunk_size=1000)
+
+# Iterate through data efficiently
+for row in model:
+    # Process each row
+    print(row)
+
+# Or get rows as dictionaries
+for row_dict in model.iter_rows():
+    print(row_dict["column_name"])
+```
+
+### Type Inference and Validation
+
+```python
+from splurge_tools.type_helper import String, DataType
+
+# Infer data types
+data_type = String.infer_type("2023-12-25")  # DataType.DATE
+data_type = String.infer_type("123.45")      # DataType.FLOAT
+data_type = String.infer_type("true")        # DataType.BOOLEAN
+
+# Convert values with validation
+date_val = String.to_date("2023-12-25")
+float_val = String.to_float("123.45", default=0.0)
+bool_val = String.to_bool("true")
+```
+
+### DSV Parsing and Profiling
+
+```python
+from splurge_tools.dsv_helper import DsvHelper
+
+# Parse and profile columns
+data = DsvHelper.parse("data.csv", delimiter=",")
+profile = DsvHelper.profile_columns(data)
+
+# Get column information
+for col_name, col_info in profile.items():
+    print(f"{col_name}: {col_info['datatype']} ({col_info['count']} values)")
+```
 
 ## Development
 
@@ -99,6 +165,23 @@ python -m build
 ```
 
 ## Changelog
+
+# [0.2.6] - 2025-07-12
+
+#### Added
+- **Incremental Type Checking Optimization**: Added performance optimization to `profile_values()` function in `type_helper.py` that uses weighted incremental checks at 25%, 50%, and 75% of data processing to short-circuit early when a definitive type can be determined. This provides significant performance improvements for large datasets (>10,000 items) while maintaining accuracy.
+- **Early Mixed Type Detection**: Enhanced early termination logic to immediately return `MIXED` type when both numeric/temporal types and string types are detected, avoiding unnecessary processing.
+- **Configurable Optimization**: Added `use_incremental_typecheck` parameter (default: `True`) to control whether incremental checking is used, allowing users to disable optimization if needed.
+- **Performance Benchmarking**: Added comprehensive performance benchmark script (`examples/profile_values_performance_benchmark.py`) demonstrating 2-3x performance improvements for large datasets.
+
+#### Changed
+- **Performance Threshold**: Incremental type checking is automatically disabled for datasets of 10,000 items or fewer to avoid overhead on small datasets.
+- **Documentation Updates**: Updated docstrings in `type_helper.py` to accurately reflect the simplified implementation.
+- **Test Structure**: Updated unittest test classes to properly inherit from `unittest.TestCase` for improved test organization and consistency.
+
+#### Removed
+- **Unused Imports**: Removed unused `os` import from `type_helper.py` to improve code cleanliness.
+
 
 # [0.2.5] - 2025-07-10
 

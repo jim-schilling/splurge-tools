@@ -49,6 +49,7 @@ class CaseHelper:
     """
 
     @staticmethod
+    @handle_empty_value
     def normalize(
         value: str
     ) -> str:
