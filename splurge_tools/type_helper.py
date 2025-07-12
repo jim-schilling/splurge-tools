@@ -130,8 +130,9 @@ class String:
     _TIME_12HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""")
     _TIME_COMPACT_REGEX = re.compile(r"""^(\d{2})(\d{2})(\d{2})?$""")
 
-    @staticmethod
+    @classmethod
     def is_bool_like(
+        cls,
         value: Union[str, bool, None],
         *,
         trim: bool = True
@@ -160,8 +161,9 @@ class String:
 
         return False
 
-    @staticmethod
+    @classmethod
     def is_none_like(
+        cls,
         value: Any,
         *,
         trim: bool = True
@@ -190,8 +192,9 @@ class String:
 
         return False
 
-    @staticmethod
+    @classmethod
     def is_empty_like(
+        cls,
         value: Any,
         *,
         trim: bool = True
@@ -217,8 +220,9 @@ class String:
 
         return not value.strip() if trim else not value
 
-    @staticmethod
+    @classmethod
     def is_float_like(
+        cls,
         value: Union[str, float, None],
         *,
         trim: bool = True
@@ -248,12 +252,13 @@ class String:
             return False
 
         return (
-            String._FLOAT_REGEX.match(value.strip() if trim else value)
+            cls._FLOAT_REGEX.match(value.strip() if trim else value)
             is not None
         )
 
-    @staticmethod
+    @classmethod
     def is_int_like(
+        cls,
         value: Union[str, int, None],
         *,
         trim: bool = True
@@ -283,7 +288,7 @@ class String:
             return False
 
         tmp_value: str = value.strip() if trim else value
-        return String._INTEGER_REGEX.match(tmp_value) is not None
+        return cls._INTEGER_REGEX.match(tmp_value) is not None
 
     @classmethod
     def is_numeric_like(
@@ -761,8 +766,9 @@ class String:
 
         return default
 
-    @staticmethod
+    @classmethod
     def has_leading_zero(
+        cls,
         value: Union[str, None],
         *,
         trim: bool = True
@@ -864,12 +870,18 @@ class String:
         return cls.infer_type(value, trim=trim).name
 
 
-def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
+def profile_values(
+    values: Iterable, 
+    *, 
+    trim: bool = True
+) -> DataType:
     """
     Infer the most appropriate data type for a collection of values.
 
     This function analyzes a collection of values and determines the most
     appropriate data type that can represent all values in the collection.
+    It processes values sequentially and counts the types of all values
+    to determine the final data type.
 
     Args:
         values: Collection of values to analyze
@@ -893,6 +905,7 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
     # Convert to list to handle generators and ensure we can iterate multiple times
     values_list: list = list(values)
     
+    # Sequential processing
     types = {
         DataType.BOOLEAN.name: 0,
         DataType.DATE.name: 0,
@@ -913,6 +926,7 @@ def profile_values(values: Iterable, *, trim: bool = True) -> DataType:
         types[inferred_type.name] += 1
         count += 1
 
+    # Determine final data type based on type counts
     if types[DataType.EMPTY.name] == count:
         return DataType.EMPTY
 

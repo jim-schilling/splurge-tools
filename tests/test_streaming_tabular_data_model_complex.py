@@ -6,7 +6,7 @@ Copyright (c) 2025, Jim Schilling
 This module is licensed under the MIT License.
 """
 
-import pytest
+import unittest
 import tempfile
 import os
 
@@ -14,7 +14,7 @@ from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 
 
-class TestStreamingTabularDataModelComplex:
+class TestStreamingTabularDataModelComplex(unittest.TestCase):
     """Complex test cases for StreamingTabularDataModel."""
 
     def test_streaming_model_with_multi_row_headers(self) -> None:
@@ -40,13 +40,13 @@ class TestStreamingTabularDataModelComplex:
             )
 
             # Test column names (merged)
-            assert model.column_names == ["Personal_Name", "Personal_Age", "Location_City"]
-            assert model.column_count == 3
+            self.assertEqual(model.column_names, ["Personal_Name", "Personal_Age", "Location_City"])
+            self.assertEqual(model.column_count, 3)
 
             # Test iteration
             rows = list(model.iter_rows())
-            assert len(rows) == 2
-            assert rows[0] == {"Personal_Name": "John", "Personal_Age": "25", "Location_City": "New York"}
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0], {"Personal_Name": "John", "Personal_Age": "25", "Location_City": "New York"})
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -82,15 +82,15 @@ class TestStreamingTabularDataModelComplex:
             # Test that we can iterate through all rows
             row_count = 0
             for row in model.iter_rows():
-                assert "ID" in row
-                assert "Name" in row
-                assert "Value" in row
+                self.assertIn("ID", row)
+                self.assertIn("Name", row)
+                self.assertIn("Value", row)
                 row_count += 1
 
-            assert row_count == 1000
+            self.assertEqual(row_count, 1000)
 
             # Test that buffer is empty after iteration (streaming behavior)
-            assert len(model._buffer) == 0
+            self.assertEqual(len(model._buffer), 0)
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -124,9 +124,9 @@ class TestStreamingTabularDataModelComplex:
 
             # Test basic iteration
             rows = list(model)
-            assert len(rows) == 2
-            assert rows[0] == ["John", "25", "New York"]
-            assert rows[1] == ["Jane", "30", "Los Angeles"]
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0], ["John", "25", "New York"])
+            self.assertEqual(rows[1], ["Jane", "30", "Los Angeles"])
 
             # Create new model for dictionary iteration (since iterator is exhausted)
             stream2 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
@@ -139,9 +139,9 @@ class TestStreamingTabularDataModelComplex:
 
             # Test dictionary iteration
             dict_rows = list(model2.iter_rows())
-            assert len(dict_rows) == 2
-            assert dict_rows[0] == {"Name": "John", "Age": "25", "City": "New York"}
-            assert dict_rows[1] == {"Name": "Jane", "Age": "30", "City": "Los Angeles"}
+            self.assertEqual(len(dict_rows), 2)
+            self.assertEqual(dict_rows[0], {"Name": "John", "Age": "25", "City": "New York"})
+            self.assertEqual(dict_rows[1], {"Name": "Jane", "Age": "30", "City": "Los Angeles"})
 
             # Create new model for tuple iteration
             stream3 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
@@ -154,9 +154,9 @@ class TestStreamingTabularDataModelComplex:
 
             # Test tuple iteration
             tuple_rows = list(model3.iter_rows_as_tuples())
-            assert len(tuple_rows) == 2
-            assert tuple_rows[0] == ("John", "25", "New York")
-            assert tuple_rows[1] == ("Jane", "30", "Los Angeles")
+            self.assertEqual(len(tuple_rows), 2)
+            self.assertEqual(tuple_rows[0], ("John", "25", "New York"))
+            self.assertEqual(tuple_rows[1], ("Jane", "30", "Los Angeles"))
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -197,10 +197,10 @@ class TestStreamingTabularDataModelComplex:
 
             # Test that empty rows are skipped
             rows = list(model.iter_rows())
-            assert len(rows) == 3
-            assert rows[0]["Name"] == "John"
-            assert rows[1]["Name"] == "Jane"
-            assert rows[2]["Name"] == "Bob"
+            self.assertEqual(len(rows), 3)
+            self.assertEqual(rows[0]["Name"], "John")
+            self.assertEqual(rows[1]["Name"], "Jane")
+            self.assertEqual(rows[2]["Name"], "Bob")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -235,26 +235,26 @@ class TestStreamingTabularDataModelComplex:
 
             # Test that rows are properly padded/truncated
             rows = list(model.iter_rows())
-            assert len(rows) == 3
+            self.assertEqual(len(rows), 3)
             
             # First row should be padded with empty strings
-            assert rows[0]["Name"] == "John"
-            assert rows[0]["Age"] == "25"
-            assert rows[0]["City"] == "New York"
-            assert rows[0]["Country"] == ""
+            self.assertEqual(rows[0]["Name"], "John")
+            self.assertEqual(rows[0]["Age"], "25")
+            self.assertEqual(rows[0]["City"], "New York")
+            self.assertEqual(rows[0]["Country"], "")
             
             # Second row should have extra columns added
-            assert rows[1]["Name"] == "Jane"
-            assert rows[1]["Age"] == "30"
-            assert rows[1]["City"] == "Los Angeles"
-            assert rows[1]["Country"] == "USA"
-            assert rows[1]["column_4"] == "Extra"
+            self.assertEqual(rows[1]["Name"], "Jane")
+            self.assertEqual(rows[1]["Age"], "30")
+            self.assertEqual(rows[1]["City"], "Los Angeles")
+            self.assertEqual(rows[1]["Country"], "USA")
+            self.assertEqual(rows[1]["column_4"], "Extra")
             
             # Third row should be complete
-            assert rows[2]["Name"] == "Bob"
-            assert rows[2]["Age"] == "35"
-            assert rows[2]["City"] == "Chicago"
-            assert rows[2]["Country"] == "USA"
+            self.assertEqual(rows[2]["Name"], "Bob")
+            self.assertEqual(rows[2]["Age"], "35")
+            self.assertEqual(rows[2]["City"], "Chicago")
+            self.assertEqual(rows[2]["Country"], "USA")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -287,13 +287,13 @@ class TestStreamingTabularDataModelComplex:
             )
 
             # Test initial state
-            assert model.column_names == ["Name", "Age"]
-            assert model._is_initialized is True
+            self.assertEqual(model.column_names, ["Name", "Age"])
+            self.assertTrue(model._is_initialized)
 
             # Reset stream
             model.reset_stream()
-            assert model._is_initialized is False
-            assert len(model._buffer) == 0
+            self.assertFalse(model._is_initialized)
+            self.assertEqual(len(model._buffer), 0)
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -329,11 +329,11 @@ class TestStreamingTabularDataModelComplex:
             # Test that we can still iterate through all rows
             row_count = 0
             for row in model.iter_rows():
-                assert "Name" in row
-                assert "Age" in row
+                self.assertIn("Name", row)
+                self.assertIn("Age", row)
                 row_count += 1
 
-            assert row_count == 50
+            self.assertEqual(row_count, 50)
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -369,11 +369,11 @@ class TestStreamingTabularDataModelComplex:
             # Test that we can iterate through all rows
             row_count = 0
             for row in model.iter_rows():
-                assert "Name" in row
-                assert "Age" in row
+                self.assertIn("Name", row)
+                self.assertIn("Age", row)
                 row_count += 1
 
-            assert row_count == 100
+            self.assertEqual(row_count, 100)
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -405,11 +405,11 @@ class TestStreamingTabularDataModelComplex:
             )
 
             # Test that initialization is marked as complete
-            assert model._is_initialized is True
+            self.assertTrue(model._is_initialized)
 
             # Call initialization again - should return early
             model._initialize_from_stream()
-            assert model._is_initialized is True
+            self.assertTrue(model._is_initialized)
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -424,32 +424,32 @@ class TestStreamingTabularDataModelComplex:
         """Test process_headers with various edge cases."""
         # Test with empty data
         result = StreamingTabularDataModel.process_headers([], header_rows=0)
-        assert result == ([], [])
+        self.assertEqual(result, ([], []))
         
         # Test with empty column names
         header_data = [["", "", ""]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
-        assert result[1] == ["column_0", "column_1", "column_2"]
+        self.assertEqual(result[1], ["column_0", "column_1", "column_2"])
         
         # Test with mixed empty and non-empty names
         header_data = [["Name", "", "City"]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
-        assert result[1] == ["Name", "column_1", "City"]
+        self.assertEqual(result[1], ["Name", "column_1", "City"])
         
         # Test with column count padding
         header_data = [["Name", "Age"], ["John", "25", "Extra"]]  # Second row has more columns
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=2)
-        assert len(result[1]) == 3  # Should have 3 columns based on max row length
+        self.assertEqual(len(result[1]), 3)  # Should have 3 columns based on max row length
         
         # Test with single empty row
         header_data = [[""]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
-        assert result[1] == ["column_0"]
+        self.assertEqual(result[1], ["column_0"])
         
         # Test with multiple empty rows
         header_data = [[""], [""], [""]]
         result = StreamingTabularDataModel.process_headers(header_data, header_rows=3)
-        assert result[1] == ["column_0"]
+        self.assertEqual(result[1], ["column_0"])
 
     def test_streaming_model_dynamic_column_expansion(self) -> None:
         """Test dynamic column expansion during iteration."""
@@ -474,30 +474,30 @@ class TestStreamingTabularDataModelComplex:
             )
 
             # Test initial column count
-            assert model.column_count == 2
-            assert model.column_names == ["Name", "Age"]
+            self.assertEqual(model.column_count, 2)
+            self.assertEqual(model.column_names, ["Name", "Age"])
 
             # Iterate through rows to trigger dynamic expansion
             rows = list(model.iter_rows())
-            assert len(rows) == 3
+            self.assertEqual(len(rows), 3)
 
             # Check that columns were expanded
-            assert model.column_count >= 4  # At least 4 columns after expansion
-            assert "column_2" in model.column_names
-            assert "column_3" in model.column_names
+            self.assertGreaterEqual(model.column_count, 4)  # At least 4 columns after expansion
+            self.assertIn("column_2", model.column_names)
+            self.assertIn("column_3", model.column_names)
 
             # Check row data
-            assert rows[0]["Name"] == "John"
-            assert rows[0]["Age"] == "25"
-            assert rows[0]["column_2"] == "Extra1"
+            self.assertEqual(rows[0]["Name"], "John")
+            self.assertEqual(rows[0]["Age"], "25")
+            self.assertEqual(rows[0]["column_2"], "Extra1")
 
-            assert rows[1]["Name"] == "Jane"
-            assert rows[1]["Age"] == "30"
+            self.assertEqual(rows[1]["Name"], "Jane")
+            self.assertEqual(rows[1]["Age"], "30")
 
-            assert rows[2]["Name"] == "Bob"
-            assert rows[2]["Age"] == "35"
-            assert rows[2]["column_2"] == "Extra2"
-            assert rows[2]["column_3"] == "Extra3"
+            self.assertEqual(rows[2]["Name"], "Bob")
+            self.assertEqual(rows[2]["Age"], "35")
+            self.assertEqual(rows[2]["column_2"], "Extra2")
+            self.assertEqual(rows[2]["column_3"], "Extra3")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -532,25 +532,25 @@ class TestStreamingTabularDataModelComplex:
 
             # Test iteration with row padding
             rows = list(model.iter_rows())
-            assert len(rows) == 3
+            self.assertEqual(len(rows), 3)
 
             # First row should be padded
-            assert rows[0]["Name"] == "John"
-            assert rows[0]["Age"] == "25"
-            assert rows[0]["City"] == ""
-            assert rows[0]["Country"] == ""
+            self.assertEqual(rows[0]["Name"], "John")
+            self.assertEqual(rows[0]["Age"], "25")
+            self.assertEqual(rows[0]["City"], "")
+            self.assertEqual(rows[0]["Country"], "")
 
             # Second row should be padded
-            assert rows[1]["Name"] == "Jane"
-            assert rows[1]["Age"] == "30"
-            assert rows[1]["City"] == "Los Angeles"
-            assert rows[1]["Country"] == ""
+            self.assertEqual(rows[1]["Name"], "Jane")
+            self.assertEqual(rows[1]["Age"], "30")
+            self.assertEqual(rows[1]["City"], "Los Angeles")
+            self.assertEqual(rows[1]["Country"], "")
 
             # Third row should be complete
-            assert rows[2]["Name"] == "Bob"
-            assert rows[2]["Age"] == "35"
-            assert rows[2]["City"] == "Chicago"
-            assert rows[2]["Country"] == "USA"
+            self.assertEqual(rows[2]["Name"], "Bob")
+            self.assertEqual(rows[2]["Age"], "35")
+            self.assertEqual(rows[2]["City"], "Chicago")
+            self.assertEqual(rows[2]["Country"], "USA")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -582,15 +582,15 @@ class TestStreamingTabularDataModelComplex:
             )
 
             # Test that column names are auto-generated
-            assert model.column_names == ["column_0", "column_1", "column_2"]
-            assert model.column_count == 3
+            self.assertEqual(model.column_names, ["column_0", "column_1", "column_2"])
+            self.assertEqual(model.column_count, 3)
 
             # Test iteration
             rows = list(model.iter_rows())
-            assert len(rows) == 2
-            assert rows[0]["column_0"] == "John"
-            assert rows[0]["column_1"] == "25"
-            assert rows[0]["column_2"] == "New York"
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0]["column_0"], "John")
+            self.assertEqual(rows[0]["column_1"], "25")
+            self.assertEqual(rows[0]["column_2"], "New York")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -624,9 +624,9 @@ class TestStreamingTabularDataModelComplex:
 
             # Test iteration
             rows = list(model.iter_rows())
-            assert len(rows) == 2
-            assert rows[0]["Name"] == "John"
-            assert rows[1]["Name"] == "Jane"
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0]["Name"], "John")
+            self.assertEqual(rows[1]["Name"], "Jane")
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -635,4 +635,8 @@ class TestStreamingTabularDataModelComplex:
                     list(getattr(model, 'iter_rows', lambda: [])())
             except Exception:
                 pass
-            os.unlink(temp_file) 
+            os.unlink(temp_file)
+
+
+if __name__ == "__main__":
+    unittest.main()
