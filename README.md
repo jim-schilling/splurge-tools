@@ -168,7 +168,14 @@ python -m build
 
 # [0.2.6] - 2025-07-12
 
+#### Added
+- **Incremental Type Checking Optimization**: Added performance optimization to `profile_values()` function in `type_helper.py` that uses weighted incremental checks at 25%, 50%, and 75% of data processing to short-circuit early when a definitive type can be determined. This provides significant performance improvements for large datasets (>10,000 items) while maintaining accuracy.
+- **Early Mixed Type Detection**: Enhanced early termination logic to immediately return `MIXED` type when both numeric/temporal types and string types are detected, avoiding unnecessary processing.
+- **Configurable Optimization**: Added `use_incremental_typecheck` parameter (default: `True`) to control whether incremental checking is used, allowing users to disable optimization if needed.
+- **Performance Benchmarking**: Added comprehensive performance benchmark script (`examples/profile_values_performance_benchmark.py`) demonstrating 2-3x performance improvements for large datasets.
+
 #### Changed
+- **Performance Threshold**: Incremental type checking is automatically disabled for datasets of 10,000 items or fewer to avoid overhead on small datasets.
 - **Documentation Updates**: Updated docstrings in `type_helper.py` to accurately reflect the simplified implementation.
 - **Test Structure**: Updated unittest test classes to properly inherit from `unittest.TestCase` for improved test organization and consistency.
 
