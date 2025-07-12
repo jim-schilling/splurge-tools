@@ -870,22 +870,88 @@ class String:
         return cls.infer_type(value, trim=trim).name
 
 
+def _determine_type_from_counts(
+    types: dict[str, int],
+    count: int,
+    *,
+    allow_special_cases: bool = True
+) -> Union[DataType, None]:
+    """
+    Determine the data type based on type counts.
+    
+    Args:
+        types: Dictionary of type counts
+        count: Total number of values processed
+        allow_special_cases: Whether to apply special case logic (all-digit strings, etc.)
+    
+    Returns:
+        DataType if a definitive type can be determined, None otherwise
+    """
+    if types[DataType.EMPTY.name] == count:
+        return DataType.EMPTY
+
+    if types[DataType.NONE.name] == count:
+        return DataType.NONE
+
+    if types[DataType.NONE.name] + types[DataType.EMPTY.name] == count:
+        return DataType.NONE
+
+    if types[DataType.BOOLEAN.name] + types[DataType.EMPTY.name] == count:
+        return DataType.BOOLEAN
+
+    if types[DataType.STRING.name] + types[DataType.EMPTY.name] == count:
+        return DataType.STRING
+
+    # For early termination, skip complex logic that requires full analysis
+    if not allow_special_cases:
+        return None
+
+    if types[DataType.DATE.name] + types[DataType.EMPTY.name] == count:
+        return DataType.DATE
+
+    if types[DataType.DATETIME.name] + types[DataType.EMPTY.name] == count:
+        return DataType.DATETIME
+
+    if types[DataType.TIME.name] + types[DataType.EMPTY.name] == count:
+        return DataType.TIME
+
+    if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
+        return DataType.INTEGER
+
+    if (
+        types[DataType.FLOAT.name]
+        + types[DataType.INTEGER.name]
+        + types[DataType.EMPTY.name]
+        == count
+    ):
+        return DataType.FLOAT
+
+    return None
+
+
+_INCREMENTAL_TYPECHECK_THRESHOLD = 10_000
+
 def profile_values(
     values: Iterable, 
     *, 
-    trim: bool = True
+    trim: bool = True,
+    use_incremental_typecheck: bool = True
 ) -> DataType:
     """
     Infer the most appropriate data type for a collection of values.
 
     This function analyzes a collection of values and determines the most
     appropriate data type that can represent all values in the collection.
-    It processes values sequentially and counts the types of all values
-    to determine the final data type.
+    For lists of more than _INCREMENTAL_TYPECHECK_THRESHOLD items, it uses weighted incremental checks
+    to short-circuit early when enough information is available to determine
+    the final data type. For lists of _INCREMENTAL_TYPECHECK_THRESHOLD or fewer items, incremental
+    type checking is disabled and a single pass is used.
 
     Args:
         values: Collection of values to analyze
         trim: Whether to trim whitespace before checking
+        use_incremental_typecheck: Whether to use incremental type checking for early termination.
+                                  For lists of _INCREMENTAL_TYPECHECK_THRESHOLD or fewer items, this is always False.
 
     Returns:
         DataType enum value representing the inferred type
@@ -898,6 +964,7 @@ def profile_values(
         >>> profile_values(['1.1', '2.2', '3.3'])     # DataType.FLOAT
         >>> profile_values(['1', '2.2', 'abc'])       # DataType.MIXED
         >>> profile_values(['true', 'false'])         # DataType.BOOLEAN
+        >>> profile_values(['1', '2', '3'], use_incremental_typecheck=False)  # Full analysis
     """
     if not is_iterable_not_string(values):
         raise ValueError("values must be iterable")
@@ -905,7 +972,14 @@ def profile_values(
     # Convert to list to handle generators and ensure we can iterate multiple times
     values_list: list = list(values)
     
-    # Sequential processing
+    if not values_list:
+        return DataType.EMPTY
+    
+    # Only enable incremental type checking for lists larger than the threshold
+    if len(values_list) <= _INCREMENTAL_TYPECHECK_THRESHOLD:
+        use_incremental_typecheck = False
+    
+    # Sequential processing with incremental checks
     types = {
         DataType.BOOLEAN.name: 0,
         DataType.DATE.name: 0,
@@ -919,37 +993,49 @@ def profile_values(
     }
 
     count = 0
+    total_count = len(values_list)
+    
+    # Check points for early termination (25%, 50%, 75%) - only used if incremental checking is enabled
+    check_points = {}
+    if use_incremental_typecheck:
+        check_points = {
+            int(total_count * 0.25): False,
+            int(total_count * 0.50): False,
+            int(total_count * 0.75): False,
+        }
 
-    # First pass: count types
+    # First pass: count types with incremental checks
     for value in values_list:
         inferred_type = String.infer_type(value, trim=trim)
         types[inferred_type.name] += 1
         count += 1
+        
+        # Check for early termination at check points (only if incremental checking is enabled)
+        if use_incremental_typecheck and count in check_points:
+            # Only do early termination for very clear cases that don't involve
+            # the special all-digit string logic or mixed int/float detection
+            
+            # Early detection of MIXED type: if we have both numeric/temporal types AND string types
+            numeric_temporal_count = (
+                types[DataType.INTEGER.name] + 
+                types[DataType.FLOAT.name] + 
+                types[DataType.DATE.name] + 
+                types[DataType.DATETIME.name] + 
+                types[DataType.TIME.name]
+            )
+            string_count = types[DataType.STRING.name]
+            
+            if numeric_temporal_count > 0 and string_count > 0:
+                return DataType.MIXED
+            
+            early_result = _determine_type_from_counts(types, count, allow_special_cases=False)
+            if early_result is not None:
+                return early_result
 
-    # Determine final data type based on type counts
-    if types[DataType.EMPTY.name] == count:
-        return DataType.EMPTY
-
-    if types[DataType.NONE.name] == count:
-        return DataType.NONE
-
-    if types[DataType.NONE.name] + types[DataType.EMPTY.name] == count:
-        return DataType.NONE
-
-    if types[DataType.BOOLEAN.name] + types[DataType.EMPTY.name] == count:
-        return DataType.BOOLEAN
-
-    if types[DataType.DATE.name] + types[DataType.EMPTY.name] == count:
-        return DataType.DATE
-
-    if types[DataType.DATETIME.name] + types[DataType.EMPTY.name] == count:
-        return DataType.DATETIME
-
-    if types[DataType.TIME.name] + types[DataType.EMPTY.name] == count:
-        return DataType.TIME
-
-    if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
-        return DataType.INTEGER
+    # Final determination based on complete analysis
+    final_result = _determine_type_from_counts(types, count, allow_special_cases=True)
+    if final_result is not None:
+        return final_result
 
     # Special case: if we have mixed DATE, TIME, DATETIME, INTEGER types,
     # check if all values are all-digit strings and prioritize INTEGER
@@ -968,17 +1054,6 @@ def profile_values(
         
         if all_digit_values:
             return DataType.INTEGER
-
-    if (
-        types[DataType.FLOAT.name]
-        + types[DataType.INTEGER.name]
-        + types[DataType.EMPTY.name]
-        == count
-    ):
-        return DataType.FLOAT
-
-    if types[DataType.STRING.name] + types[DataType.EMPTY.name] == count:
-        return DataType.STRING
 
     return DataType.MIXED
 
