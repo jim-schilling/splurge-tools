@@ -62,12 +62,12 @@ def encode_base58(data: Union[bytes, bytearray]) -> str:
     return result
 
 
-def decode_base58(string: str) -> bytes:
+def decode_base58(base58_data: str) -> bytes:
     """
     Decode base-58 string to binary data.
     
     Args:
-        string: Base-58 encoded string
+        base58_data: Base-58 encoded string
         
     Returns:
         Decoded binary data
@@ -75,21 +75,21 @@ def decode_base58(string: str) -> bytes:
     Raises:
         ValidationError: If input string is empty or contains invalid characters
     """
-    if not string:
+    if not base58_data:
         raise ValidationError("Input string cannot be empty")
     
     # Validate characters
-    for char in string:
+    for char in base58_data:
         if char not in _BASE58_ALPHABET:
             raise ValidationError(f"Invalid character '{char}' in base-58 string")
     
     # Handle all-'1' case (all zero bytes)
-    if all(char == _BASE58_ALPHABET[0] for char in string):
-        return b'\x00' * len(string)
+    if all(char == _BASE58_ALPHABET[0] for char in base58_data):
+        return b'\x00' * len(base58_data)
     
     # Convert from base-58 to integer
     number = 0
-    for char in string:
+    for char in base58_data:
         number = number * _BASE58_ALPHABET_LENGTH + _BASE58_ALPHABET.index(char)
     
     # Calculate number of bytes needed
@@ -100,7 +100,7 @@ def decode_base58(string: str) -> bytes:
     
     # Add leading zeros for each leading '1' in the encoded string
     leading_zeros = 0
-    for char in string:
+    for char in base58_data:
         if char == _BASE58_ALPHABET[0]:
             leading_zeros += 1
         else:
@@ -109,24 +109,24 @@ def decode_base58(string: str) -> bytes:
     return b'\x00' * leading_zeros + result
 
 
-def is_valid_base58(string: str) -> bool:
+def is_valid_base58(base58_data: str) -> bool:
     """
     Check if a string is valid base-58.
     
     Args:
-        string: String to validate
+        base58_data: String to validate
         
     Returns:
         True if valid base-58, False otherwise
     """
-    if not isinstance(string, str):
+    if not isinstance(base58_data, str):
         return False
     
-    if not string:
+    if not base58_data:
         return False
     
     try:
-        for char in string:
+        for char in base58_data:
             if char not in _BASE58_ALPHABET:
                 return False
         return True

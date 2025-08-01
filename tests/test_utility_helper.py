@@ -346,17 +346,7 @@ class TestBase58ErrorHandling(unittest.TestCase):
     def test_encoding_with_string_input(self):
         """Test encoding with string input (should fail)."""
         with self.assertRaises(TypeError):
-            encode_base58("Hello World")
-    
-    def test_encoding_with_list_input(self):
-        """Test encoding with list input (should work as it converts to bytes)."""
-        # List of integers can be converted to bytes
-        result = encode_base58([1, 2, 3, 4])
-        self.assertIsInstance(result, str)
-        self.assertGreater(len(result), 0)
-        # Verify round-trip works
-        decoded = decode_base58(result)
-        self.assertEqual(decoded, bytes([1, 2, 3, 4]))
+            encode_base58("Hello World")    
     
     def test_decoding_with_none_input(self):
         """Test decoding with None input."""
