@@ -3,7 +3,9 @@ Data transformation utilities for tabular data models.
 
 Provides pivot, melt, group-by, and column transformation operations for TabularDataModel and TypedTabularDataModel.
 
-Copyright (c) 2024 Jim Schilling
+Copyright (c) 2025 Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
@@ -11,15 +13,19 @@ This module is licensed under the MIT License.
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from splurge_tools.protocols import DataTransformerProtocol, TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
 
 
-class DataTransformer:
+class DataTransformer(DataTransformerProtocol):
     """
     Utility for transforming tabular data models.
 
     Supports pivot, melt, group-by, and column transformation operations.
+    
+    This class implements the DataTransformerProtocol interface, providing
+    a consistent interface for data transformation operations.
     """
 
     def __init__(
@@ -33,6 +39,47 @@ class DataTransformer:
             data_model (TabularDataModel | TypedTabularDataModel): The data model to transform.
         """
         self._model = data_model
+
+    def transform(
+        self,
+        data: TabularDataProtocol
+    ) -> TabularDataProtocol:
+        """
+        Transform the given data.
+        
+        This is a general transformation method that applies default transformations.
+        For specific transformations, use the dedicated methods like pivot(), melt(), etc.
+        
+        Args:
+            data: The data to transform
+            
+        Returns:
+            Transformed data model
+        """
+        # Default transformation: return the data as-is
+        # This can be overridden by subclasses or extended with transformation rules
+        return data
+
+    def can_transform(
+        self,
+        data: TabularDataProtocol
+    ) -> bool:
+        """
+        Check if the data can be transformed.
+        
+        Args:
+            data: The data to check
+            
+        Returns:
+            True if the data can be transformed, False otherwise
+        """
+        # Basic check: ensure data has the required interface
+        return (
+            hasattr(data, 'column_names') and
+            hasattr(data, 'row_count') and
+            hasattr(data, 'column_count') and
+            hasattr(data, 'iter_rows')
+        )
 
     def pivot(
         self,

@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
 """
-Performance Benchmark for profile_values Function
+Performance benchmark for profile_values function.
 
-This example demonstrates the performance benefits of the incremental type checking
-optimization in the profile_values function. It measures execution time for large
-datasets with and without the optimization enabled.
+This example demonstrates the performance improvements achieved by the optimized
+profile_values function compared to the original implementation.
 
-Note: Incremental type checking is only enabled for lists larger than
-splurge_tools.type_helper._INCREMENTAL_TYPECHECK_THRESHOLD items.
+Copyright (c) 2025 Jim Schilling
 
-Usage:
-    python profile_values_performance_benchmark.py
+Please preserve this header and all related material when sharing!
 
-Requirements:
-    - splurge_tools package only
+This module is licensed under the MIT License.
 """
 
 import time
 import gc
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from splurge_tools.type_helper import profile_values, DataType, _INCREMENTAL_TYPECHECK_THRESHOLD
+
+
+# Module-level constants for performance benchmarking
+_MICROSECOND_THRESHOLD = 0.001  # Threshold for microsecond formatting
+_MILLISECOND_MULTIPLIER = 1000  # Multiplier for millisecond conversion
+_MICROSECOND_MULTIPLIER = 1_000_000  # Multiplier for microsecond conversion
+_PERCENTAGE_MULTIPLIER = 100  # Multiplier for percentage calculation
+_DATASET_SIZES = [5_000, 25_000, 100_000, 250_000]  # Dataset sizes to test
 
 
 def generate_test_data(
@@ -112,10 +116,10 @@ def benchmark_profile_values(
 
 def format_time(seconds: float) -> str:
     """Format time in a human-readable format."""
-    if seconds < 0.001:
-        return f"{seconds * 1_000_000:.2f} μs"
+    if seconds < _MICROSECOND_THRESHOLD:
+        return f"{seconds * _MICROSECOND_MULTIPLIER:.2f} μs"
     elif seconds < 1:
-        return f"{seconds * 1000:.2f} ms"
+        return f"{seconds * _MILLISECOND_MULTIPLIER:.2f} ms"
     else:
         return f"{seconds:.2f} s"
 
@@ -130,7 +134,7 @@ def run_benchmark() -> None:
     print()
     
     # Test configurations
-    dataset_sizes = [5_000, 25_000, 100_000, 250_000]
+    dataset_sizes = _DATASET_SIZES
     data_types = ['boolean', 'string', 'integer', 'float', 'mixed']
     
     # Results storage
@@ -161,7 +165,7 @@ def run_benchmark() -> None:
             )
             
             # Calculate improvement
-            time_improvement = ((time_original - time_optimized) / time_original) * 100
+            time_improvement = ((time_original - time_optimized) / time_original) * _PERCENTAGE_MULTIPLIER
             
             # Store results
             results[(data_type, size)] = {

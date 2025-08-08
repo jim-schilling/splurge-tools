@@ -1,20 +1,27 @@
 """
 Tabular data model classes for structured data operations.
 
-Copyright (c) 2025, Jim Schilling
+Copyright (c) 2025 Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
 
 import re
+import warnings
 from typing import Generator
 
+from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
 
 
-class TabularDataModel:
+class TabularDataModel(TabularDataProtocol):
     """
     Tabular data model for structured data.
+    
+    This class implements the TabularDataProtocol interface, providing
+    a consistent interface for tabular data operations.
     """
 
     def __init__(

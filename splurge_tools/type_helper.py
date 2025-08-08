@@ -8,11 +8,11 @@ This module offers a comprehensive set of tools for:
 - Collection type checking
 - Value profiling and analysis
 
-Copyright (c) 2023 Jim Schilling
+Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
-This software is licensed under the MIT License.
+This module is licensed under the MIT License.
 """
 
 from collections import abc
@@ -50,6 +50,83 @@ class DataType(Enum):
     MIXED = "mixed"
     EMPTY = "empty"
     NONE = "none"
+
+
+class TypeInference:
+    """
+    Type inference utility that implements the TypeInferenceProtocol.
+    
+    This class provides methods for inferring data types and converting values
+    to their inferred types.
+    """
+    
+    def can_infer(
+        self,
+        value: str
+    ) -> bool:
+        """
+        Check if the value can be inferred as a specific type.
+        
+        Args:
+            value: The value to check
+            
+        Returns:
+            True if the value can be inferred as a specific type, False otherwise
+        """
+        if not isinstance(value, str):
+            return False
+            
+        inferred_type = String.infer_type(value)
+        return inferred_type != DataType.STRING
+    
+    def infer_type(
+        self,
+        value: str
+    ) -> DataType:
+        """
+        Infer the type of the given value.
+        
+        Args:
+            value: The value to infer the type for
+            
+        Returns:
+            The inferred DataType
+        """
+        return String.infer_type(value)
+    
+    def convert_value(
+        self,
+        value: str
+    ) -> Any:
+        """
+        Convert the value to its inferred type.
+        
+        Args:
+            value: The value to convert
+            
+        Returns:
+            The converted value in its inferred type
+        """
+        inferred_type = self.infer_type(value)
+        
+        if inferred_type == DataType.BOOLEAN:
+            return String.to_bool(value)
+        elif inferred_type == DataType.INTEGER:
+            return String.to_int(value)
+        elif inferred_type == DataType.FLOAT:
+            return String.to_float(value)
+        elif inferred_type == DataType.DATE:
+            return String.to_date(value)
+        elif inferred_type == DataType.TIME:
+            return String.to_time(value)
+        elif inferred_type == DataType.DATETIME:
+            return String.to_datetime(value)
+        elif inferred_type == DataType.NONE:
+            return None
+        elif inferred_type == DataType.EMPTY:
+            return ""
+        else:
+            return value
 
 
 class String:
@@ -124,8 +201,12 @@ class String:
     _INTEGER_REGEX = re.compile(r"""^[-+]?\d+$""")
     _DATE_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""")
     _DATE_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""")
-    _DATETIME_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
-    _DATETIME_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
+    _DATETIME_YYYY_MM_DD_REGEX = re.compile(
+        r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+    )
+    _DATETIME_MM_DD_YYYY_REGEX = re.compile(
+        r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+    )
     _TIME_24HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""")
     _TIME_12HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""")
     _TIME_COMPACT_REGEX = re.compile(r"""^(\d{2})(\d{2})(\d{2})?$""")
@@ -240,7 +321,7 @@ class String:
         Examples:
             >>> String.is_float_like('1.23')  # True
             >>> String.is_float_like('-1.23') # True
-            >>> String.is_float_like('1')     # False
+            >>> String.is_float_like('1')     # True
         """
         if value is None:
             return False

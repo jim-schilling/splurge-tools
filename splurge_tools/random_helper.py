@@ -7,9 +7,9 @@ The module uses Python's built-in `secrets` module for secure generation and `ra
 for non-secure generation. All methods support both secure and non-secure modes via the
 `secure` parameter.
 
-Copyright (c) 2022 Jim Schilling.
+Copyright (c) 2025 Jim Schilling.
 
-Please keep this header.
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """

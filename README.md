@@ -189,8 +189,9 @@ python -m build
 - Proper handling of leading zero bytes in base-58 encoding/decoding
 - Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
 
+### [0.3.0] - 2025-08-08
 
-# [0.2.6] - 2025-07-12
+### [0.2.6] - 2025-07-12
 
 #### Added
 - **Incremental Type Checking Optimization**: Added performance optimization to `profile_values()` function in `type_helper.py` that uses weighted incremental checks at 25%, 50%, and 75% of data processing to short-circuit early when a definitive type can be determined. This provides significant performance improvements for large datasets (>10,000 items) while maintaining accuracy.
@@ -207,7 +208,7 @@ python -m build
 - **Unused Imports**: Removed unused `os` import from `type_helper.py` to improve code cleanliness.
 
 
-# [0.2.5] - 2025-07-10
+### [0.2.5] - 2025-07-10
 
 #### Changed
 - **Test Organization**: Reorganized test files to improve clarity and maintainability by separating core functionality tests from complex/integration tests. Split the following test files:
@@ -314,6 +315,36 @@ python -m build
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Development
+
+### Building Source Distributions
+
+This project is configured to build source distributions only (no wheels). To build a source distribution:
+
+```bash
+# Using the build script (recommended)
+python build_sdist.py
+
+# Or using build directly
+python -m build --sdist
+```
+
+The source distribution will be created in the `dist/` directory as a `.tar.gz` file.
+
+### Testing
+
+Run the test suite:
+
+```bash
+pytest
+```
+
+Run with coverage:
+
+```bash
+pytest --cov=splurge_tools --cov-report=html
+```
 
 ## Author
 

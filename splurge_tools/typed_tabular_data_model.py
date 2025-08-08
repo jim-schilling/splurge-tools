@@ -2,9 +2,9 @@
 This module contains the TypedTabularDataModel class that extends TabularDataModel
 for typed data access.
 
-Copyright (c) 2025, Jim Schilling
+Copyright (c) 2025 Jim Schilling
 
-Please keep the copyright notice in this file and in the source code files.
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
@@ -12,6 +12,7 @@ This module is licensed under the MIT License.
 from dataclasses import dataclass
 from typing import Any, Generator, Optional
 
+from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.type_helper import DataType, String, profile_values
 
@@ -25,10 +26,13 @@ class TypeConfig:
     none_default: Any
 
 
-class TypedTabularDataModel(TabularDataModel):
+class TypedTabularDataModel(TabularDataModel, TabularDataProtocol):
     """
     Extends TabularDataModel to provide typed data access.
     Values are converted to native Python types based on inferred column type.
+    
+    This class implements the TabularDataProtocol interface, providing
+    a consistent interface for typed tabular data operations.
     """
 
     def __init__(

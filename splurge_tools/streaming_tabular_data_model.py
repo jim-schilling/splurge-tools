@@ -4,7 +4,9 @@ Streaming tabular data model for large datasets that don't fit in memory.
 This class works with streams from DsvHelper.parse_stream to process data
 without loading the entire dataset into memory.
 
-Copyright (c) 2025, Jim Schilling
+Copyright (c) 2025 Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
@@ -12,15 +14,19 @@ This module is licensed under the MIT License.
 import re
 from typing import Generator, Iterator
 
+from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
 
 
-class StreamingTabularDataModel:
+class StreamingTabularDataModel(TabularDataProtocol):
     """
     Streaming tabular data model for large datasets that don't fit in memory.
     
     This class works with streams from DsvHelper.parse_stream to process data
     without loading the entire dataset into memory.
+    
+    This class implements the TabularDataProtocol interface, providing
+    a consistent interface for streaming tabular data operations.
     """
 
     def __init__(
