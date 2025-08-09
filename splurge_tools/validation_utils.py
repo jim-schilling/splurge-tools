@@ -24,6 +24,9 @@ from splurge_tools.exceptions import (
 
 T = TypeVar('T')
 
+# Sentinel value for distinguishing between None and missing values
+_MISSING = object()
+
 
 class Validator:
     """
@@ -359,7 +362,7 @@ class Validator:
     def create_helpful_error_message(
         base_message: str,
         *,
-        received_value: Any = None,
+        received_value: Any = _MISSING,
         expected_type: type | str | None = None,
         valid_range: tuple[Any, Any] | None = None,
         suggestions: list[str] | None = None
@@ -369,17 +372,21 @@ class Validator:
         
         Args:
             base_message: Base error message
-            received_value: The value that caused the error
+            received_value: The value that caused the error (use _MISSING to exclude from details)
             expected_type: Expected type or type description
             valid_range: Valid range as (min, max) tuple
             suggestions: List of suggestions for fixing the error
             
         Returns:
             Tuple of (message, details) for exception creation
+            
+        Note:
+            This method properly handles falsy values (0, False, empty strings/collections)
+            by using a sentinel value to distinguish between None and missing values.
         """
         details_parts = []
         
-        if received_value is not None:
+        if received_value is not _MISSING:
             details_parts.append(f"Received value: {repr(received_value)} (type: {type(received_value).__name__})")
         
         if expected_type is not None:

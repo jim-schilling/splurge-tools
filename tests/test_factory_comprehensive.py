@@ -2,6 +2,8 @@
 Comprehensive unit tests for Factory classes to improve coverage.
 """
 
+import os
+import tempfile
 import unittest
 from typing import Iterator
 from pathlib import Path
@@ -103,7 +105,6 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         )
         
         # Should use custom chunk size and return streaming protocol
-        from splurge_tools.protocols import StreamingTabularDataProtocol
         self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
@@ -319,9 +320,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
 
     def test_create_resource_manager_with_file(self):
         """Test create_resource_manager method with file path."""
-        import tempfile
-        import os
-        
         # Create a temporary file
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write("test content")
@@ -349,9 +347,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
 
     def test_create_resource_manager_with_path_object(self):
         """Test create_resource_manager method with Path object."""
-        import tempfile
-        import os
-        
         # Create a temporary file
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write("test content")
@@ -379,9 +374,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
 
     def test_create_resource_manager_with_custom_mode(self):
         """Test create_resource_manager method with custom mode."""
-        import tempfile
-        import os
-        
         # Create a temporary file
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write("test content")

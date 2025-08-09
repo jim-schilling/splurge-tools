@@ -5,6 +5,7 @@ This module tests the path validation utilities for secure file operations.
 """
 
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -160,20 +161,36 @@ class TestPathValidator(unittest.TestCase):
 
     def test_validate_path_dangerous_characters(self):
         """Test path validation with dangerous characters."""
-        dangerous_paths = [
+        # Characters that are universally dangerous across platforms
+        universal_dangerous_paths = [
             "file<.txt",
             "file>.txt",
             "file\".txt",
             "file|.txt",
             "file?.txt",
             "file*.txt",
-            "file\x00.txt",
-            "file\x01.txt",
+            "file\x01.txt",  # Control character (not null byte)
         ]
         
-        for path in dangerous_paths:
+        # Test universally dangerous characters
+        for path in universal_dangerous_paths:
             with self.assertRaises(SplurgePathValidationError):
                 PathValidator.validate_path(path)
+        
+        # Test null byte handling - platform specific behavior
+        null_byte_path = "file\x00.txt"
+        
+        # PathValidator should always reject null bytes as they're in _DANGEROUS_CHARS
+        # regardless of platform, but the underlying error may vary
+        with self.assertRaises(SplurgePathValidationError) as cm:
+            PathValidator.validate_path(null_byte_path)
+        
+        # Verify the error message mentions dangerous characters or null bytes
+        error_msg = str(cm.exception).lower()
+        self.assertTrue(
+            "dangerous" in error_msg or "invalid" in error_msg or "null" in error_msg,
+            f"Expected error about dangerous/invalid characters, got: {cm.exception}"
+        )
 
     def test_validate_path_windows_drive_letter_valid(self):
         """Test path validation with valid Windows drive letters."""
@@ -245,7 +262,12 @@ class TestPathValidator(unittest.TestCase):
         self.assertEqual(result, "file__.txt")
 
     def test_sanitize_filename_control_characters(self):
-        """Test filename sanitization with control characters."""
+        """Test filename sanitization with control characters.
+        
+        Note: This test verifies that control characters (including null bytes)
+        are properly removed during sanitization. The sanitize_filename method
+        should consistently remove these characters across all platforms.
+        """
         result = PathValidator.sanitize_filename("file\x00\x01.txt")
         self.assertEqual(result, "file.txt")
 

@@ -2,8 +2,17 @@
 test_validation_utils.py
 
 Comprehensive unit tests for the validation_utils module.
+
+Platform-Specific Behavior Notes:
+- Null bytes in file paths behave differently across operating systems:
+  * Windows: Path constructor preserves null bytes but they may cause issues in file operations
+  * Unix-like systems (Linux, macOS): Null bytes typically cause immediate errors
+- Tests are designed to handle these platform differences gracefully
 """
 
+import os
+import platform
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -195,8 +204,13 @@ class TestValidatorIsNonNegativeInteger(unittest.TestCase):
         result = Validator.is_non_negative_integer(5, "test_param", max_value=10)
         self.assertEqual(result, 5)
         
-        with self.assertRaises(SplurgeRangeError):
+        # Test exact maximum value
+        result = Validator.is_non_negative_integer(10, "test_param", max_value=10)
+        self.assertEqual(result, 10)
+        
+        with self.assertRaises(SplurgeRangeError) as cm:
             Validator.is_non_negative_integer(15, "test_param", max_value=10)
+        self.assertIn("test_param must be <= 10", str(cm.exception))
 
     def test_negative_integers(self):
         """Test that negative integers are rejected."""
@@ -210,11 +224,17 @@ class TestValidatorIsNonNegativeInteger(unittest.TestCase):
 
     def test_invalid_types(self):
         """Test invalid input types."""
-        with self.assertRaises(SplurgeParameterError):
+        with self.assertRaises(SplurgeParameterError) as cm:
             Validator.is_non_negative_integer(5.0, "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
         
-        with self.assertRaises(SplurgeParameterError):
+        with self.assertRaises(SplurgeParameterError) as cm:
             Validator.is_non_negative_integer("5", "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_non_negative_integer(None, "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
 
 
 class TestValidatorIsRangeBounds(unittest.TestCase):
@@ -472,52 +492,6 @@ class TestValidatorIsIterable(unittest.TestCase):
         self.assertEqual(result, generator)
 
 
-class TestValidatorIsNonNegativeInteger(unittest.TestCase):
-    """Test cases for Validator.is_non_negative_integer method."""
-
-    def test_valid_non_negative_integers(self):
-        """Test that valid non-negative integers are accepted."""
-        result = Validator.is_non_negative_integer(0, "test_param")
-        self.assertEqual(result, 0)
-        
-        result = Validator.is_non_negative_integer(1, "test_param")
-        self.assertEqual(result, 1)
-        
-        result = Validator.is_non_negative_integer(100, "test_param")
-        self.assertEqual(result, 100)
-
-    def test_negative_integers(self):
-        """Test that negative integers raise SplurgeRangeError."""
-        with self.assertRaises(SplurgeRangeError) as cm:
-            Validator.is_non_negative_integer(-1, "test_param")
-        self.assertIn("test_param must be >= 0", str(cm.exception))
-        
-        with self.assertRaises(SplurgeRangeError) as cm:
-            Validator.is_non_negative_integer(-100, "test_param")
-        self.assertIn("test_param must be >= 0", str(cm.exception))
-
-    def test_custom_max_value(self):
-        """Test custom maximum values."""
-        result = Validator.is_non_negative_integer(10, "test_param", max_value=10)
-        self.assertEqual(result, 10)
-        
-        with self.assertRaises(SplurgeRangeError) as cm:
-            Validator.is_non_negative_integer(11, "test_param", max_value=10)
-        self.assertIn("test_param must be <= 10", str(cm.exception))
-
-    def test_invalid_types(self):
-        """Test that non-integer types raise SplurgeParameterError."""
-        with self.assertRaises(SplurgeParameterError) as cm:
-            Validator.is_non_negative_integer("5", "test_param")
-        self.assertIn("test_param must be an integer", str(cm.exception))
-        
-        with self.assertRaises(SplurgeParameterError) as cm:
-            Validator.is_non_negative_integer(5.5, "test_param")
-        self.assertIn("test_param must be an integer", str(cm.exception))
-        
-        with self.assertRaises(SplurgeParameterError) as cm:
-            Validator.is_non_negative_integer(None, "test_param")
-        self.assertIn("test_param must be an integer", str(cm.exception))
 
 
 class TestValidatorIsEncoding(unittest.TestCase):
@@ -665,7 +639,9 @@ class TestValidatorCreateHelpfulErrorMessage(unittest.TestCase):
         )
         
         self.assertEqual(message, "Basic error")
-        self.assertIsNone(details)
+        # None should now be included in details since it's a valid value
+        self.assertIn("Received value: None", details)
+        self.assertIn("type: NoneType", details)
 
     def test_complex_received_value(self):
         """Test with complex received values."""
@@ -736,6 +712,43 @@ class TestValidatorCreateHelpfulErrorMessage(unittest.TestCase):
         self.assertIn("  - Use integer values", details)
         self.assertIn("  - Check range limits", details)
 
+    def test_falsy_values_included(self):
+        """Test that falsy values are properly included in error messages."""
+        falsy_values = [
+            (0, "int"),
+            (0.0, "float"),
+            (False, "bool"),
+            ("", "str"),
+            ([], "list"),
+            ({}, "dict"),
+            (set(), "set"),
+            ((), "tuple"),
+        ]
+        
+        for falsy_value, expected_type_name in falsy_values:
+            with self.subTest(value=falsy_value, type=expected_type_name):
+                message, details = Validator.create_helpful_error_message(
+                    "Test message",
+                    received_value=falsy_value
+                )
+                
+                self.assertEqual(message, "Test message")
+                self.assertIn(f"Received value: {repr(falsy_value)}", details)
+                self.assertIn(f"type: {expected_type_name}", details)
+
+    def test_missing_received_value(self):
+        """Test that missing received_value (using sentinel) excludes from details."""
+        message, details = Validator.create_helpful_error_message(
+            "Test message",
+            expected_type=str
+        )
+        
+        self.assertEqual(message, "Test message")
+        # When no received_value is provided, it should not appear in details
+        if details:
+            self.assertNotIn("Received value:", details)
+        self.assertIn("Expected type: str", details)
+
 
 class TestValidatorEdgeCases(unittest.TestCase):
     """Test edge cases and error conditions for various Validator methods."""
@@ -769,16 +782,33 @@ class TestValidatorEdgeCases(unittest.TestCase):
 
     def test_file_path_invalid_path_construction(self):
         """Test is_file_path with values that cause Path construction errors."""
-        # Test with null bytes - Path constructor on Windows preserves them
-        # so let's test that it works correctly
-        result = Validator.is_file_path("test\x00file", "test_param")
-        self.assertEqual(result, Path("test\x00file"))  # null bytes are preserved on Windows
+        # Test with null bytes - behavior varies by platform
+        # On Windows: Path constructor preserves null bytes but they may cause issues in file operations
+        # On Unix-like systems: null bytes typically cause immediate errors
+        null_byte_path = "test\x00file"
+        
+        if sys.platform == "win32":
+            # Windows preserves null bytes in Path objects but they're problematic for actual file operations
+            result = Validator.is_file_path(null_byte_path, "test_param")
+            self.assertEqual(result, Path(null_byte_path))
+            # Verify the null byte is preserved in the Path object
+            self.assertIn("\x00", str(result))
+        else:
+            # Unix-like systems (Linux, macOS) typically reject null bytes in paths
+            # The behavior may vary, so we test that it either works or raises a specific error
+            try:
+                result = Validator.is_file_path(null_byte_path, "test_param")
+                # If it succeeds, verify the path is created correctly
+                self.assertEqual(result, Path(null_byte_path))
+            except (ValueError, OSError, SplurgeParameterError) as e:
+                # These are acceptable exceptions for null bytes in paths on Unix systems
+                self.assertTrue(
+                    "null byte" in str(e).lower() or "embedded null" in str(e).lower(),
+                    f"Expected null byte error, got: {e}"
+                )
 
     def test_file_path_permission_simulation(self):
         """Test file path validation with permission issues."""
-        import tempfile
-        import os
-        
         # Create a temporary file to test with
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_path = temp_file.name

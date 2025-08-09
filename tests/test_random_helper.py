@@ -5,6 +5,7 @@ This module contains comprehensive tests for all methods in the RandomHelper cla
 including both secure and non-secure random generation modes.
 """
 
+import re
 import unittest
 from datetime import date, datetime, timedelta
 
@@ -191,8 +192,6 @@ class TestRandomHelper(unittest.TestCase):
 
     def test_as_base58_like(self):
         """Test Base58-like string generation with guaranteed character diversity."""
-        import re
-        
         # Test 1: Default usage with all symbol types
         result = RandomHelper.as_base58_like(10)
         self.assertEqual(len(result), 10)
