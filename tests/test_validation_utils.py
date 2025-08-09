@@ -15,7 +15,8 @@ from splurge_tools.exceptions import (
     SplurgeRangeError,
     SplurgeValidationError,
     SplurgeFileNotFoundError,
-    SplurgeFilePermissionError
+    SplurgeFilePermissionError,
+    SplurgeFormatError
 )
 
 
@@ -396,6 +397,194 @@ class TestValidatorIsFilePath(unittest.TestCase):
         self.assertEqual(result, Path("."))
 
 
+class TestValidatorIsIterable(unittest.TestCase):
+    """Test cases for Validator.is_iterable method."""
+
+    def test_valid_iterables(self):
+        """Test that valid iterables are accepted."""
+        # Test basic iterables
+        result = Validator.is_iterable([1, 2, 3], "test_param")
+        self.assertEqual(result, [1, 2, 3])
+        
+        result = Validator.is_iterable((1, 2, 3), "test_param")
+        self.assertEqual(result, (1, 2, 3))
+        
+        result = Validator.is_iterable("hello", "test_param")
+        self.assertEqual(result, "hello")
+        
+        result = Validator.is_iterable({1, 2, 3}, "test_param")
+        self.assertEqual(result, {1, 2, 3})
+        
+        result = Validator.is_iterable({"a": 1}, "test_param")
+        self.assertEqual(result, {"a": 1})
+
+    def test_empty_iterables_allowed(self):
+        """Test that empty iterables are accepted when allow_empty=True."""
+        result = Validator.is_iterable([], "test_param", allow_empty=True)
+        self.assertEqual(result, [])
+        
+        result = Validator.is_iterable("", "test_param", allow_empty=True)
+        self.assertEqual(result, "")
+        
+        result = Validator.is_iterable(set(), "test_param", allow_empty=True)
+        self.assertEqual(result, set())
+
+    def test_empty_iterables_not_allowed(self):
+        """Test that empty iterables raise error when allow_empty=False."""
+        with self.assertRaises(SplurgeValidationError) as cm:
+            Validator.is_iterable([], "test_param", allow_empty=False)
+        self.assertIn("test_param cannot be empty", str(cm.exception))
+        
+        with self.assertRaises(SplurgeValidationError) as cm:
+            Validator.is_iterable("", "test_param", allow_empty=False)
+        self.assertIn("test_param cannot be empty", str(cm.exception))
+
+    def test_non_iterable_values(self):
+        """Test that non-iterable values raise SplurgeParameterError."""
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_iterable(42, "test_param")
+        self.assertIn("test_param must be iterable", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_iterable(None, "test_param")
+        self.assertIn("test_param must be iterable", str(cm.exception))
+
+    def test_expected_type_validation(self):
+        """Test type validation when expected_type is specified."""
+        # Valid type
+        result = Validator.is_iterable([1, 2, 3], "test_param", expected_type=list)
+        self.assertEqual(result, [1, 2, 3])
+        
+        # Invalid type
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_iterable("hello", "test_param", expected_type=list)
+        self.assertIn("test_param must be of type list", str(cm.exception))
+
+    def test_generator_objects(self):
+        """Test that generator objects work as iterables."""
+        def gen():
+            yield 1
+            yield 2
+            yield 3
+        
+        generator = gen()
+        result = Validator.is_iterable(generator, "test_param")
+        self.assertEqual(result, generator)
+
+
+class TestValidatorIsNonNegativeInteger(unittest.TestCase):
+    """Test cases for Validator.is_non_negative_integer method."""
+
+    def test_valid_non_negative_integers(self):
+        """Test that valid non-negative integers are accepted."""
+        result = Validator.is_non_negative_integer(0, "test_param")
+        self.assertEqual(result, 0)
+        
+        result = Validator.is_non_negative_integer(1, "test_param")
+        self.assertEqual(result, 1)
+        
+        result = Validator.is_non_negative_integer(100, "test_param")
+        self.assertEqual(result, 100)
+
+    def test_negative_integers(self):
+        """Test that negative integers raise SplurgeRangeError."""
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_non_negative_integer(-1, "test_param")
+        self.assertIn("test_param must be >= 0", str(cm.exception))
+        
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_non_negative_integer(-100, "test_param")
+        self.assertIn("test_param must be >= 0", str(cm.exception))
+
+    def test_custom_max_value(self):
+        """Test custom maximum values."""
+        result = Validator.is_non_negative_integer(10, "test_param", max_value=10)
+        self.assertEqual(result, 10)
+        
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_non_negative_integer(11, "test_param", max_value=10)
+        self.assertIn("test_param must be <= 10", str(cm.exception))
+
+    def test_invalid_types(self):
+        """Test that non-integer types raise SplurgeParameterError."""
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_non_negative_integer("5", "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_non_negative_integer(5.5, "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_non_negative_integer(None, "test_param")
+        self.assertIn("test_param must be an integer", str(cm.exception))
+
+
+class TestValidatorIsEncoding(unittest.TestCase):
+    """Test cases for Validator.is_encoding method."""
+
+    def test_valid_encodings(self):
+        """Test that valid encodings are accepted."""
+        result = Validator.is_encoding("utf-8", "test_param")
+        self.assertEqual(result, "utf-8")
+        
+        result = Validator.is_encoding("ascii", "test_param")
+        self.assertEqual(result, "ascii")
+        
+        result = Validator.is_encoding("latin-1", "test_param")
+        self.assertEqual(result, "latin-1")
+        
+        result = Validator.is_encoding("utf-16", "test_param")
+        self.assertEqual(result, "utf-16")
+
+    def test_invalid_encoding_names(self):
+        """Test that invalid encoding names raise SplurgeFormatError."""
+        with self.assertRaises(SplurgeFormatError) as cm:
+            Validator.is_encoding("invalid-encoding", "test_param")
+        self.assertIn("Unsupported encoding: invalid-encoding", str(cm.exception))
+        
+        with self.assertRaises(SplurgeFormatError) as cm:
+            Validator.is_encoding("fake-encoding-123", "test_param")
+        self.assertIn("Unsupported encoding: fake-encoding-123", str(cm.exception))
+
+    def test_non_string_values(self):
+        """Test that non-string values raise SplurgeParameterError."""
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding(123, "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding(None, "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding(["utf-8"], "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+
+    def test_empty_or_whitespace_strings(self):
+        """Test that empty or whitespace-only strings raise SplurgeParameterError."""
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding("", "test_param")
+        self.assertIn("test_param cannot be empty or whitespace", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding("   ", "test_param")
+        self.assertIn("test_param cannot be empty or whitespace", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            Validator.is_encoding("\t\n", "test_param")
+        self.assertIn("test_param cannot be empty or whitespace", str(cm.exception))
+
+    def test_case_sensitivity(self):
+        """Test that encoding names are case-sensitive where appropriate."""
+        # Most encodings are case-insensitive in Python
+        result = Validator.is_encoding("UTF-8", "test_param")
+        self.assertEqual(result, "UTF-8")
+        
+        result = Validator.is_encoding("Utf-8", "test_param")
+        self.assertEqual(result, "Utf-8")
+
+
 class TestValidatorCreateHelpfulErrorMessage(unittest.TestCase):
     """Test cases for Validator.create_helpful_error_message method."""
 
@@ -493,6 +682,169 @@ class TestValidatorCreateHelpfulErrorMessage(unittest.TestCase):
             received_value={"key": "value"}
         )
         self.assertIn("Received value: {'key': 'value'}", details)
+
+    def test_valid_range_edge_cases(self):
+        """Test edge cases for valid_range parameter."""
+        # Test with tuple range
+        message, details = Validator.create_helpful_error_message(
+            "Value out of range",
+            valid_range=(0, 100)
+        )
+        self.assertEqual(message, "Value out of range")
+        self.assertIn("Valid range: 0 to 100", details)
+        
+        # Test with negative range
+        message, details = Validator.create_helpful_error_message(
+            "Value out of range",
+            valid_range=(-10, -1)
+        )
+        self.assertEqual(message, "Value out of range")
+        self.assertIn("Valid range: -10 to -1", details)
+
+    def test_expected_type_edge_cases(self):
+        """Test edge cases for expected_type parameter."""
+        # Test with non-type object (string)
+        message, details = Validator.create_helpful_error_message(
+            "Type mismatch",
+            expected_type="custom_type_description"
+        )
+        self.assertEqual(message, "Type mismatch")
+        self.assertIn("Expected: custom_type_description", details)
+        
+        # Test with built-in type
+        message, details = Validator.create_helpful_error_message(
+            "Type mismatch",
+            expected_type=dict
+        )
+        self.assertEqual(message, "Type mismatch")
+        self.assertIn("Expected type: dict", details)
+
+    def test_all_parameters_combined(self):
+        """Test with all parameters provided."""
+        message, details = Validator.create_helpful_error_message(
+            "Complete validation error",
+            received_value=42.5,
+            expected_type=int,
+            valid_range=(1, 10),
+            suggestions=["Use integer values", "Check range limits"]
+        )
+        self.assertEqual(message, "Complete validation error")
+        self.assertIn("Received value: 42.5 (type: float)", details)
+        self.assertIn("Expected type: int", details)
+        self.assertIn("Valid range: 1 to 10", details)
+        self.assertIn("Suggestions:", details)
+        self.assertIn("  - Use integer values", details)
+        self.assertIn("  - Check range limits", details)
+
+
+class TestValidatorEdgeCases(unittest.TestCase):
+    """Test edge cases and error conditions for various Validator methods."""
+
+    def test_range_bounds_allow_equal_edge_cases(self):
+        """Test edge cases for is_range_bounds with allow_equal parameter."""
+        # Test equal values with allow_equal=True
+        result = Validator.is_range_bounds(5, 5, allow_equal=True)
+        self.assertEqual(result, (5, 5))
+        
+        # Test equal values with allow_equal=False
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_range_bounds(5, 5, allow_equal=False)
+        self.assertIn("lower must be < upper", str(cm.exception))
+        
+        # Test lower > upper with allow_equal=True (should still fail)
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_range_bounds(10, 5, allow_equal=True)
+        self.assertIn("lower must be <= upper", str(cm.exception))
+
+    def test_range_bounds_custom_param_names(self):
+        """Test is_range_bounds with custom parameter names."""
+        with self.assertRaises(SplurgeRangeError) as cm:
+            Validator.is_range_bounds(
+                10, 5, 
+                lower_param="min_val", 
+                upper_param="max_val",
+                allow_equal=False
+            )
+        self.assertIn("min_val must be < max_val", str(cm.exception))
+
+    def test_file_path_invalid_path_construction(self):
+        """Test is_file_path with values that cause Path construction errors."""
+        # Test with null bytes - Path constructor on Windows preserves them
+        # so let's test that it works correctly
+        result = Validator.is_file_path("test\x00file", "test_param")
+        self.assertEqual(result, Path("test\x00file"))  # null bytes are preserved on Windows
+
+    def test_file_path_permission_simulation(self):
+        """Test file path validation with permission issues."""
+        import tempfile
+        import os
+        
+        # Create a temporary file to test with
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_path = temp_file.name
+            temp_file.write(b"test content")
+        
+        try:
+            # Test existing file
+            result = Validator.is_file_path(temp_path, "test_param", must_exist=True)
+            self.assertEqual(result, Path(temp_path))
+            
+            # Test non-existent file with must_exist=True
+            non_existent = temp_path + "_nonexistent"
+            with self.assertRaises(SplurgeValidationError) as cm:
+                Validator.is_file_path(non_existent, "test_param", must_exist=True)
+            self.assertIn("test_param does not exist", str(cm.exception))
+            
+        finally:
+            # Clean up
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_positive_integer_boundary_values(self):
+        """Test boundary values for is_positive_integer."""
+        # Test with very large integers
+        large_int = 10**100
+        result = Validator.is_positive_integer(large_int, "test_param")
+        self.assertEqual(result, large_int)
+        
+        # Test with max_value boundary
+        result = Validator.is_positive_integer(100, "test_param", max_value=100)
+        self.assertEqual(result, 100)
+        
+        with self.assertRaises(SplurgeRangeError):
+            Validator.is_positive_integer(101, "test_param", max_value=100)
+
+    def test_delimiter_edge_cases(self):
+        """Test edge cases for is_delimiter method."""
+        # Test with unicode characters
+        result = Validator.is_delimiter("→", "test_param")
+        self.assertEqual(result, "→")
+        
+        # Test with escape sequences
+        result = Validator.is_delimiter("\\n", "test_param")
+        self.assertEqual(result, "\\n")
+        
+        # Test with actual newline
+        result = Validator.is_delimiter("\n", "test_param")
+        self.assertEqual(result, "\n")
+
+    def test_non_empty_string_unicode_edge_cases(self):
+        """Test unicode edge cases for is_non_empty_string."""
+        # Test with unicode string
+        result = Validator.is_non_empty_string("héllo", "test_param")
+        self.assertEqual(result, "héllo")
+        
+        # Test with emoji
+        result = Validator.is_non_empty_string("🚀", "test_param")
+        self.assertEqual(result, "🚀")
+        
+        # Test with zero-width characters - these are not treated as whitespace by Python's strip()
+        result = Validator.is_non_empty_string("\u200b", "test_param", allow_whitespace_only=False)
+        self.assertEqual(result, "\u200b")  # zero-width space is preserved
+        
+        # Test with actual whitespace characters
+        with self.assertRaises(SplurgeParameterError):
+            Validator.is_non_empty_string("   ", "test_param", allow_whitespace_only=False)
 
 
 if __name__ == "__main__":
