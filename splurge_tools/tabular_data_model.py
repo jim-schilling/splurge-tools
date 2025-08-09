@@ -14,6 +14,9 @@ from typing import Generator, Iterator
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
+from splurge_tools.validation_utils import Validator
+from splurge_tools.common_utils import validate_data_structure, safe_dict_access, safe_index_access
+from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
 
 
 class TabularDataModel(TabularDataProtocol):
@@ -42,10 +45,8 @@ class TabularDataModel(TabularDataProtocol):
         Raises:
             ValueError: If data or header configuration is invalid.
         """
-        if data is None or len(data) == 0:
-            raise ValueError("Data is required")
-        if header_rows < 0:
-            raise ValueError("Header rows must be greater than or equal to 0")
+        data = validate_data_structure(data, expected_type=list, param_name="data", allow_empty=False)
+        header_rows = Validator.is_non_negative_integer(header_rows, "header_rows")
 
         self._raw_data = data
         self._header_rows = header_rows
@@ -143,9 +144,7 @@ class TabularDataModel(TabularDataProtocol):
         Raises:
             ValueError: If column name is not found.
         """
-        if name not in self._column_index_map:
-            raise ValueError(f"Column name {name} not found")
-        return self._column_index_map[name]
+        return safe_dict_access(self._column_index_map, name, item_name="column")
 
     @property
     def row_count(self) -> int:
@@ -177,8 +176,7 @@ class TabularDataModel(TabularDataProtocol):
         Raises:
             ValueError: If column name is not found.
         """
-        if name not in self._column_index_map:
-            raise ValueError(f"Column name {name} not found")
+        safe_dict_access(self._column_index_map, name, item_name="column")
         if name not in self._column_types:
             col_idx: int = self._column_index_map[name]
             values: list[str] = [row[col_idx] for row in self._data]
@@ -201,8 +199,7 @@ class TabularDataModel(TabularDataProtocol):
         Raises:
             ValueError: If column name is not found.
         """
-        if name not in self._column_index_map:
-            raise ValueError(f"Column name {name} not found")
+        safe_dict_access(self._column_index_map, name, item_name="column")
         col_idx: int = self._column_index_map[name]
         return [row[col_idx] for row in self._data]
 
@@ -224,10 +221,12 @@ class TabularDataModel(TabularDataProtocol):
         Raises:
             ValueError: If column name is not found or row index is out of range.
         """
-        if name not in self._column_index_map:
-            raise ValueError(f"Column name {name} not found")
+        safe_dict_access(self._column_index_map, name, item_name="column")
         if row_index < 0 or row_index >= self._rows:
-            raise ValueError(f"Row index {row_index} out of range")
+            raise SplurgeRangeError(
+                f"Row index {row_index} out of range",
+                details=f"Valid range: 0 to {self._rows - 1}"
+            )
         col_idx: int = self._column_index_map[name]
         return self._data[row_index][col_idx]
 

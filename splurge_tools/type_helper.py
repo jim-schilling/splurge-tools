@@ -20,7 +20,7 @@ import re
 import typing
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, Iterable, Union
+from typing import Any, Iterable
 
 
 class DataType(Enum):
@@ -214,7 +214,7 @@ class String:
     @classmethod
     def is_bool_like(
         cls,
-        value: Union[str, bool, None],
+        value: str | bool | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -304,7 +304,7 @@ class String:
     @classmethod
     def is_float_like(
         cls,
-        value: Union[str, float, None],
+        value: str | float | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -340,7 +340,7 @@ class String:
     @classmethod
     def is_int_like(
         cls,
-        value: Union[str, int, None],
+        value: str | int | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -374,7 +374,7 @@ class String:
     @classmethod
     def is_numeric_like(
         cls,
-        value: Union[str, float, int, None],
+        value: str | float | int | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -405,7 +405,7 @@ class String:
     @classmethod
     def is_category_like(
         cls,
-        value: Union[str, None],
+        value: str | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -489,7 +489,7 @@ class String:
     @classmethod
     def is_date_like(
         cls,
-        value: Union[str, date, None],
+        value: str | date | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -556,7 +556,7 @@ class String:
     @classmethod
     def is_datetime_like(
         cls,
-        value: Union[str, datetime, None],
+        value: str | datetime | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -595,7 +595,7 @@ class String:
     @classmethod
     def is_time_like(
         cls,
-        value: Union[str, time, None],
+        value: str | time | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -639,11 +639,11 @@ class String:
     @classmethod
     def to_bool(
         cls,
-        value: Union[str, bool, None],
+        value: str | bool | None,
         *,
-        default: Union[bool, None] = None,
+        default: bool | None = None,
         trim: bool = True
-    ) -> Union[bool, None]:
+    ) -> bool | None:
         """
         Convert value to boolean.
 
@@ -673,11 +673,11 @@ class String:
     @classmethod
     def to_float(
         cls,
-        value: Union[str, float, None],
+        value: str | float | None,
         *,
-        default: Union[float, None] = None,
+        default: float | None = None,
         trim: bool = True
-    ) -> Union[float, None]:
+    ) -> float | None:
         """
         Convert value to float.
 
@@ -701,11 +701,11 @@ class String:
     @classmethod
     def to_int(
         cls,
-        value: Union[str, int, None],
+        value: str | int | None,
         *,
-        default: Union[int, None] = None,
+        default: int | None = None,
         trim: bool = True
-    ) -> Union[int, None]:
+    ) -> int | None:
         """
         Convert value to integer.
 
@@ -729,11 +729,11 @@ class String:
     @classmethod
     def to_date(
         cls,
-        value: Union[str, date, None],
+        value: str | date | None,
         *,
-        default: Union[date, None] = None,
+        default: date | None = None,
         trim: bool = True
-    ) -> Union[date, None]:
+    ) -> date | None:
         """
         Convert value to date.
 
@@ -773,11 +773,11 @@ class String:
     @classmethod
     def to_datetime(
         cls,
-        value: Union[str, datetime, None],
+        value: str | datetime | None,
         *,
-        default: Union[datetime, None] = None,
+        default: datetime | None = None,
         trim: bool = True
-    ) -> Union[datetime, None]:
+    ) -> datetime | None:
         """
         Convert value to datetime.
 
@@ -817,11 +817,11 @@ class String:
     @classmethod
     def to_time(
         cls,
-        value: Union[str, time, None],
+        value: str | time | None,
         *,
-        default: Union[time, None] = None,
+        default: time | None = None,
         trim: bool = True
-    ) -> Union[time, None]:
+    ) -> time | None:
         """
         Convert value to time.
 
@@ -862,7 +862,7 @@ class String:
     @classmethod
     def has_leading_zero(
         cls,
-        value: Union[str, None],
+        value: str | None,
         *,
         trim: bool = True
     ) -> bool:
@@ -889,7 +889,7 @@ class String:
     @classmethod
     def infer_type(
         cls,
-        value: Union[str, bool, int, float, date, time, datetime, None],
+        value: str | bool | int | float | date | time | datetime | None,
         *,
         trim: bool = True
     ) -> DataType:
@@ -955,7 +955,7 @@ class String:
     @classmethod
     def infer_type_name(
         cls,
-        value: Union[str, bool, int, float, date, time, datetime, None],
+        value: str | bool | int | float | date | time | datetime | None,
         *,
         trim: bool = True
     ) -> str:
@@ -984,7 +984,7 @@ def _determine_type_from_counts(
     count: int,
     *,
     allow_special_cases: bool = True
-) -> Union[DataType, None]:
+) -> DataType | None:
     """
     Determine the data type based on type counts.
     

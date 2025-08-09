@@ -10,7 +10,7 @@ This module is licensed under the MIT License.
 """
 
 from dataclasses import dataclass
-from typing import Any, Generator, Optional
+from typing import Any, Generator
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
@@ -41,7 +41,7 @@ class TypedTabularDataModel(TabularDataModel, TabularDataProtocol):
         *,
         header_rows: int = 1,
         skip_empty_rows: bool = True,
-        type_configs: Optional[dict[DataType, TypeConfig]] = None
+        type_configs: dict[DataType, TypeConfig] | None = None
     ) -> None:
         super().__init__(
             data,

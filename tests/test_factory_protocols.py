@@ -2,6 +2,8 @@
 Tests for factory pattern with protocol compliance.
 """
 
+import os
+import tempfile
 import unittest
 from typing import Iterator
 
@@ -14,7 +16,7 @@ from splurge_tools.protocols import (
     ResourceManagerProtocol,
     TypeInferenceProtocol
 )
-from splurge_tools.type_helper import TypeInference
+from splurge_tools.type_helper import TypeInference, DataType
 
 
 class TestFactoryProtocols(unittest.TestCase):
@@ -113,15 +115,11 @@ class TestFactoryProtocols(unittest.TestCase):
         self.assertTrue(type_inference.can_infer("123"))
         self.assertFalse(type_inference.can_infer("hello"))
         
-        from splurge_tools.type_helper import DataType
         self.assertEqual(type_inference.infer_type("123"), DataType.INTEGER)
         self.assertEqual(type_inference.convert_value("123"), 123)
     
     def test_component_factory_resource_manager(self):
         """Test that ComponentFactory.create_resource_manager returns ResourceManagerProtocol compliant objects."""
-        import tempfile
-        import os
-        
         # Create a temporary file for testing
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write("test content")

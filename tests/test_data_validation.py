@@ -5,6 +5,7 @@ Tests for data validation utilities.
 import unittest
 
 from splurge_tools.data_validator import DataValidator
+from splurge_tools.protocols import DataValidatorProtocol
 
 
 class TestDataValidator(unittest.TestCase):
@@ -99,8 +100,6 @@ class TestDataValidator(unittest.TestCase):
 
     def test_protocol_compliance(self):
         """Test that DataValidator properly implements DataValidatorProtocol."""
-        from splurge_tools.protocols import DataValidatorProtocol
-        
         # Test that it implements the protocol
         self.assertIsInstance(self.validator, DataValidatorProtocol)
         

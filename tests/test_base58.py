@@ -5,6 +5,9 @@ This module contains comprehensive tests for the Base58 class
 including encoding/decoding and validation functionality.
 """
 
+import random
+import threading
+import time
 import unittest
 import pytest
 from splurge_tools.base58 import Base58
@@ -277,8 +280,6 @@ class TestBase58Integration(unittest.TestCase):
     
     def test_random_binary_data(self):
         """Test encoding/decoding random binary data."""
-        import random
-        
         for _ in range(10):
             # Generate random data of varying lengths
             length = random.randint(1, 100)
@@ -290,8 +291,6 @@ class TestBase58Integration(unittest.TestCase):
     
     def test_concurrent_encoding_decoding(self):
         """Test concurrent encoding and decoding operations."""
-        import threading
-        
         def encode_decode_worker():
             data = b"Hello World"
             for _ in range(100):
@@ -319,8 +318,6 @@ class TestBase58Integration(unittest.TestCase):
     
     def test_performance_with_large_data(self):
         """Test performance with large data."""
-        import time
-        
         data = b"x" * 1000  
         start_time = time.time()
         

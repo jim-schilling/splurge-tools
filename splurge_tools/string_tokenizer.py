@@ -11,6 +11,8 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
+from splurge_tools.validation_utils import Validator
+
 
 class StringTokenizer:
     """
@@ -49,8 +51,7 @@ class StringTokenizer:
             >>> StringTokenizer.parse("a,,c", ",")
             ['a', '', 'c']
         """
-        if not delimiter:
-            raise ValueError("Delimiter cannot be empty or None")
+        delimiter = Validator.is_delimiter(delimiter)
 
         if content is None:
             return []
@@ -89,8 +90,7 @@ class StringTokenizer:
             >>> StringTokenizer.parses(["a,b", "c,d"], ",")
             [['a', 'b'], ['c', 'd']]
         """
-        if not delimiter:
-            raise ValueError("Delimiter cannot be empty or None")
+        delimiter = Validator.is_delimiter(delimiter)
 
         return [cls.parse(text, delimiter, strip=strip) for text in content]
 

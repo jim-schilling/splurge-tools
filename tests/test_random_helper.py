@@ -5,10 +5,12 @@ This module contains comprehensive tests for all methods in the RandomHelper cla
 including both secure and non-secure random generation modes.
 """
 
+import re
 import unittest
 from datetime import date, datetime, timedelta
 
 from splurge_tools.random_helper import RandomHelper
+from splurge_tools.exceptions import SplurgeRangeError, SplurgeFormatError, SplurgeParameterError
 
 
 class TestRandomHelper(unittest.TestCase):
@@ -101,11 +103,11 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(1 <= secure_value <= 10)
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_int_range(10, 1)  # lower > upper
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_int_range(RandomHelper.INT64_MIN - 1, 10)  # below min
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_int_range(1, RandomHelper.INT64_MAX + 1)  # above max
 
     def test_as_float_range(self):
@@ -119,7 +121,7 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(-1.0 <= value <= 1.0)
 
         # Test edge case
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_float_range(1.0, 0.0)  # lower > upper
 
     def test_as_string(self):
@@ -135,9 +137,9 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(all(c in "abc" for c in secure_value))
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_string(0, "abc")  # length < 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             RandomHelper.as_string(5, "")  # empty charset
 
     def test_as_alpha(self):
@@ -190,8 +192,6 @@ class TestRandomHelper(unittest.TestCase):
 
     def test_as_base58_like(self):
         """Test Base58-like string generation with guaranteed character diversity."""
-        import re
-        
         # Test 1: Default usage with all symbol types
         result = RandomHelper.as_base58_like(10)
         self.assertEqual(len(result), 10)
@@ -247,35 +247,34 @@ class TestRandomHelper(unittest.TestCase):
         """Test error conditions for as_base58_like method."""
         
         # Test 1: Invalid size
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeRangeError) as cm:
             RandomHelper.as_base58_like(0)
         self.assertIn("size must be >= 1", str(cm.exception))
         
         # Test 2: Size too small for requirements (with symbols)
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeRangeError) as cm:
             RandomHelper.as_base58_like(2, symbols="!")
-        self.assertIn("size must be >= 3 to include alpha, digit, and symbol", str(cm.exception))
+        self.assertIn("Size too small to guarantee character diversity", str(cm.exception))
         
         # Test 3: Size too small for requirements (without symbols)
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeRangeError) as cm:
             RandomHelper.as_base58_like(1, symbols="")
-        self.assertIn("size must be >= 2 to include alpha and digit", str(cm.exception))
+        self.assertIn("Size too small to guarantee character diversity", str(cm.exception))
         
         # Test 4: Invalid symbols (not in SYMBOLS constant)
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeFormatError) as cm:
             RandomHelper.as_base58_like(5, symbols="XYZ")
-        self.assertIn("symbols contains invalid characters: XYZ", str(cm.exception))
-        self.assertIn("Only characters from SYMBOLS constant are allowed", str(cm.exception))
+        self.assertIn("Invalid characters in symbols parameter", str(cm.exception))
         
         # Test 5: Mixed valid and invalid symbols
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeFormatError) as cm:
             RandomHelper.as_base58_like(5, symbols="!@XY")
-        self.assertIn("symbols contains invalid characters: XY", str(cm.exception))
+        self.assertIn("Invalid characters in symbols parameter", str(cm.exception))
         
         # Test 6: Symbols with characters from BASE58 set (should fail)
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(SplurgeFormatError) as cm:
             RandomHelper.as_base58_like(5, symbols="A1!")  # A and 1 are from BASE58, not SYMBOLS
-        self.assertIn("symbols contains invalid characters: 1A", str(cm.exception))
+        self.assertIn("Invalid characters in symbols parameter", str(cm.exception))
 
     def test_as_base58_like_constants_validation(self):
         """Test that the method correctly uses the updated constants."""
@@ -305,9 +304,9 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(all(c in "abc" for c in secure_value))
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_variable_string(-1, 5, "abc")  # negative lower bound
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_variable_string(5, 3, "abc")  # lower >= upper
 
     def test_as_bool(self):
@@ -337,9 +336,9 @@ class TestRandomHelper(unittest.TestCase):
         self.assertEqual(secure_value[3], "-")
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeFormatError):
             RandomHelper.as_masked_string("")  # empty mask
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeFormatError):
             RandomHelper.as_masked_string("---")  # no mask characters
 
     def test_as_sequenced_string(self):
@@ -360,13 +359,13 @@ class TestRandomHelper(unittest.TestCase):
         self.assertEqual(values, ["100", "101", "102"])
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_sequenced_string(0, 3)  # count < 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_sequenced_string(3, 0)  # digits < 1
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_sequenced_string(3, 3, start=-1)  # start < 0
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_sequenced_string(1000, 3)  # sequence too long for digits
 
     def test_as_date(self):
@@ -393,11 +392,11 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(self.today - timedelta(days=30) <= value <= self.today)
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_date(10, 5)  # lower > upper
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_date(RandomHelper.INT64_MIN - 1, 10)  # below min
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_date(1, RandomHelper.INT64_MAX + 1)  # above max
 
     def test_as_datetime(self):
@@ -441,11 +440,11 @@ class TestRandomHelper(unittest.TestCase):
         self.assertTrue(value.date() <= self.now.date())
 
         # Test edge cases
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_datetime(10, 5)  # lower > upper
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_datetime(RandomHelper.INT64_MIN - 1, 10)  # below min
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             RandomHelper.as_datetime(1, RandomHelper.INT64_MAX + 1)  # above max
 
         # Test datetime components

@@ -11,7 +11,7 @@ This module is licensed under the MIT License.
 """
 
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List
 
 from splurge_tools.protocols import DataTransformerProtocol, TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
@@ -87,7 +87,7 @@ class DataTransformer(DataTransformerProtocol):
         columns_col: str,
         values_col: str,
         *,
-        agg_func: Optional[Callable[[List[Any]], Any]] = None
+        agg_func: Callable[[List[Any]], Any] | None = None
     ) -> TabularDataModel:
         """
         Pivot the data model to create a cross-tabulation.
@@ -96,7 +96,7 @@ class DataTransformer(DataTransformerProtocol):
             index_cols (List[str]): Columns to use as row indices.
             columns_col (str): Column to use as new columns.
             values_col (str): Column to use as values.
-            agg_func (Optional[Callable[[List[Any]], Any]]): Aggregation function for duplicates.
+            agg_func (Callable[[List[Any]], Any] | None): Aggregation function for duplicates.
 
         Returns:
             TabularDataModel: Pivoted data model.

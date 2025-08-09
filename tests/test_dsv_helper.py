@@ -3,6 +3,7 @@
 import unittest
 
 from splurge_tools.dsv_helper import DsvHelper
+from splurge_tools.exceptions import SplurgeParameterError
 
 
 class TestDSVHelper(unittest.TestCase):
@@ -45,7 +46,7 @@ class TestDSVHelper(unittest.TestCase):
     def test_parses_invalid_content_type(self):
         """Test parses method with invalid content type."""
         # Test with non-list content
-        with self.assertRaises(TypeError):
+        with self.assertRaises(SplurgeParameterError):
             DsvHelper.parses("not a list", ",")
         
         # Test with list containing non-string items
@@ -58,7 +59,7 @@ class TestDSVHelper(unittest.TestCase):
 
     def test_invalid_delimiter(self):
         """Test handling of invalid delimiter."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             DsvHelper.parse("a,b,c", "")
 
     def test_profile_columns_simple(self):

@@ -184,30 +184,48 @@ python -m build
 
 ## Changelog
 
-# [0.2.7] - 2025-08-01
+### [0.3.1] - 2025-08-09
 
 #### Added
-- Added `utility_helper.py` module with base-58 encoding/decoding utilities
-- Added `encode_base58()` function for converting binary data to base-58 strings
-- Added `decode_base58()` function for converting base-58 strings to binary data
-- Added `is_valid_base58()` function for validating base-58 string format
-- Added `ValidationError` exception class for utility validation errors
-- Added comprehensive test suite for base-58 functionality in `test_utility_helper.py`
-- Added support for bytearray input in base-58 encoding
-- Added handling for edge cases including all-zero bytes and leading zeros
-- Added integration tests for cryptographic key encoding and Bitcoin-style addresses
-- Added performance and memory efficiency tests for large data handling
-- Added concurrent operation testing for thread safety
+- **Common Utilities Module**: Added new `common_utils.py` module containing reusable utility functions to reduce code duplication across the package:
+  - `deprecated_method()`: Decorator for marking methods as deprecated with customizable warning messages
+  - `safe_file_operation()`: Safe file path validation and operation handling with comprehensive error handling
+  - `ensure_minimum_columns()`: Utility for ensuring data rows have minimum required columns with padding
+  - `safe_index_access()`: Safe list/tuple index access with bounds checking and helpful error messages
+  - `safe_dict_access()`: Safe dictionary key access with default values and error context
+  - `validate_data_structure()`: Generic data structure validation with type checking and empty data handling
+  - `create_parameter_validator()`: Factory function for creating parameter validation functions from validator dictionaries
+  - `batch_validate_rows()`: Iterator for validating and filtering tabular data rows with column count constraints
+  - `create_error_context()`: Utility for creating detailed error context information for debugging
+
+- **Validation Utilities Module**: Added new `validation_utils.py` module providing centralized `Validator` class with consistent error handling:
+  - `Validator.is_non_empty_string()`: String validation with whitespace handling options
+  - `Validator.is_positive_integer()`: Integer validation with range constraints and bounds checking
+  - `Validator.is_valid_range()`: Numeric range validation with inclusive/exclusive bounds
+  - `Validator.is_valid_path()`: Path validation with existence checking and permission validation
+  - `Validator.is_valid_encoding()`: Text encoding validation with fallback options
+  - `Validator.is_iterable_of_type()`: Generic iterable validation with element type checking
+  - All validator methods follow consistent `is_*` naming convention and return validated values or raise specific exceptions
 
 #### Changed
-- Enhanced error handling with specific validation error messages
-- Improved input validation for base-58 encoding/decoding operations
+- **Type Annotation Modernization**: Updated type annotations across multiple modules to use modern Python union syntax (`|`) instead of `Optional` and `Union` imports:
+  - Updated `data_transformer.py`, `data_validator.py`, `dsv_helper.py`, `random_helper.py`, `string_tokenizer.py`, `tabular_data_model.py`
+  - Improved type safety and consistency throughout the codebase
+  - Simplified import statements by removing unused `Optional` and `Union` imports
 
 #### Fixed
-- Proper handling of leading zero bytes in base-58 encoding/decoding
-- Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
+- **Enhanced Error Handling**: Improved error handling consistency across the package with specific exception types
+- **Code Duplication Reduction**: Consolidated common validation and utility patterns into reusable functions
+- **Type Safety Improvements**: Enhanced type checking and validation throughout the codebase
 
-### [0.3.0] - 2025-01-15
+#### Testing
+- **Comprehensive Test Coverage**: Added extensive test suites for new modules:
+  - `tests/test_common_utils.py`: Complete test coverage for common utility functions (96% coverage)
+  - `tests/test_validation_utils.py`: Comprehensive validation utility testing (94% coverage)
+  - Enhanced existing test files to use new utility functions where appropriate
+- **Maintained Package Coverage**: All existing functionality preserved with improved test organization
+
+### [0.3.0] - 2025-08-08
 
 #### Added
 - **Protocol-Based Architecture**: Implemented comprehensive protocol-based design across all major components for improved type safety and consistency
@@ -289,6 +307,29 @@ python -m build
   - RandomHelper: 58% → **97%** (+39%)
 - **Type Safety**: Reduced MyPy errors from 109 to 7 (remaining are "unreachable code" warnings for defensive programming)
 - **Architectural Clarity**: Improved separation of concerns between streaming and in-memory data models
+
+### [0.2.7] - 2025-08-01
+
+#### Added
+- Added `utility_helper.py` module with base-58 encoding/decoding utilities
+- Added `encode_base58()` function for converting binary data to base-58 strings
+- Added `decode_base58()` function for converting base-58 strings to binary data
+- Added `is_valid_base58()` function for validating base-58 string format
+- Added `ValidationError` exception class for utility validation errors
+- Added comprehensive test suite for base-58 functionality in `test_utility_helper.py`
+- Added support for bytearray input in base-58 encoding
+- Added handling for edge cases including all-zero bytes and leading zeros
+- Added integration tests for cryptographic key encoding and Bitcoin-style addresses
+- Added performance and memory efficiency tests for large data handling
+- Added concurrent operation testing for thread safety
+
+#### Changed
+- Enhanced error handling with specific validation error messages
+- Improved input validation for base-58 encoding/decoding operations
+
+#### Fixed
+- Proper handling of leading zero bytes in base-58 encoding/decoding
+- Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
 
 ### [0.2.6] - 2025-07-12
 

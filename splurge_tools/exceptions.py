@@ -11,7 +11,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from typing import Optional
+# No typing imports needed
 
 
 class SplurgeToolsError(Exception):
@@ -21,7 +21,7 @@ class SplurgeToolsError(Exception):
         self,
         message: str,
         *,
-        details: Optional[str] = None
+        details: str | None = None
     ) -> None:
         """
         Initialize SplurgeToolsError.
@@ -102,4 +102,24 @@ class SplurgeResourceAcquisitionError(SplurgeResourceError):
 
 class SplurgeResourceReleaseError(SplurgeResourceError):
     """Raised when resource release fails."""
+    pass
+
+
+class SplurgePerformanceWarning(SplurgeToolsError):
+    """Warning for performance-related issues."""
+    pass
+
+
+class SplurgeParameterError(SplurgeValidationError):
+    """Raised when function parameters are invalid."""
+    pass
+
+
+class SplurgeRangeError(SplurgeValidationError):
+    """Raised when values are outside expected ranges."""
+    pass
+
+
+class SplurgeFormatError(SplurgeValidationError):
+    """Raised when data format is invalid."""
     pass

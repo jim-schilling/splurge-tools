@@ -10,11 +10,13 @@ This module is licensed under the MIT License.
 
 from os import PathLike
 from collections import deque
-from typing import Optional, Union, Iterator
+from typing import Iterator
 
 from splurge_tools.string_tokenizer import StringTokenizer
 from splurge_tools.text_file_helper import TextFileHelper
 from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.validation_utils import Validator
+from splurge_tools.common_utils import validate_data_structure
 
 
 # Module-level constants for DSV parsing
@@ -38,7 +40,7 @@ class DsvHelper:
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True
     ) -> list[str]:
         """
@@ -48,7 +50,7 @@ class DsvHelper:
             content (str): The string to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
 
         Returns:
@@ -63,8 +65,7 @@ class DsvHelper:
             >>> DsvHelper.parse('"a","b","c"', ",", bookend='"')
             ['a', 'b', 'c']
         """
-        if not delimiter:
-            raise ValueError("Delimiter must not be empty or None.")
+        delimiter = Validator.is_delimiter(delimiter)
 
         tokens: list[str] = StringTokenizer.parse(content, delimiter, strip=strip)
 
@@ -83,7 +84,7 @@ class DsvHelper:
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True
     ) -> list[list[str]]:
         """
@@ -93,7 +94,7 @@ class DsvHelper:
             content (list[str]): The list of strings to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
 
         Returns:
@@ -107,7 +108,8 @@ class DsvHelper:
             >>> DsvHelper.parses(["a,b,c", "d,e,f"], ",")
             [['a', 'b', 'c'], ['d', 'e', 'f']]
         """
-        if not isinstance(content, list) or not all(isinstance(item, str) for item in content):
+        content = validate_data_structure(content, expected_type=list, param_name="content")
+        if not all(isinstance(item, str) for item in content):
             raise TypeError("Content must be a list of strings.")
 
         return [
@@ -118,11 +120,11 @@ class DsvHelper:
     @classmethod
     def parse_file(
         cls,
-        file_path: Union[PathLike[str], str],
+        file_path: PathLike[str] | str,
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True,
         encoding: str = _DEFAULT_ENCODING,
         skip_header_rows: int = _DEFAULT_HEADER_ROWS,
@@ -132,10 +134,10 @@ class DsvHelper:
         Parse a file into a list of lists of strings.
 
         Args:
-            file_path (Union[PathLike[str], str]): The path to the file to parse.
+            file_path (PathLike[str] | str): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
             encoding (str): The file encoding.
             skip_header_rows (int): Number of header rows to skip.
@@ -171,11 +173,11 @@ class DsvHelper:
     @classmethod
     def parse_stream(
         cls,
-        file_path: Union[PathLike[str], str],
+        file_path: PathLike[str] | str,
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True,
         encoding: str = _DEFAULT_ENCODING,
         skip_header_rows: int = _DEFAULT_HEADER_ROWS,
@@ -186,10 +188,10 @@ class DsvHelper:
         Stream-parse a DSV file in chunks of lines.
 
         Args:
-            file_path (Union[PathLike[str], str]): The path to the file to parse.
+            file_path (PathLike[str] | str): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
             encoding (str): The file encoding.
             skip_header_rows (int): Number of header rows to skip.
@@ -204,12 +206,10 @@ class DsvHelper:
             ValueError: If delimiter is empty or None.
             PermissionError: If the file cannot be accessed.
         """
-        if not delimiter:
-            raise ValueError("Delimiter must not be empty or None.")
-        if chunk_size < 100:
-            raise ValueError("chunk_size must be at least 100.")
-        if skip_header_rows < 0 or skip_footer_rows < 0:
-            raise ValueError("skip_header_rows and skip_footer_rows must be >= 0.")
+        delimiter = Validator.is_delimiter(delimiter)
+        chunk_size = Validator.is_positive_integer(chunk_size, "chunk_size", min_value=100)
+        skip_header_rows = Validator.is_non_negative_integer(skip_header_rows, "skip_header_rows")
+        skip_footer_rows = Validator.is_non_negative_integer(skip_footer_rows, "skip_footer_rows")
 
         with open(file_path, "r", encoding=encoding) as stream:
             # Skip header rows

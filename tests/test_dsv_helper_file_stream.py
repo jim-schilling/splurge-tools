@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from splurge_tools.dsv_helper import DsvHelper
+from splurge_tools.exceptions import SplurgeRangeError, SplurgeParameterError
 from splurge_tools.exceptions import SplurgeFileNotFoundError
 
 
@@ -164,7 +165,7 @@ class TestDSVHelperFileStream(unittest.TestCase):
             temp_path = Path(temp_file.name)
 
         try:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SplurgeParameterError):
                 list(DsvHelper.parse_stream(temp_path, ""))
         finally:
             temp_path.unlink()
@@ -176,7 +177,7 @@ class TestDSVHelperFileStream(unittest.TestCase):
             temp_path = Path(temp_file.name)
 
         try:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SplurgeRangeError):
                 list(DsvHelper.parse_stream(temp_path, ",", chunk_size=50))
         finally:
             temp_path.unlink()
@@ -188,10 +189,10 @@ class TestDSVHelperFileStream(unittest.TestCase):
             temp_path = Path(temp_file.name)
 
         try:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SplurgeRangeError):
                 list(DsvHelper.parse_stream(temp_path, ",", skip_header_rows=-1))
             
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SplurgeRangeError):
                 list(DsvHelper.parse_stream(temp_path, ",", skip_footer_rows=-1))
         finally:
             temp_path.unlink()
