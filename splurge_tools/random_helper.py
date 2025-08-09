@@ -153,7 +153,9 @@ class RandomHelper:
     def as_float_range(
         cls,
         lower: float,
-        upper: float
+        upper: float,
+        *,
+        secure: bool | None = False
     ) -> float:
         """
         Generate a random float within a specified range.
@@ -161,6 +163,8 @@ class RandomHelper:
         Args:
             lower (float): Lower bound (inclusive)
             upper (float): Upper bound (inclusive)
+            secure (bool, optional): If True, uses cryptographically secure random generation.
+                Defaults to False.
 
         Returns:
             float: Random float between lower and upper (inclusive)
@@ -169,13 +173,24 @@ class RandomHelper:
             ValueError: If lower >= upper
 
         Example:
-            >>> random_float_range(0.0, 1.0)
+            >>> RandomHelper.as_float_range(0.0, 1.0)
             0.56789
-            >>> random_float_range(-1.0, 1.0)
+            >>> RandomHelper.as_float_range(-1.0, 1.0, secure=True)  # Cryptographically secure
             0.12345
         """
         Validator.is_range_bounds(lower, upper, lower_param="lower", upper_param="upper")
-        return random.uniform(lower, upper)
+        
+        if secure:
+            # Use secure random generation
+            range_size = upper - lower
+            # Generate secure random bytes and convert to float in range [0, 1)
+            random_bytes = cls.as_bytes(8, secure=True)
+            random_int = int.from_bytes(random_bytes, 'big')
+            # Convert to float in range [0, 1)
+            random_fraction = random_int / (2**64)
+            return lower + (random_fraction * range_size)
+        else:
+            return random.uniform(lower, upper)
 
     @classmethod
     def as_string(
