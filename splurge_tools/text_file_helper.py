@@ -26,7 +26,7 @@ import warnings
 from collections import deque
 from os import PathLike
 from pathlib import Path
-from typing import List, Union, Iterator
+from typing import List, Iterator
 
 from splurge_tools.exceptions import (
     SplurgeFileNotFoundError,
@@ -46,7 +46,7 @@ class TextFileHelper:
 
     @staticmethod
     def line_count(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         encoding: str = "utf-8"
     ) -> int:
@@ -82,7 +82,7 @@ class TextFileHelper:
 
     @staticmethod
     def preview(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         max_lines: int = 100,
         strip: bool = True,
@@ -145,7 +145,7 @@ class TextFileHelper:
 
     @staticmethod
     def read_as_stream(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -248,7 +248,7 @@ class TextFileHelper:
 
     @staticmethod
     def read(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -301,7 +301,7 @@ class TextFileHelper:
 
     @staticmethod
     def load_as_stream(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -355,7 +355,7 @@ class TextFileHelper:
 
     @staticmethod
     def load(
-        file_name: Union[PathLike[str], str],
+        file_name: PathLike[str] | str,
         *,
         strip: bool = True,
         encoding: str = "utf-8",

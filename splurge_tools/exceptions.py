@@ -11,7 +11,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from typing import Optional
+# No typing imports needed
 
 
 class SplurgeToolsError(Exception):
@@ -21,7 +21,7 @@ class SplurgeToolsError(Exception):
         self,
         message: str,
         *,
-        details: Optional[str] = None
+        details: str | None = None
     ) -> None:
         """
         Initialize SplurgeToolsError.

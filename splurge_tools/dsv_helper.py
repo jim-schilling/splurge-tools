@@ -10,7 +10,7 @@ This module is licensed under the MIT License.
 
 from os import PathLike
 from collections import deque
-from typing import Optional, Union, Iterator
+from typing import Iterator
 
 from splurge_tools.string_tokenizer import StringTokenizer
 from splurge_tools.text_file_helper import TextFileHelper
@@ -38,7 +38,7 @@ class DsvHelper:
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True
     ) -> list[str]:
         """
@@ -48,7 +48,7 @@ class DsvHelper:
             content (str): The string to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
 
         Returns:
@@ -83,7 +83,7 @@ class DsvHelper:
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True
     ) -> list[list[str]]:
         """
@@ -93,7 +93,7 @@ class DsvHelper:
             content (list[str]): The list of strings to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
 
         Returns:
@@ -118,11 +118,11 @@ class DsvHelper:
     @classmethod
     def parse_file(
         cls,
-        file_path: Union[PathLike[str], str],
+        file_path: PathLike[str] | str,
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True,
         encoding: str = _DEFAULT_ENCODING,
         skip_header_rows: int = _DEFAULT_HEADER_ROWS,
@@ -132,10 +132,10 @@ class DsvHelper:
         Parse a file into a list of lists of strings.
 
         Args:
-            file_path (Union[PathLike[str], str]): The path to the file to parse.
+            file_path (PathLike[str] | str): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
             encoding (str): The file encoding.
             skip_header_rows (int): Number of header rows to skip.
@@ -171,11 +171,11 @@ class DsvHelper:
     @classmethod
     def parse_stream(
         cls,
-        file_path: Union[PathLike[str], str],
+        file_path: PathLike[str] | str,
         delimiter: str,
         *,
         strip: bool = True,
-        bookend: Optional[str] = None,
+        bookend: str | None = None,
         bookend_strip: bool = True,
         encoding: str = _DEFAULT_ENCODING,
         skip_header_rows: int = _DEFAULT_HEADER_ROWS,
@@ -186,10 +186,10 @@ class DsvHelper:
         Stream-parse a DSV file in chunks of lines.
 
         Args:
-            file_path (Union[PathLike[str], str]): The path to the file to parse.
+            file_path (PathLike[str] | str): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
-            bookend (Optional[str]): The bookend to use for text fields.
+            bookend (str | None): The bookend to use for text fields.
             bookend_strip (bool): Whether to strip whitespace from the bookend.
             encoding (str): The file encoding.
             skip_header_rows (int): Number of header rows to skip.

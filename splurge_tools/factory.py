@@ -13,7 +13,7 @@ This module is licensed under the MIT License.
 """
 
 import warnings
-from typing import Any, Iterator, Optional, Union, Type
+from typing import Any, Iterator, Type
 from pathlib import Path
 
 from splurge_tools.protocols import (
@@ -61,16 +61,16 @@ class DataModelFactory:
     
     def create_model(
         self,
-        data: Union[list[list[str]], Iterator[list[list[str]]]],
+        data: list[list[str]] | Iterator[list[list[str]]],
         *,
         header_rows: int = 1,
         skip_empty_rows: bool = True,
         force_typed: bool = False,
         force_streaming: bool = False,
-        estimated_size_mb: Optional[float] = None,
-        type_configs: Optional[dict[Any, Any]] = None,
-        chunk_size: Optional[int] = None
-    ) -> Union[TabularDataProtocol, StreamingTabularDataProtocol]:
+        estimated_size_mb: float | None = None,
+        type_configs: dict[Any, Any] | None = None,
+        chunk_size: int | None = None
+    ) -> TabularDataProtocol | StreamingTabularDataProtocol:
         """
         Create the most appropriate data model based on data characteristics.
         
@@ -140,11 +140,11 @@ class DataModelFactory:
     
     def _determine_model_type(
         self,
-        data: Union[list[list[str]], Iterator[list[list[str]]]],
+        data: list[list[str]] | Iterator[list[list[str]]],
         *,
         force_typed: bool,
         force_streaming: bool,
-        estimated_size_mb: Optional[float]
+        estimated_size_mb: float | None
     ) -> str:
         """
         Determine the most appropriate model type based on data characteristics.
@@ -200,7 +200,7 @@ class DataModelFactory:
         *,
         header_rows: int,
         skip_empty_rows: bool,
-        type_configs: Optional[dict[Any, Any]]
+        type_configs: dict[Any, Any] | None
     ) -> TypedTabularDataModel:
         """Create a TypedTabularDataModel."""
         return TypedTabularDataModel(
@@ -278,10 +278,10 @@ class ComponentFactory:
     
     @staticmethod
     def create_resource_manager(
-        file_path: Union[str, Path],
+        file_path: str | Path,
         *,
         mode: str = "r",
-        encoding: Optional[str] = None
+        encoding: str | None = None
     ) -> ResourceManagerProtocol:
         """
         Create a file resource manager instance.
@@ -298,9 +298,9 @@ class ComponentFactory:
         
         # Create a custom resource manager that wraps FileResourceManager
         class FileResourceManagerWrapper(ResourceManagerProtocol):
-            def __init__(self, file_path: Union[str, Path], mode: str, encoding: Optional[str]):
+            def __init__(self, file_path: str | Path, mode: str, encoding: str | None):
                 self._file_manager = FileResourceManager(file_path, mode=mode, encoding=encoding)
-                self._file_handle: Optional[Any] = None
+                self._file_handle: Any | None = None
                 self._is_acquired_flag = False
             
             def acquire(self) -> Any:
@@ -338,16 +338,16 @@ _default_factory = DataModelFactory()
 
 
 def create_data_model(
-    data: Union[list[list[str]], Iterator[list[list[str]]]],
+    data: list[list[str]] | Iterator[list[list[str]]],
     *,
     header_rows: int = 1,
     skip_empty_rows: bool = True,
     force_typed: bool = False,
     force_streaming: bool = False,
-    estimated_size_mb: Optional[float] = None,
-    type_configs: Optional[dict[Any, Any]] = None,
-    chunk_size: Optional[int] = None
-) -> Union[TabularDataProtocol, StreamingTabularDataProtocol]:
+    estimated_size_mb: float | None = None,
+    type_configs: dict[Any, Any] | None = None,
+    chunk_size: int | None = None
+) -> TabularDataProtocol | StreamingTabularDataProtocol:
     """
     Convenience function to create a data model using the default factory.
     

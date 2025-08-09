@@ -14,7 +14,7 @@ This module is licensed under the MIT License.
 import os
 import re
 from pathlib import Path
-from typing import Union, Optional
+from typing import TYPE_CHECKING
 
 from splurge_tools.exceptions import (
     SplurgePathValidationError,
@@ -57,13 +57,13 @@ class PathValidator:
     @classmethod
     def validate_path(
         cls,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         *,
         must_exist: bool = False,
         must_be_file: bool = False,
         must_be_readable: bool = False,
         allow_relative: bool = True,
-        base_directory: Optional[Union[str, Path]] = None
+        base_directory: str | Path | None = None
     ) -> Path:
         """
         Validate a file path for security and correctness.
@@ -229,7 +229,7 @@ class PathValidator:
         return sanitized
     
     @classmethod
-    def is_safe_path(cls, file_path: Union[str, Path]) -> bool:
+    def is_safe_path(cls, file_path: str | Path) -> bool:
         """
         Check if a path is safe without raising exceptions.
         

@@ -184,30 +184,9 @@ python -m build
 
 ## Changelog
 
-# [0.2.7] - 2025-08-01
+### [0.3.1] - 2025-08-09
 
-#### Added
-- Added `utility_helper.py` module with base-58 encoding/decoding utilities
-- Added `encode_base58()` function for converting binary data to base-58 strings
-- Added `decode_base58()` function for converting base-58 strings to binary data
-- Added `is_valid_base58()` function for validating base-58 string format
-- Added `ValidationError` exception class for utility validation errors
-- Added comprehensive test suite for base-58 functionality in `test_utility_helper.py`
-- Added support for bytearray input in base-58 encoding
-- Added handling for edge cases including all-zero bytes and leading zeros
-- Added integration tests for cryptographic key encoding and Bitcoin-style addresses
-- Added performance and memory efficiency tests for large data handling
-- Added concurrent operation testing for thread safety
-
-#### Changed
-- Enhanced error handling with specific validation error messages
-- Improved input validation for base-58 encoding/decoding operations
-
-#### Fixed
-- Proper handling of leading zero bytes in base-58 encoding/decoding
-- Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
-
-### [0.3.0] - 2025-01-15
+### [0.3.0] - 2025-08-08
 
 #### Added
 - **Protocol-Based Architecture**: Implemented comprehensive protocol-based design across all major components for improved type safety and consistency
@@ -289,6 +268,29 @@ python -m build
   - RandomHelper: 58% → **97%** (+39%)
 - **Type Safety**: Reduced MyPy errors from 109 to 7 (remaining are "unreachable code" warnings for defensive programming)
 - **Architectural Clarity**: Improved separation of concerns between streaming and in-memory data models
+
+### [0.2.7] - 2025-08-01
+
+#### Added
+- Added `utility_helper.py` module with base-58 encoding/decoding utilities
+- Added `encode_base58()` function for converting binary data to base-58 strings
+- Added `decode_base58()` function for converting base-58 strings to binary data
+- Added `is_valid_base58()` function for validating base-58 string format
+- Added `ValidationError` exception class for utility validation errors
+- Added comprehensive test suite for base-58 functionality in `test_utility_helper.py`
+- Added support for bytearray input in base-58 encoding
+- Added handling for edge cases including all-zero bytes and leading zeros
+- Added integration tests for cryptographic key encoding and Bitcoin-style addresses
+- Added performance and memory efficiency tests for large data handling
+- Added concurrent operation testing for thread safety
+
+#### Changed
+- Enhanced error handling with specific validation error messages
+- Improved input validation for base-58 encoding/decoding operations
+
+#### Fixed
+- Proper handling of leading zero bytes in base-58 encoding/decoding
+- Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
 
 ### [0.2.6] - 2025-07-12
 

@@ -15,7 +15,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional, Union, TextIO, BinaryIO, Any, IO
+from typing import Iterator, TextIO, BinaryIO, Any, IO
 
 from splurge_tools.exceptions import (
     SplurgeResourceAcquisitionError,
@@ -46,7 +46,7 @@ class ResourceManager(ResourceManagerProtocol):
     
     def __init__(self) -> None:
         """Initialize the resource manager."""
-        self._resource: Optional[Any] = None
+        self._resource: Any | None = None
         self._is_acquired_flag: bool = False
     
     def acquire(self) -> Any:
@@ -140,12 +140,12 @@ class FileResourceManager:
     
     def __init__(
         self,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         *,
         mode: str = _DEFAULT_MODE,
-        encoding: Optional[str] = _DEFAULT_ENCODING,
-        errors: Optional[str] = None,
-        newline: Optional[str] = None,
+        encoding: str | None = _DEFAULT_ENCODING,
+        errors: str | None = None,
+        newline: str | None = None,
         buffering: int = _DEFAULT_BUFFERING
     ) -> None:
         """
@@ -174,7 +174,7 @@ class FileResourceManager:
         self.errors = errors
         self.newline = newline
         self.buffering = buffering
-        self._file_handle: Optional[IO[Any]] = None
+        self._file_handle: IO[Any] | None = None
     
     def __enter__(self) -> IO[Any]:
         """
@@ -228,9 +228,9 @@ class FileResourceManager:
     
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
-        exc_tb: Optional[Any]
+        exc_type: type | None,
+        exc_val: Exception | None,
+        exc_tb: Any | None
     ) -> None:
         """
         Close the file handle and cleanup resources.
@@ -263,9 +263,9 @@ class TemporaryFileManager:
     def __init__(
         self,
         *,
-        suffix: Optional[str] = None,
-        prefix: Optional[str] = None,
-        dir: Optional[Union[str, Path]] = None,
+        suffix: str | None = None,
+        prefix: str | None = None,
+        dir: str | Path | None = None,
         delete: bool = True,
         mode: str = _DEFAULT_TEMP_MODE
     ) -> None:
@@ -284,8 +284,8 @@ class TemporaryFileManager:
         self.dir = Path(dir) if dir else None
         self.delete = delete
         self.mode = mode
-        self._temp_file: Optional[IO[Any]] = None
-        self._file_path: Optional[Path] = None
+        self._temp_file: IO[Any] | None = None
+        self._file_path: Path | None = None
     
     def __enter__(self) -> IO[Any]:
         """
@@ -315,9 +315,9 @@ class TemporaryFileManager:
     
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
-        exc_tb: Optional[Any]
+        exc_type: type | None,
+        exc_val: Exception | None,
+        exc_tb: Any | None
     ) -> None:
         """
         Close and optionally delete the temporary file.
@@ -350,7 +350,7 @@ class TemporaryFileManager:
                 self._file_path = None
     
     @property
-    def file_path(self) -> Optional[Path]:
+    def file_path(self) -> Path | None:
         """Get the path of the temporary file."""
         return self._file_path
 
@@ -391,9 +391,9 @@ class StreamResourceManager:
     
     def __exit__(
         self,
-        exc_type: Optional[type],
-        exc_val: Optional[Exception],
-        exc_tb: Optional[Any]
+        exc_type: type | None,
+        exc_val: Exception | None,
+        exc_tb: Any | None
     ) -> None:
         """
         Clean up the stream.
@@ -421,12 +421,12 @@ class StreamResourceManager:
 
 @contextmanager
 def safe_file_operation(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     *,
     mode: str = _DEFAULT_MODE,
-    encoding: Optional[str] = _DEFAULT_ENCODING,
-    errors: Optional[str] = None,
-    newline: Optional[str] = None,
+    encoding: str | None = _DEFAULT_ENCODING,
+    errors: str | None = None,
+    newline: str | None = None,
     buffering: int = _DEFAULT_BUFFERING
 ) -> Iterator[IO[Any]]:
     """
@@ -463,9 +463,9 @@ def safe_file_operation(
 @contextmanager
 def temporary_file(
     *,
-    suffix: Optional[str] = None,
-    prefix: Optional[str] = None,
-    dir: Optional[Union[str, Path]] = None,
+    suffix: str | None = None,
+    prefix: str | None = None,
+    dir: str | Path | None = None,
     delete: bool = True,
     mode: str = _DEFAULT_TEMP_MODE
 ) -> Iterator[IO[Any]]:

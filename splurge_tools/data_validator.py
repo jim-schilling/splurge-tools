@@ -11,7 +11,7 @@ This module is licensed under the MIT License.
 """
 
 import re
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List
 
 from splurge_tools.protocols import DataValidatorProtocol
 
@@ -211,8 +211,8 @@ class DataValidator(DataValidatorProtocol):
 
     @staticmethod
     def numeric_range(
-        min_val: Union[int, float],
-        max_val: Union[int, float]
+        min_val: int | float,
+        max_val: int | float
     ) -> Callable[[Any], bool]:
         """Validator that checks if a number is within a range."""
         return lambda x: min_val <= float(x) <= max_val

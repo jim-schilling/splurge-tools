@@ -19,7 +19,7 @@ import string
 import sys
 from datetime import date, datetime, timedelta
 from secrets import randbits
-from typing import List, Optional
+from typing import List
 
 
 class RandomHelper:
@@ -55,7 +55,7 @@ class RandomHelper:
     def as_bytes(
         size: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> bytes:
         """
         Generate random bytes of specified size.
@@ -84,7 +84,7 @@ class RandomHelper:
         cls,
         size: int = 8,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> int:
         """
         Generate a random 64-bit integer.
@@ -114,7 +114,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> int:
         """
         Generate a random 64-bit integer within a specified range.
@@ -178,7 +178,7 @@ class RandomHelper:
         length: int,
         allowable_chars: str,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random string of specified length using given characters.
@@ -222,7 +222,7 @@ class RandomHelper:
         upper: int,
         allowable_chars: str,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random string with length between lower and upper bounds.
@@ -260,7 +260,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random string of letters.
@@ -286,7 +286,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random alphanumeric string.
@@ -312,7 +312,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random numeric string.
@@ -338,7 +338,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random Base58 string.
@@ -365,7 +365,7 @@ class RandomHelper:
         size: int,
         *,
         symbols: str = SYMBOLS,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a Base58-like string with guaranteed character diversity.
@@ -457,7 +457,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random Base58 string with variable length.
@@ -485,7 +485,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random alphabetic string with variable length.
@@ -513,7 +513,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random alphanumeric string with variable length.
@@ -543,7 +543,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random numeric string with variable length.
@@ -569,7 +569,7 @@ class RandomHelper:
     def as_bool(
         cls,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> bool:
         """
         Generate a random boolean value.
@@ -594,7 +594,7 @@ class RandomHelper:
         cls,
         mask: str,
         *,
-        secure: Optional[bool] = False
+        secure: bool | None = False
     ) -> str:
         """
         Generate a random string based on a mask pattern.
@@ -647,8 +647,8 @@ class RandomHelper:
         digits: int,
         *,
         start: int = 0,
-        prefix: Optional[str] = None,
-        suffix: Optional[str] = None
+        prefix: str | None = None,
+        suffix: str | None = None
     ) -> List[str]:
         """
         Generate a list of sequentially numbered strings.
@@ -700,8 +700,8 @@ class RandomHelper:
         lower_days: int,
         upper_days: int,
         *,
-        base_date: Optional[date] = None,
-        secure: Optional[bool] = False
+        base_date: date | None = None,
+        secure: bool | None = False
     ) -> date:
         """
         Generate a random date between two days.
@@ -732,8 +732,8 @@ class RandomHelper:
         lower_days: int,
         upper_days: int,
         *,
-        base_date: Optional[datetime] = None,
-        secure: Optional[bool] = False
+        base_date: datetime | None = None,
+        secure: bool | None = False
     ) -> datetime:
         """
         Generate a random datetime between two days.
