@@ -186,6 +186,45 @@ python -m build
 
 ### [0.3.1] - 2025-08-09
 
+#### Added
+- **Common Utilities Module**: Added new `common_utils.py` module containing reusable utility functions to reduce code duplication across the package:
+  - `deprecated_method()`: Decorator for marking methods as deprecated with customizable warning messages
+  - `safe_file_operation()`: Safe file path validation and operation handling with comprehensive error handling
+  - `ensure_minimum_columns()`: Utility for ensuring data rows have minimum required columns with padding
+  - `safe_index_access()`: Safe list/tuple index access with bounds checking and helpful error messages
+  - `safe_dict_access()`: Safe dictionary key access with default values and error context
+  - `validate_data_structure()`: Generic data structure validation with type checking and empty data handling
+  - `create_parameter_validator()`: Factory function for creating parameter validation functions from validator dictionaries
+  - `batch_validate_rows()`: Iterator for validating and filtering tabular data rows with column count constraints
+  - `create_error_context()`: Utility for creating detailed error context information for debugging
+
+- **Validation Utilities Module**: Added new `validation_utils.py` module providing centralized `Validator` class with consistent error handling:
+  - `Validator.is_non_empty_string()`: String validation with whitespace handling options
+  - `Validator.is_positive_integer()`: Integer validation with range constraints and bounds checking
+  - `Validator.is_valid_range()`: Numeric range validation with inclusive/exclusive bounds
+  - `Validator.is_valid_path()`: Path validation with existence checking and permission validation
+  - `Validator.is_valid_encoding()`: Text encoding validation with fallback options
+  - `Validator.is_iterable_of_type()`: Generic iterable validation with element type checking
+  - All validator methods follow consistent `is_*` naming convention and return validated values or raise specific exceptions
+
+#### Changed
+- **Type Annotation Modernization**: Updated type annotations across multiple modules to use modern Python union syntax (`|`) instead of `Optional` and `Union` imports:
+  - Updated `data_transformer.py`, `data_validator.py`, `dsv_helper.py`, `random_helper.py`, `string_tokenizer.py`, `tabular_data_model.py`
+  - Improved type safety and consistency throughout the codebase
+  - Simplified import statements by removing unused `Optional` and `Union` imports
+
+#### Fixed
+- **Enhanced Error Handling**: Improved error handling consistency across the package with specific exception types
+- **Code Duplication Reduction**: Consolidated common validation and utility patterns into reusable functions
+- **Type Safety Improvements**: Enhanced type checking and validation throughout the codebase
+
+#### Testing
+- **Comprehensive Test Coverage**: Added extensive test suites for new modules:
+  - `tests/test_common_utils.py`: Complete test coverage for common utility functions (96% coverage)
+  - `tests/test_validation_utils.py`: Comprehensive validation utility testing (94% coverage)
+  - Enhanced existing test files to use new utility functions where appropriate
+- **Maintained Package Coverage**: All existing functionality preserved with improved test organization
+
 ### [0.3.0] - 2025-08-08
 
 #### Added
