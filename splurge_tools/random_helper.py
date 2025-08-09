@@ -23,6 +23,10 @@ from typing import List
 
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeFormatError
 from splurge_tools.validation_utils import Validator
+from typing import List
+
+from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeFormatError
+from splurge_tools.validation_utils import Validator
 
 
 class RandomHelper:
