@@ -278,8 +278,8 @@ def advanced_transformation_examples(sales_data):
         print(f"Transformed data: {transformed.row_count} rows × {transformed.column_count} columns")
         print("Sample with tax calculation:")
         for i in range(min(3, transformed.row_count)):
-                    row = transformed.row(i)
-        print(f"  Original: {model.row(i)['Sales']}, Transformed: {row['Sales']}")
+            row = transformed.row(i)
+            print(f"  Original: {model.row(i)['Sales']}, Transformed: {row['Sales']}")
     except Exception as e:
         print(f"Column transformation error: {e}")
     print()
