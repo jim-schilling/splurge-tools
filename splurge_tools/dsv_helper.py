@@ -15,6 +15,8 @@ from typing import Iterator
 from splurge_tools.string_tokenizer import StringTokenizer
 from splurge_tools.text_file_helper import TextFileHelper
 from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.validation_utils import Validator
+from splurge_tools.common_utils import validate_data_structure
 
 
 # Module-level constants for DSV parsing
@@ -63,8 +65,7 @@ class DsvHelper:
             >>> DsvHelper.parse('"a","b","c"', ",", bookend='"')
             ['a', 'b', 'c']
         """
-        if not delimiter:
-            raise ValueError("Delimiter must not be empty or None.")
+        delimiter = Validator.is_delimiter(delimiter)
 
         tokens: list[str] = StringTokenizer.parse(content, delimiter, strip=strip)
 
@@ -107,7 +108,8 @@ class DsvHelper:
             >>> DsvHelper.parses(["a,b,c", "d,e,f"], ",")
             [['a', 'b', 'c'], ['d', 'e', 'f']]
         """
-        if not isinstance(content, list) or not all(isinstance(item, str) for item in content):
+        content = validate_data_structure(content, expected_type=list, param_name="content")
+        if not all(isinstance(item, str) for item in content):
             raise TypeError("Content must be a list of strings.")
 
         return [
@@ -204,12 +206,10 @@ class DsvHelper:
             ValueError: If delimiter is empty or None.
             PermissionError: If the file cannot be accessed.
         """
-        if not delimiter:
-            raise ValueError("Delimiter must not be empty or None.")
-        if chunk_size < 100:
-            raise ValueError("chunk_size must be at least 100.")
-        if skip_header_rows < 0 or skip_footer_rows < 0:
-            raise ValueError("skip_header_rows and skip_footer_rows must be >= 0.")
+        delimiter = Validator.is_delimiter(delimiter)
+        chunk_size = Validator.is_positive_integer(chunk_size, "chunk_size", min_value=100)
+        skip_header_rows = Validator.is_non_negative_integer(skip_header_rows, "skip_header_rows")
+        skip_footer_rows = Validator.is_non_negative_integer(skip_footer_rows, "skip_footer_rows")
 
         with open(file_path, "r", encoding=encoding) as stream:
             # Skip header rows

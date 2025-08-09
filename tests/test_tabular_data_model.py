@@ -4,6 +4,7 @@ import unittest
 
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.type_helper import DataType
+from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeValidationError
 
 
 class TestTabularDataModel(unittest.TestCase):
@@ -113,16 +114,13 @@ class TestTabularDataModel(unittest.TestCase):
 
     def test_invalid_initialization(self):
         """Test invalid initialization parameters."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             TabularDataModel(None)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeValidationError):
             TabularDataModel([])
 
-        with self.assertRaises(ValueError):
-            TabularDataModel(self.sample_data, header_rows=-1)
-
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             TabularDataModel(self.sample_data, header_rows=-1)
 
     def test_multi_row_headers(self):
@@ -181,7 +179,7 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(model.column_type("Date"), DataType.DATE)
 
         # Test invalid column name
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             model.column_type("InvalidColumn")
 
     def test_column_values(self):
@@ -194,7 +192,7 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(model.column_values("City"), ["New York", "Boston", "Chicago"])
 
         # Test invalid column name
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             model.column_values("InvalidColumn")
 
     def test_cell_value(self):
@@ -207,13 +205,13 @@ class TestTabularDataModel(unittest.TestCase):
         self.assertEqual(model.cell_value("City", 2), "Chicago")
 
         # Test invalid column name
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             model.cell_value("InvalidColumn", 0)
 
         # Test invalid row index
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             model.cell_value("Name", -1)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeRangeError):
             model.cell_value("Name", 3)
 
     def test_column_type_caching(self):

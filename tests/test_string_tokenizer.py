@@ -7,6 +7,7 @@ Unit tests for the StringTokenizer class.
 import unittest
 
 from splurge_tools.string_tokenizer import StringTokenizer
+from splurge_tools.exceptions import SplurgeParameterError
 
 
 class TestStringTokenizer(unittest.TestCase):
@@ -73,11 +74,11 @@ class TestStringTokenizer(unittest.TestCase):
     def test_parse_invalid_delimiter(self):
         """Test that invalid delimiters raise ValueError."""
         # Empty delimiter
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             StringTokenizer.parse("a,b,c", "")
         
         # None delimiter
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeParameterError):
             StringTokenizer.parse("a,b,c", None)
 
     def test_parses_basic(self):

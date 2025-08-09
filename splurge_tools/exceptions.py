@@ -103,3 +103,23 @@ class SplurgeResourceAcquisitionError(SplurgeResourceError):
 class SplurgeResourceReleaseError(SplurgeResourceError):
     """Raised when resource release fails."""
     pass
+
+
+class SplurgePerformanceWarning(SplurgeToolsError):
+    """Warning for performance-related issues."""
+    pass
+
+
+class SplurgeParameterError(SplurgeValidationError):
+    """Raised when function parameters are invalid."""
+    pass
+
+
+class SplurgeRangeError(SplurgeValidationError):
+    """Raised when values are outside expected ranges."""
+    pass
+
+
+class SplurgeFormatError(SplurgeValidationError):
+    """Raised when data format is invalid."""
+    pass
