@@ -118,7 +118,7 @@ class DsvHelper:
     @classmethod
     def parse_file(
         cls,
-        file_path: Union[PathLike, str],
+        file_path: Union[PathLike[str], str],
         delimiter: str,
         *,
         strip: bool = True,
@@ -132,7 +132,7 @@ class DsvHelper:
         Parse a file into a list of lists of strings.
 
         Args:
-            file_path (Union[PathLike, str]): The path to the file to parse.
+            file_path (Union[PathLike[str], str]): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
             bookend (Optional[str]): The bookend to use for text fields.
@@ -171,7 +171,7 @@ class DsvHelper:
     @classmethod
     def parse_stream(
         cls,
-        file_path: Union[PathLike, str],
+        file_path: Union[PathLike[str], str],
         delimiter: str,
         *,
         strip: bool = True,
@@ -186,7 +186,7 @@ class DsvHelper:
         Stream-parse a DSV file in chunks of lines.
 
         Args:
-            file_path (Union[PathLike, str]): The path to the file to parse.
+            file_path (Union[PathLike[str], str]): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
             bookend (Optional[str]): The bookend to use for text fields.
@@ -219,7 +219,7 @@ class DsvHelper:
 
             # If skipping footer rows, use a buffer
             if skip_footer_rows > 0:
-                buffer = deque()  
+                buffer: deque[str] = deque()  
                 chunk = []  
                 for line in stream:
                     buffer.append(line.strip() if strip else line.rstrip("\n"))

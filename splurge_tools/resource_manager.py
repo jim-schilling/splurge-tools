@@ -15,7 +15,7 @@ import os
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Optional, Union, TextIO, BinaryIO, Any
+from typing import Iterator, Optional, Union, TextIO, BinaryIO, Any, IO
 
 from splurge_tools.exceptions import (
     SplurgeResourceAcquisitionError,
@@ -126,7 +126,7 @@ class ResourceManager(ResourceManagerProtocol):
         This method should be overridden by subclasses to provide
         specific resource cleanup logic.
         """
-        if hasattr(self._resource, 'close'):
+        if self._resource is not None and hasattr(self._resource, 'close'):
             self._resource.close()
 
 
@@ -174,9 +174,9 @@ class FileResourceManager:
         self.errors = errors
         self.newline = newline
         self.buffering = buffering
-        self._file_handle: Optional[Union[TextIO, BinaryIO]] = None
+        self._file_handle: Optional[IO[Any]] = None
     
-    def __enter__(self) -> Union[TextIO, BinaryIO]:
+    def __enter__(self) -> IO[Any]:
         """
         Open the file and return the file handle.
         
@@ -284,10 +284,10 @@ class TemporaryFileManager:
         self.dir = Path(dir) if dir else None
         self.delete = delete
         self.mode = mode
-        self._temp_file: Optional[tempfile.NamedTemporaryFile] = None
+        self._temp_file: Optional[IO[Any]] = None
         self._file_path: Optional[Path] = None
     
-    def __enter__(self) -> tempfile.NamedTemporaryFile:
+    def __enter__(self) -> IO[Any]:
         """
         Create temporary file and return file handle.
         
@@ -365,7 +365,7 @@ class StreamResourceManager:
     
     def __init__(
         self,
-        stream: Iterator,
+        stream: Iterator[Any],
         *,
         auto_close: bool = True
     ) -> None:
@@ -380,7 +380,7 @@ class StreamResourceManager:
         self.auto_close = auto_close
         self._is_closed = False
     
-    def __enter__(self) -> Iterator:
+    def __enter__(self) -> Iterator[Any]:
         """
         Return the stream.
         
@@ -428,7 +428,7 @@ def safe_file_operation(
     errors: Optional[str] = None,
     newline: Optional[str] = None,
     buffering: int = _DEFAULT_BUFFERING
-) -> Iterator[Union[TextIO, BinaryIO]]:
+) -> Iterator[IO[Any]]:
     """
     Context manager for safe file operations.
     
@@ -468,7 +468,7 @@ def temporary_file(
     dir: Optional[Union[str, Path]] = None,
     delete: bool = True,
     mode: str = _DEFAULT_TEMP_MODE
-) -> Iterator[tempfile.NamedTemporaryFile]:
+) -> Iterator[IO[Any]]:
     """
     Context manager for temporary file operations.
     
@@ -499,10 +499,10 @@ def temporary_file(
 
 @contextmanager
 def safe_stream_operation(
-    stream: Iterator,
+    stream: Iterator[Any],
     *,
     auto_close: bool = True
-) -> Iterator[Iterator]:
+) -> Iterator[Iterator[Any]]:
     """
     Context manager for safe stream operations.
     

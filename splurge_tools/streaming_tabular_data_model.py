@@ -14,19 +14,20 @@ This module is licensed under the MIT License.
 import re
 from typing import Generator, Iterator
 
-from splurge_tools.protocols import TabularDataProtocol
-from splurge_tools.type_helper import DataType, profile_values
+from splurge_tools.protocols import StreamingTabularDataProtocol
 
 
-class StreamingTabularDataModel(TabularDataProtocol):
+class StreamingTabularDataModel(StreamingTabularDataProtocol):
     """
     Streaming tabular data model for large datasets that don't fit in memory.
     
     This class works with streams from DsvHelper.parse_stream to process data
     without loading the entire dataset into memory.
     
-    This class implements the TabularDataProtocol interface, providing
-    a consistent interface for streaming tabular data operations.
+    This class implements the StreamingTabularDataProtocol interface, providing
+    a streaming-optimized interface for tabular data operations. Unlike the full
+    TabularDataProtocol, this protocol focuses on forward-only iteration and
+    memory-efficient operations.
     """
 
     def __init__(
@@ -262,4 +263,5 @@ class StreamingTabularDataModel(TabularDataProtocol):
         Reset the stream position (requires a new stream iterator).
         """
         self._buffer.clear()
-        self._is_initialized = False 
+        self._is_initialized = False
+ 

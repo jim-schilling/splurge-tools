@@ -79,7 +79,7 @@ class Base58:
         return result
 
     @classmethod
-    def decode(cls, base58_data: str) -> bytes:
+    def decode(cls, base58_data: str | None) -> bytes:
         """
         Decode base-58 string to binary data.
 
@@ -133,7 +133,7 @@ class Base58:
         return b"\x00" * leading_ones + result
 
     @classmethod
-    def is_valid(cls, base58_data: str) -> bool:
+    def is_valid(cls, base58_data: Any) -> bool:
         """
         Check if a string is valid base-58.
 

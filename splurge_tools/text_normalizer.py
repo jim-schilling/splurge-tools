@@ -17,8 +17,8 @@ from splurge_tools.case_helper import CaseHelper
 
 
 def handle_empty_value(
-    func: Callable[[str, Any], str]
-) -> Callable[[str, Any], str]:
+    func: Callable[..., str]
+) -> Callable[..., str]:
     """Decorator to handle empty value checks for normalization methods."""
     @wraps(func)
     def wrapper(value: str, *args: Any, **kwargs: Any) -> str:
@@ -49,9 +49,9 @@ class TextNormalizer:
     - Preserves original string if no changes needed
     """
 
-    _WHITESPACE_PATTERN: Pattern = re.compile(r"\s+")
-    _CONTROL_CHARS_PATTERN: Pattern = re.compile(r"[\x00-\x1f\x7f-\x9f]")
-    _SPECIAL_CHARS_PATTERN: Pattern = re.compile(r"[^\w\s-]")
+    _WHITESPACE_PATTERN: Pattern[str] = re.compile(r"\s+")
+    _CONTROL_CHARS_PATTERN: Pattern[str] = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+    _SPECIAL_CHARS_PATTERN: Pattern[str] = re.compile(r"[^\w\s-]")
 
     @classmethod
     @handle_empty_value

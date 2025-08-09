@@ -24,7 +24,7 @@ class StringTokenizer:
 
     @staticmethod
     def parse(
-        content: str,
+        content: str | None,
         delimiter: str,
         *,
         strip: bool = True
@@ -33,7 +33,7 @@ class StringTokenizer:
         Split a string into tokens based on a delimiter.
 
         Args:
-            content (str): The input string to tokenize
+            content (str | None): The input string to tokenize
             delimiter (str): The character(s) to split the string on
             strip (bool, optional): Whether to strip whitespace from tokens. Defaults to True.
 

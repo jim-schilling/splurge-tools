@@ -15,8 +15,8 @@ from typing import Callable, Any
 
 
 def handle_empty_value(
-    func: Callable[[str, Any], str]
-) -> Callable[[str, Any], str]:
+    func: Callable[..., str]
+) -> Callable[..., str]:
     """
     Decorator to handle empty value checks for case conversion methods.
     Returns empty string if input value is None or empty.

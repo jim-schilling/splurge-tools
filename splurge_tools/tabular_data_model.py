@@ -10,7 +10,7 @@ This module is licensed under the MIT License.
 
 import re
 import warnings
-from typing import Generator
+from typing import Generator, Iterator
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
@@ -69,7 +69,7 @@ class TabularDataModel(TabularDataProtocol):
         while len(self._column_names) < self._columns:
             self._column_names.append(f"column_{len(self._column_names)}")
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
-        self._column_types = {}
+        self._column_types: dict[str, DataType] = {}
 
     @staticmethod
     def process_headers(
@@ -231,7 +231,7 @@ class TabularDataModel(TabularDataProtocol):
         col_idx: int = self._column_index_map[name]
         return self._data[row_index][col_idx]
 
-    def __iter__(self) -> Generator[list[str], None, None]:
+    def __iter__(self) -> Iterator[list[str]]:
         return iter(self._data)
 
     def iter_rows(self) -> Generator[dict[str, str], None, None]:

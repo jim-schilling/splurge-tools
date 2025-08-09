@@ -18,6 +18,7 @@ from pathlib import Path
 
 from splurge_tools.protocols import (
     TabularDataProtocol,
+    StreamingTabularDataProtocol,
     DataValidatorProtocol,
     DataTransformerProtocol,
     ResourceManagerProtocol
@@ -67,9 +68,9 @@ class DataModelFactory:
         force_typed: bool = False,
         force_streaming: bool = False,
         estimated_size_mb: Optional[float] = None,
-        type_configs: Optional[dict] = None,
+        type_configs: Optional[dict[Any, Any]] = None,
         chunk_size: Optional[int] = None
-    ) -> TabularDataProtocol:
+    ) -> Union[TabularDataProtocol, StreamingTabularDataProtocol]:
         """
         Create the most appropriate data model based on data characteristics.
         
@@ -84,7 +85,8 @@ class DataModelFactory:
             chunk_size: Chunk size for streaming model
             
         Returns:
-            Appropriate data model implementation
+            Appropriate data model implementation (TabularDataProtocol for in-memory models,
+            StreamingTabularDataProtocol for streaming models)
             
         Raises:
             SplurgeValidationError: If data is invalid or requirements conflict
@@ -198,7 +200,7 @@ class DataModelFactory:
         *,
         header_rows: int,
         skip_empty_rows: bool,
-        type_configs: Optional[dict]
+        type_configs: Optional[dict[Any, Any]]
     ) -> TypedTabularDataModel:
         """Create a TypedTabularDataModel."""
         return TypedTabularDataModel(
@@ -343,9 +345,9 @@ def create_data_model(
     force_typed: bool = False,
     force_streaming: bool = False,
     estimated_size_mb: Optional[float] = None,
-    type_configs: Optional[dict] = None,
+    type_configs: Optional[dict[Any, Any]] = None,
     chunk_size: Optional[int] = None
-) -> TabularDataProtocol:
+) -> Union[TabularDataProtocol, StreamingTabularDataProtocol]:
     """
     Convenience function to create a data model using the default factory.
     

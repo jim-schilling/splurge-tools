@@ -25,6 +25,7 @@ This module is licensed under the MIT License.
 import warnings
 from collections import deque
 from os import PathLike
+from pathlib import Path
 from typing import List, Union, Iterator
 
 from splurge_tools.exceptions import (
@@ -45,7 +46,7 @@ class TextFileHelper:
 
     @staticmethod
     def line_count(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         encoding: str = "utf-8"
     ) -> int:
@@ -70,7 +71,7 @@ class TextFileHelper:
         """
         # Validate file path
         validated_path = PathValidator.validate_path(
-            file_name,
+            Path(file_name),
             must_exist=True,
             must_be_file=True,
             must_be_readable=True
@@ -81,7 +82,7 @@ class TextFileHelper:
 
     @staticmethod
     def preview(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         max_lines: int = 100,
         strip: bool = True,
@@ -118,7 +119,7 @@ class TextFileHelper:
         
         # Validate file path
         validated_path = PathValidator.validate_path(
-            file_name,
+            Path(file_name),
             must_exist=True,
             must_be_file=True,
             must_be_readable=True
@@ -144,7 +145,7 @@ class TextFileHelper:
 
     @staticmethod
     def read_as_stream(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -185,7 +186,7 @@ class TextFileHelper:
         
         # Validate file path
         validated_path = PathValidator.validate_path(
-            file_name,
+            Path(file_name),
             must_exist=True,
             must_be_file=True,
             must_be_readable=True
@@ -230,24 +231,24 @@ class TextFileHelper:
                     yield current_chunk
             else:
                 # No footer skipping needed - simple streaming
-                current_chunk: List[str] = []
+                chunk: List[str] = []
                 
                 for line in stream:
                     processed_line = line.strip() if strip else line.rstrip("\n")
-                    current_chunk.append(processed_line)
+                    chunk.append(processed_line)
                     
                     # Yield chunk when it reaches the desired size
-                    if len(current_chunk) >= chunk_size:
-                        yield current_chunk
-                        current_chunk = []
+                    if len(chunk) >= chunk_size:
+                        yield chunk
+                        chunk = []
                 
                 # Yield any remaining lines in the final chunk
-                if current_chunk:
-                    yield current_chunk
+                if chunk:
+                    yield chunk
 
     @staticmethod
     def read(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -278,7 +279,7 @@ class TextFileHelper:
         """
         # Validate file path
         validated_path = PathValidator.validate_path(
-            file_name,
+            Path(file_name),
             must_exist=True,
             must_be_file=True,
             must_be_readable=True
@@ -300,7 +301,7 @@ class TextFileHelper:
 
     @staticmethod
     def load_as_stream(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -344,7 +345,7 @@ class TextFileHelper:
             stacklevel=2
         )
         return TextFileHelper.read_as_stream(
-            file_name,
+            Path(file_name),
             strip=strip,
             encoding=encoding,
             skip_header_rows=skip_header_rows,
@@ -354,7 +355,7 @@ class TextFileHelper:
 
     @staticmethod
     def load(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -394,7 +395,7 @@ class TextFileHelper:
             stacklevel=2
         )
         return TextFileHelper.read(
-            file_name,
+            Path(file_name),
             strip=strip,
             encoding=encoding,
             skip_header_rows=skip_header_rows,

@@ -48,7 +48,7 @@ class TypedTabularDataModel(TabularDataModel, TabularDataProtocol):
             header_rows=header_rows,
             skip_empty_rows=skip_empty_rows
         )
-        self._typed_data = []
+        self._typed_data: list[list[Any]] = []
         self._type_configs = {
             DataType.BOOLEAN: TypeConfig(False, False),
             DataType.INTEGER: TypeConfig(0, 0),

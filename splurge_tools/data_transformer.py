@@ -30,13 +30,13 @@ class DataTransformer(DataTransformerProtocol):
 
     def __init__(
         self,
-        data_model: Union[TabularDataModel, TypedTabularDataModel]
+        data_model: TabularDataProtocol
     ) -> None:
         """
         Initialize the DataTransformer.
 
         Args:
-            data_model (TabularDataModel | TypedTabularDataModel): The data model to transform.
+            data_model: The data model to transform.
         """
         self._model = data_model
 

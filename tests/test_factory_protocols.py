@@ -8,6 +8,7 @@ from typing import Iterator
 from splurge_tools.factory import DataModelFactory, ComponentFactory
 from splurge_tools.protocols import (
     TabularDataProtocol,
+    StreamingTabularDataProtocol,
     DataValidatorProtocol,
     DataTransformerProtocol,
     ResourceManagerProtocol,
@@ -52,8 +53,8 @@ class TestFactoryProtocols(unittest.TestCase):
         
         model = self.data_model_factory.create_model(data_iterator())
         
-        # Verify it implements the protocol
-        self.assertIsInstance(model, TabularDataProtocol)
+        # Verify it implements the streaming protocol (iterator data creates streaming models)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         
         # Test basic functionality
         self.assertEqual(model.column_count, 2)

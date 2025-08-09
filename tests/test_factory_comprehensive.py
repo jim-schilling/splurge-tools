@@ -7,7 +7,7 @@ from typing import Iterator
 from pathlib import Path
 
 from splurge_tools.factory import DataModelFactory, ComponentFactory, create_data_model
-from splurge_tools.protocols import TabularDataProtocol
+from splurge_tools.protocols import TabularDataProtocol, StreamingTabularDataProtocol
 from splurge_tools.exceptions import SplurgeValidationError
 
 
@@ -17,6 +17,13 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.factory = DataModelFactory()
+    
+    def _assert_is_tabular_data_protocol(self, obj):
+        """Helper to assert object implements either TabularDataProtocol or StreamingTabularDataProtocol."""
+        self.assertTrue(
+            isinstance(obj, (TabularDataProtocol, StreamingTabularDataProtocol)),
+            f"Object {obj} should implement TabularDataProtocol or StreamingTabularDataProtocol"
+        )
 
     def test_create_model_with_force_streaming(self):
         """Test create_model with force_streaming=True."""
@@ -31,7 +38,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         )
         
         # Should return streaming model even for list data
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
         self.assertEqual(model.column_names, ["name", "age"])
 
@@ -59,7 +66,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         model = self.factory.create_model(data_iterator())
         
         # Should return streaming model for iterator data
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
         self.assertEqual(model.column_names, ["name", "age"])
 
@@ -79,7 +86,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         )
         
         # Should return streaming model due to size
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
         self.assertEqual(model.column_names, ["name", "age"])
 
@@ -95,8 +102,9 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             chunk_size=1000  # Use valid chunk size (minimum 100)
         )
         
-        # Should use custom chunk size
-        self.assertIsInstance(model, TabularDataProtocol)
+        # Should use custom chunk size and return streaming protocol
+        from splurge_tools.protocols import StreamingTabularDataProtocol
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
     def test_create_model_with_type_configs(self):
@@ -168,7 +176,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             data_iterator(),
             force_streaming=True
         )
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
 
     def test_standard_model_with_iterator_error(self):
         """Test that standard model with iterator works correctly."""
@@ -182,7 +190,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             force_typed=False,
             force_streaming=False
         )
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
 
     def test_determine_model_type_logic(self):
         """Test the model type determination logic."""
@@ -275,7 +283,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             chunk_size=1000
         )
         
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
 
@@ -434,7 +442,7 @@ class TestCreateDataModelFunction(unittest.TestCase):
         
         model = create_data_model(data_iterator())
         
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
 

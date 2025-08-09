@@ -46,7 +46,10 @@ class RandomHelper:
     ALPHA_CHARS: str = f"{string.ascii_lowercase}{string.ascii_uppercase}"
     DIGITS: str = "0123456789"
     ALPHANUMERIC_CHARS: str = f"{ALPHA_CHARS}{DIGITS}"
-    BASE58_CHARS: str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    BASE58_ALPHA: str = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    BASE58_DIGITS: str = "123456789"
+    BASE58_CHARS: str = f"{BASE58_ALPHA}{BASE58_DIGITS}"
+    SYMBOLS: str = "!@#$%^&*()_+-=[]{};:,.<>?`~"
 
     @staticmethod
     def as_bytes(
@@ -357,6 +360,98 @@ class RandomHelper:
         return cls.as_string(length, cls.BASE58_CHARS, secure=secure)
 
     @classmethod
+    def as_base58_like(
+        cls,
+        size: int,
+        *,
+        symbols: str = SYMBOLS,
+        secure: Optional[bool] = False
+    ) -> str:
+        """
+        Generate a Base58-like string with guaranteed character diversity.
+        
+        Creates a string from BASE58_ALPHA, BASE58_DIGITS, and symbols that contains
+        at least one alphabetic character, one digit, and (if symbols provided) one symbol.
+        
+        Args:
+            size (int): Length of the string to generate (must be >= 1)
+            symbols (str, optional): Symbol characters to include from cls.SYMBOLS. 
+                Defaults to cls.SYMBOLS. If empty or None, no symbols will be required or used.
+                All characters must be from the SYMBOLS constant.
+            secure (bool, optional): If True, uses cryptographically secure random generation.
+                Defaults to False.
+        
+        Returns:
+            str: Random Base58-like string with guaranteed character diversity
+            
+        Raises:
+            ValueError: If size < 1, if size is too small to satisfy character requirements,
+                or if symbols contains characters not in cls.SYMBOLS
+            
+        Example:
+            >>> RandomHelper.as_base58_like(5)
+            'A3!bC'  # Contains alpha, digit, and symbol
+            >>> RandomHelper.as_base58_like(3, symbols="")
+            'A3b'    # Contains alpha and digit, no symbols required
+            >>> RandomHelper.as_base58_like(10, symbols="@#$", secure=True)
+            'A3@bC4#dE'  # Secure generation with symbols from SYMBOLS constant
+        """
+        if size < 1:
+            raise ValueError("size must be >= 1")
+        
+        # Validate symbols parameter
+        if symbols:
+            invalid_chars = set(symbols) - set(cls.SYMBOLS)
+            if invalid_chars:
+                raise ValueError(f"symbols contains invalid characters: {''.join(sorted(invalid_chars))}. "
+                               f"Only characters from SYMBOLS constant are allowed: {cls.SYMBOLS}")
+        
+        # Determine required character types
+        use_symbols = symbols and len(symbols) > 0
+        min_required = 2 if not use_symbols else 3  # alpha + digit + optional symbol
+        
+        if size < min_required:
+            if use_symbols:
+                raise ValueError(f"size must be >= 3 to include alpha, digit, and symbol")
+            else:
+                raise ValueError(f"size must be >= 2 to include alpha and digit")
+        
+        # Build character set
+        char_set = cls.BASE58_ALPHA + cls.BASE58_DIGITS
+        if use_symbols:
+            char_set += symbols
+        
+        # Generate string with guaranteed diversity
+        result = []
+        
+        # Add required characters
+        alpha_idx = cls.as_int_range(0, len(cls.BASE58_ALPHA) - 1, secure=secure)
+        result.append(cls.BASE58_ALPHA[alpha_idx])  # At least one alpha
+        
+        digit_idx = cls.as_int_range(0, len(cls.BASE58_DIGITS) - 1, secure=secure)
+        result.append(cls.BASE58_DIGITS[digit_idx])  # At least one digit
+        
+        if use_symbols:
+            if len(symbols) == 1:
+                result.append(symbols[0])  # Only one symbol available
+            else:
+                symbol_idx = cls.as_int_range(0, len(symbols) - 1, secure=secure)
+                result.append(symbols[symbol_idx])  # At least one symbol
+        
+        # Fill remaining positions randomly from full character set
+        remaining = size - len(result)
+        for _ in range(remaining):
+            char_idx = cls.as_int_range(0, len(char_set) - 1, secure=secure)
+            result.append(char_set[char_idx])
+        
+        # Shuffle to avoid predictable patterns (Fisher-Yates shuffle)
+        for i in range(len(result) - 1, 0, -1):
+            j = cls.as_int_range(0, i, secure=secure)
+            result[i], result[j] = result[j], result[i]
+        
+        return ''.join(result)
+
+    @classmethod
     def as_variable_base58(
         cls,
         lower: int,
@@ -551,7 +646,7 @@ class RandomHelper:
         count: int,
         digits: int,
         *,
-        start: Optional[int] = 0,
+        start: int = 0,
         prefix: Optional[str] = None,
         suffix: Optional[str] = None
     ) -> List[str]:

@@ -41,7 +41,7 @@ pip install splurge-tools
 ### Data Utilities
 - **`data_validator.py`**: Data validation framework with custom validation rules
 - **`data_transformer.py`**: Data transformation utilities for converting between formats
-- **`random_helper.py`**: Random data generation for testing, including realistic test data
+- **`random_helper.py`**: Random data generation for testing, including realistic test data and secure Base58-like string generation with guaranteed character diversity
 
 ### Key Capabilities
 - **Streaming Support**: Process datasets larger than available RAM with configurable chunk sizes
@@ -102,6 +102,24 @@ profile = DsvHelper.profile_columns(data)
 # Get column information
 for col_name, col_info in profile.items():
     print(f"{col_name}: {col_info['datatype']} ({col_info['count']} values)")
+```
+
+### Secure Random String Generation
+
+```python
+from splurge_tools.random_helper import RandomHelper
+
+# Generate Base58-like strings with guaranteed character diversity
+api_key = RandomHelper.as_base58_like(32)  # Contains alpha, digit, and symbol
+print(api_key)  # Example: "A3!bC7@dE9#fG2$hJ4%kL6&mN8*pQ5"
+
+# Generate without symbols (alpha + digits only)
+token = RandomHelper.as_base58_like(16, symbols="")
+print(token)  # Example: "A3bC7dE9fG2hJ4kL"
+
+# Generate with custom symbols and secure mode
+secure_id = RandomHelper.as_base58_like(20, symbols="!@#$", secure=True)
+print(secure_id)  # Example: "A3!bC7@dE9#fG2$hJ4"
 ```
 
 ## Development
@@ -189,26 +207,45 @@ python -m build
 - Proper handling of leading zero bytes in base-58 encoding/decoding
 - Correct validation of base-58 alphabet characters (excluding 0, O, I, l)
 
-### [0.3.0] - 2025-08-08
+### [0.3.0] - 2025-01-15
 
 #### Added
 - **Protocol-Based Architecture**: Implemented comprehensive protocol-based design across all major components for improved type safety and consistency
+- **StreamingTabularDataProtocol**: Added new `StreamingTabularDataProtocol` specifically designed for streaming data models with methods optimized for memory-efficient processing:
+  - `column_names`, `column_count`, `column_index()` for metadata access
+  - `__iter__()`, `iter_rows_as_dicts()`, `iter_rows_as_tuples()` for data iteration
+  - `reset_stream()` for stream position management
 - **DataValidatorProtocol**: Added `DataValidatorProtocol` with required methods `validate()`, `get_errors()`, and `clear_errors()`
 - **DataTransformerProtocol**: Added `DataTransformerProtocol` with required methods `transform()` and `can_transform()`
 - **TypeInferenceProtocol**: Added `TypeInferenceProtocol` with required methods `can_infer()`, `infer_type()`, and `convert_value()`
 - **ResourceManagerProtocol**: Added `ResourceManagerProtocol` with required methods `acquire()`, `release()`, and `is_acquired()`
+- **Enhanced RandomHelper**: Added new `as_base58_like()` method for generating Base58-like strings with guaranteed character diversity:
+  - Ensures at least one alphabetic character, one digit, and one symbol (if provided)
+  - Validates symbols against the `SYMBOLS` constant for security
+  - Supports secure and non-secure random generation modes
+  - Includes comprehensive error handling and validation
+- **New Constants**: Added `BASE58_ALPHA`, `BASE58_DIGITS`, and `SYMBOLS` constants to `RandomHelper`:
+  - `BASE58_ALPHA`: 49 characters (excludes O, I, l from standard alphabet)
+  - `BASE58_DIGITS`: 9 characters (excludes 0, uses 1-9 only)
+  - `SYMBOLS`: 26 special characters for secure string generation
 - **TypeInference Class**: Created new `TypeInference` class implementing `TypeInferenceProtocol` for type inference operations
 - **ResourceManager Base Class**: Created new `ResourceManager` base class implementing `ResourceManagerProtocol` with abstract methods `_create_resource()` and `_cleanup_resource()`
 - **FileResourceManagerWrapper**: Added adapter class to wrap existing context managers to protocol interface
 - **Runtime Protocol Validation**: Added runtime validation in factory methods to ensure created objects implement correct protocols
-- **Comprehensive Test Suites**: Added extensive test coverage for all new protocol implementations:
+- **Comprehensive Test Suites**: Added extensive test coverage for all new implementations:
   - `tests/test_factory_protocols.py` - Factory protocol testing
   - `tests/test_type_inference.py` - TypeInference class and protocol testing
   - `tests/test_data_validator_comprehensive.py` - Comprehensive DataValidator testing (98% coverage)
   - `tests/test_factory_comprehensive.py` - Comprehensive Factory testing (87% coverage)
   - `tests/test_resource_manager_comprehensive.py` - Comprehensive ResourceManager testing (84% coverage)
+  - Enhanced `test_random_helper.py` with comprehensive `as_base58_like()` testing (97% coverage)
 
 #### Changed
+- **StreamingTabularDataModel Protocol Separation**: Updated `StreamingTabularDataModel` to implement `StreamingTabularDataProtocol` instead of `TabularDataProtocol`:
+  - Removed methods not suitable for streaming: `row_count`, `column_type`, `column_values`, `cell_value`, `row`, `row_as_list`, `row_as_tuple`
+  - Focused on streaming-optimized iteration methods
+  - Improved architectural clarity between in-memory and streaming models
+- **Factory Return Types**: Enhanced factory methods to correctly return `Union[TabularDataProtocol, StreamingTabularDataProtocol]` based on model type
 - **DataValidator Protocol Compliance**: Updated `DataValidator` class to explicitly implement `DataValidatorProtocol`:
   - Modified `validate()` method to return `bool` instead of `Dict[str, List[str]]`
   - Added `get_errors()` method returning list of error messages
@@ -218,6 +255,7 @@ python -m build
 - **DataTransformer Protocol Compliance**: Updated `DataTransformer` class to explicitly implement `DataTransformerProtocol`:
   - Added `transform()` method providing general transformation capability
   - Added `can_transform()` method to check transformability
+  - Updated constructor to accept `TabularDataProtocol` for broader compatibility
   - Kept existing specific transformation methods (pivot, melt, group_by, etc.)
 - **Factory Pattern Improvements**: Enhanced `ComponentFactory` methods to return proper protocol types instead of `Any`:
   - Added runtime validation for protocol compliance
@@ -226,9 +264,20 @@ python -m build
 - **Test Organization**: Updated existing test suites to include protocol compliance testing and improved test structure
 
 #### Fixed
+- **Type Annotation Issues**: Resolved 109 MyPy type errors across the codebase:
+  - Fixed decorator type signatures in `case_helper.py` and `text_normalizer.py`
+  - Corrected unreachable code issues in `type_helper.py` by restructuring type checks
+  - Fixed `None` attribute access by adding proper `isinstance()` checks
+  - Updated generic type parameters throughout (`Iterator[Any]`, `list[Any]`, `dict[str, DataType]`)
+  - Corrected `PathLike` type annotations to `PathLike[str]`
+  - Fixed resource manager type annotations for file handles and temporary files
 - **Protocol Implementation Issues**: Resolved all protocol compliance issues across the codebase
 - **Type Safety**: Fixed factory methods to return proper protocol types with runtime validation
 - **Circular Import Issues**: Resolved circular import problems in type inference components
+- **Parameter Type Issues**: Fixed parameter types to handle `None` values properly:
+  - Updated `string_tokenizer.py`, `base58.py` parameter types to `str | None` or `Any`
+  - Added proper validation in `random_helper.py` for `start` parameter
+- **Test Failures**: Fixed 7 test failures related to protocol type assertions in factory tests
 - **Backward Compatibility**: Ensured all existing functionality remains intact while adding protocol compliance
 
 #### Performance
@@ -237,6 +286,9 @@ python -m build
   - Factory: 85% → **89%** (+4%)
   - ResourceManager: 42% → **84%** (+42%)
   - TypeHelper: 51% → **71%** (+20%)
+  - RandomHelper: 58% → **97%** (+39%)
+- **Type Safety**: Reduced MyPy errors from 109 to 7 (remaining are "unreachable code" warnings for defensive programming)
+- **Architectural Clarity**: Improved separation of concerns between streaming and in-memory data models
 
 ### [0.2.6] - 2025-07-12
 

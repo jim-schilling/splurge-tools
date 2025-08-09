@@ -146,6 +146,51 @@ class TypeInferenceProtocol(Protocol):
 
 
 @runtime_checkable
+class StreamingTabularDataProtocol(Protocol):
+    """
+    Protocol for streaming tabular data models.
+    
+    This protocol defines the interface for streaming data models that process
+    data without loading entire datasets into memory. Unlike TabularDataProtocol,
+    this protocol focuses on streaming-friendly operations.
+    """
+    
+    @property
+    def column_names(self) -> list[str]:
+        """Get the list of column names."""
+        ...
+    
+    @property
+    def column_count(self) -> int:
+        """Get the number of columns."""
+        ...
+    
+    def column_index(self, name: str) -> int:
+        """Get the index of a column by name."""
+        ...
+    
+    def __iter__(self) -> Iterator[list[str]]:
+        """Iterate over rows as lists."""
+        ...
+    
+    def iter_rows(self) -> Generator[dict[str, str], None, None]:
+        """Iterate over rows as dictionaries."""
+        ...
+    
+    def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
+        """Iterate over rows as tuples."""
+        ...
+    
+    def clear_buffer(self) -> None:
+        """Clear any internal buffer to free memory."""
+        ...
+    
+    def reset_stream(self) -> None:
+        """Reset the stream position if possible."""
+        ...
+
+
+@runtime_checkable
 class ResourceManagerProtocol(Protocol):
     """
     Protocol for resource management operations.
