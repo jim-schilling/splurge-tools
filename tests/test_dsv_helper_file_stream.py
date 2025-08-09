@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from splurge_tools.dsv_helper import DsvHelper
+from splurge_tools.exceptions import SplurgeFileNotFoundError
 
 
 class TestDSVHelperFileStream(unittest.TestCase):
@@ -51,7 +52,7 @@ class TestDSVHelperFileStream(unittest.TestCase):
 
     def test_invalid_file_path(self):
         """Test handling of invalid file path."""
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(SplurgeFileNotFoundError):
             DsvHelper.parse_file("nonexistent.txt", ",")
 
     def test_parse_stream_basic(self):

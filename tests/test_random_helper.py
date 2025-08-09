@@ -32,7 +32,30 @@ class TestRandomHelper(unittest.TestCase):
         self.assertEqual(
             len(RandomHelper.ALPHANUMERIC_CHARS), 62
         )  # 52 letters + 10 digits
-        self.assertEqual(len(RandomHelper.BASE58_CHARS), 58)
+        
+        # Test new BASE58 constants
+        self.assertEqual(len(RandomHelper.BASE58_ALPHA), 49)  # Excludes O, I, l from alphabet (52-3=49)
+        self.assertEqual(len(RandomHelper.BASE58_DIGITS), 9)  # Excludes 0 from digits (1-9 = 9)
+        self.assertEqual(len(RandomHelper.BASE58_CHARS), 58)  # 49 + 9 = 58
+        self.assertEqual(RandomHelper.BASE58_CHARS, RandomHelper.BASE58_ALPHA + RandomHelper.BASE58_DIGITS)
+        
+        # Test SYMBOLS constant
+        expected_symbols = "!@#$%^&*()_+-=[]{};:,.<>?`~"
+        self.assertEqual(RandomHelper.SYMBOLS, expected_symbols)
+        self.assertEqual(len(RandomHelper.SYMBOLS), len(expected_symbols))
+        
+        # Verify BASE58 excludes problematic characters
+        excluded_chars = "0OIl"
+        for char in excluded_chars:
+            self.assertNotIn(char, RandomHelper.BASE58_CHARS, 
+                           f"BASE58_CHARS should not contain '{char}'")
+        
+        # Verify BASE58_DIGITS only contains 1-9
+        self.assertEqual(RandomHelper.BASE58_DIGITS, "123456789")
+        # Verify BASE58_ALPHA excludes O, I, l
+        excluded_alpha = set("OIl")
+        self.assertTrue(excluded_alpha.isdisjoint(set(RandomHelper.BASE58_ALPHA)),
+                       "BASE58_ALPHA should not contain O, I, or l")
 
     def test_as_bytes(self):
         """Test random byte generation."""
@@ -164,6 +187,110 @@ class TestRandomHelper(unittest.TestCase):
         secure_value = RandomHelper.as_base58(5, secure=True)
         self.assertEqual(len(secure_value), 5)
         self.assertTrue(all(c in RandomHelper.BASE58_CHARS for c in secure_value))
+
+    def test_as_base58_like(self):
+        """Test Base58-like string generation with guaranteed character diversity."""
+        import re
+        
+        # Test 1: Default usage with all symbol types
+        result = RandomHelper.as_base58_like(10)
+        self.assertEqual(len(result), 10)
+        self.assertTrue(re.search(r'[A-HJ-NP-Za-kmnp-z]', result), "Should contain BASE58_ALPHA")
+        self.assertTrue(re.search(r'[1-9]', result), "Should contain BASE58_DIGITS")
+        self.assertTrue(any(c in RandomHelper.SYMBOLS for c in result), "Should contain symbols")
+        
+        # Test 2: Without symbols
+        result_no_symbols = RandomHelper.as_base58_like(5, symbols="")
+        self.assertEqual(len(result_no_symbols), 5)
+        self.assertTrue(re.search(r'[A-HJ-NP-Za-kmnp-z]', result_no_symbols), "Should contain BASE58_ALPHA")
+        self.assertTrue(re.search(r'[1-9]', result_no_symbols), "Should contain BASE58_DIGITS")
+        self.assertFalse(any(c in RandomHelper.SYMBOLS for c in result_no_symbols), "Should not contain symbols")
+        
+        # Test 3: Custom symbols subset
+        custom_symbols = "!@#$"
+        result_custom = RandomHelper.as_base58_like(8, symbols=custom_symbols)
+        self.assertEqual(len(result_custom), 8)
+        self.assertTrue(re.search(r'[A-HJ-NP-Za-kmnp-z]', result_custom), "Should contain BASE58_ALPHA")
+        self.assertTrue(re.search(r'[1-9]', result_custom), "Should contain BASE58_DIGITS")
+        self.assertTrue(any(c in custom_symbols for c in result_custom), "Should contain custom symbols")
+        
+        # Test 4: Secure mode
+        result_secure = RandomHelper.as_base58_like(6, secure=True)
+        self.assertEqual(len(result_secure), 6)
+        self.assertTrue(re.search(r'[A-HJ-NP-Za-kmnp-z]', result_secure), "Should contain BASE58_ALPHA")
+        self.assertTrue(re.search(r'[1-9]', result_secure), "Should contain BASE58_DIGITS")
+        
+        # Test 5: Minimum sizes
+        min_no_symbols = RandomHelper.as_base58_like(2, symbols="")
+        self.assertEqual(len(min_no_symbols), 2)
+        
+        min_with_symbols = RandomHelper.as_base58_like(3, symbols="!")
+        self.assertEqual(len(min_with_symbols), 3)
+        self.assertTrue("!" in min_with_symbols, "Should contain the required symbol")
+        
+        # Test 6: Single symbol
+        single_symbol_result = RandomHelper.as_base58_like(4, symbols="@")
+        self.assertEqual(len(single_symbol_result), 4)
+        self.assertTrue("@" in single_symbol_result, "Should contain the single symbol")
+        
+        # Test 7: Character diversity verification (run multiple times)
+        for _ in range(10):
+            diverse_result = RandomHelper.as_base58_like(6, symbols="!@")
+            has_alpha = bool(re.search(r'[A-HJ-NP-Za-kmnp-z]', diverse_result))
+            has_digit = bool(re.search(r'[1-9]', diverse_result))
+            has_symbol = bool(re.search(r'[!@]', diverse_result))
+            self.assertTrue(has_alpha, f"Result '{diverse_result}' should have alpha character")
+            self.assertTrue(has_digit, f"Result '{diverse_result}' should have digit character")
+            self.assertTrue(has_symbol, f"Result '{diverse_result}' should have symbol character")
+
+    def test_as_base58_like_error_conditions(self):
+        """Test error conditions for as_base58_like method."""
+        
+        # Test 1: Invalid size
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(0)
+        self.assertIn("size must be >= 1", str(cm.exception))
+        
+        # Test 2: Size too small for requirements (with symbols)
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(2, symbols="!")
+        self.assertIn("size must be >= 3 to include alpha, digit, and symbol", str(cm.exception))
+        
+        # Test 3: Size too small for requirements (without symbols)
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(1, symbols="")
+        self.assertIn("size must be >= 2 to include alpha and digit", str(cm.exception))
+        
+        # Test 4: Invalid symbols (not in SYMBOLS constant)
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(5, symbols="XYZ")
+        self.assertIn("symbols contains invalid characters: XYZ", str(cm.exception))
+        self.assertIn("Only characters from SYMBOLS constant are allowed", str(cm.exception))
+        
+        # Test 5: Mixed valid and invalid symbols
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(5, symbols="!@XY")
+        self.assertIn("symbols contains invalid characters: XY", str(cm.exception))
+        
+        # Test 6: Symbols with characters from BASE58 set (should fail)
+        with self.assertRaises(ValueError) as cm:
+            RandomHelper.as_base58_like(5, symbols="A1!")  # A and 1 are from BASE58, not SYMBOLS
+        self.assertIn("symbols contains invalid characters: 1A", str(cm.exception))
+
+    def test_as_base58_like_constants_validation(self):
+        """Test that the method correctly uses the updated constants."""
+        # Verify BASE58_ALPHA and BASE58_DIGITS are used correctly
+        result = RandomHelper.as_base58_like(10, symbols="")
+        
+        # Should only contain BASE58_ALPHA and BASE58_DIGITS
+        allowed_chars = RandomHelper.BASE58_ALPHA + RandomHelper.BASE58_DIGITS
+        self.assertTrue(all(c in allowed_chars for c in result), 
+                       f"Result '{result}' contains characters not in BASE58_ALPHA + BASE58_DIGITS")
+        
+        # Should not contain excluded characters (0, O, I, l from original base58)
+        excluded_chars = "0OIl"
+        self.assertFalse(any(c in excluded_chars for c in result),
+                        f"Result '{result}' should not contain excluded characters: {excluded_chars}")
 
     def test_as_variable_string(self):
         """Test variable length string generation."""

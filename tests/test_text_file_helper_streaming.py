@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 from splurge_tools.text_file_helper import TextFileHelper
+from splurge_tools.exceptions import SplurgeFileNotFoundError, SplurgeValidationError
 
 
 class TestTextFileHelperStreaming(unittest.TestCase):
@@ -102,11 +103,11 @@ class TestTextFileHelperStreaming(unittest.TestCase):
                 os.unlink(small_file_path)
 
             # Test invalid chunk_size
-            with self.assertRaises(ValueError):
+            with self.assertRaises(SplurgeValidationError):
                 list(TextFileHelper.load_as_stream(large_file_path, chunk_size=50))
 
             # Test file not found
-            with self.assertRaises(FileNotFoundError):
+            with self.assertRaises(SplurgeFileNotFoundError):
                 list(TextFileHelper.load_as_stream("nonexistent_file.txt"))
 
         finally:

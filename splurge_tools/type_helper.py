@@ -8,11 +8,11 @@ This module offers a comprehensive set of tools for:
 - Collection type checking
 - Value profiling and analysis
 
-Copyright (c) 2023 Jim Schilling
+Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
-This software is licensed under the MIT License.
+This module is licensed under the MIT License.
 """
 
 from collections import abc
@@ -50,6 +50,83 @@ class DataType(Enum):
     MIXED = "mixed"
     EMPTY = "empty"
     NONE = "none"
+
+
+class TypeInference:
+    """
+    Type inference utility that implements the TypeInferenceProtocol.
+    
+    This class provides methods for inferring data types and converting values
+    to their inferred types.
+    """
+    
+    def can_infer(
+        self,
+        value: Any
+    ) -> bool:
+        """
+        Check if the value can be inferred as a specific type.
+        
+        Args:
+            value: The value to check
+            
+        Returns:
+            True if the value can be inferred as a specific type, False otherwise
+        """
+        if not isinstance(value, str):
+            return False
+            
+        inferred_type = String.infer_type(value)
+        return inferred_type != DataType.STRING
+    
+    def infer_type(
+        self,
+        value: str
+    ) -> DataType:
+        """
+        Infer the type of the given value.
+        
+        Args:
+            value: The value to infer the type for
+            
+        Returns:
+            The inferred DataType
+        """
+        return String.infer_type(value)
+    
+    def convert_value(
+        self,
+        value: Any
+    ) -> Any:
+        """
+        Convert the value to its inferred type.
+        
+        Args:
+            value: The value to convert
+            
+        Returns:
+            The converted value in its inferred type
+        """
+        inferred_type = self.infer_type(value)
+        
+        if inferred_type == DataType.BOOLEAN:
+            return String.to_bool(value)
+        elif inferred_type == DataType.INTEGER:
+            return String.to_int(value)
+        elif inferred_type == DataType.FLOAT:
+            return String.to_float(value)
+        elif inferred_type == DataType.DATE:
+            return String.to_date(value)
+        elif inferred_type == DataType.TIME:
+            return String.to_time(value)
+        elif inferred_type == DataType.DATETIME:
+            return String.to_datetime(value)
+        elif inferred_type == DataType.NONE:
+            return None
+        elif inferred_type == DataType.EMPTY:
+            return ""
+        else:
+            return value
 
 
 class String:
@@ -124,8 +201,12 @@ class String:
     _INTEGER_REGEX = re.compile(r"""^[-+]?\d+$""")
     _DATE_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""")
     _DATE_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""")
-    _DATETIME_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
-    _DATETIME_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""")
+    _DATETIME_YYYY_MM_DD_REGEX = re.compile(
+        r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+    )
+    _DATETIME_MM_DD_YYYY_REGEX = re.compile(
+        r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+    )
     _TIME_24HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""")
     _TIME_12HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""")
     _TIME_COMPACT_REGEX = re.compile(r"""^(\d{2})(\d{2})(\d{2})?$""")
@@ -240,7 +321,7 @@ class String:
         Examples:
             >>> String.is_float_like('1.23')  # True
             >>> String.is_float_like('-1.23') # True
-            >>> String.is_float_like('1')     # False
+            >>> String.is_float_like('1')     # True
         """
         if value is None:
             return False
@@ -248,13 +329,13 @@ class String:
         if isinstance(value, float):
             return True
 
-        if not isinstance(value, str):
-            return False
-
-        return (
-            cls._FLOAT_REGEX.match(value.strip() if trim else value)
-            is not None
-        )
+        if isinstance(value, str):
+            return (
+                cls._FLOAT_REGEX.match(value.strip() if trim else value)
+                is not None
+            )
+        
+        return False
 
     @classmethod
     def is_int_like(
@@ -284,11 +365,11 @@ class String:
         if isinstance(value, int):
             return True
 
-        if not isinstance(value, str):
-            return False
-
-        tmp_value: str = value.strip() if trim else value
-        return cls._INTEGER_REGEX.match(tmp_value) is not None
+        if isinstance(value, str):
+            tmp_value: str = value.strip() if trim else value
+            return cls._INTEGER_REGEX.match(tmp_value) is not None
+        
+        return False
 
     @classmethod
     def is_numeric_like(
@@ -315,7 +396,11 @@ class String:
         if value is None:
             return False
 
-        return cls.is_float_like(value, trim=trim) or cls.is_int_like(value, trim=trim)
+        if isinstance(value, (int, float)):
+            return True
+        if isinstance(value, str):
+            return cls.is_float_like(value, trim=trim) or cls.is_int_like(value, trim=trim)
+        return False
 
     @classmethod
     def is_category_like(
@@ -429,16 +514,14 @@ class String:
         if isinstance(value, date):
             return True
 
-        if not isinstance(value, str):
-            return False
+        if isinstance(value, str):
+            tmp_value: str = value.strip() if trim else value
 
-        tmp_value: str = value.strip() if trim else value
+            if String._DATE_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
+                return True
 
-        if String._DATE_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
-            return True
-
-        if String._DATE_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
-            return True
+            if String._DATE_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
+                return True
 
         return False
 
@@ -498,16 +581,14 @@ class String:
         if isinstance(value, datetime):
             return True
 
-        if not isinstance(value, str):
-            return False
+        if isinstance(value, str):
+            tmp_value: str = value.strip() if trim else value
 
-        tmp_value: str = value.strip() if trim else value
+            if String._DATETIME_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
+                return True
 
-        if String._DATETIME_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
-            return True
-
-        if String._DATETIME_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
-            return True
+            if String._DATETIME_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
+                return True
 
         return False
 
@@ -541,19 +622,17 @@ class String:
         if isinstance(value, time):
             return True
 
-        if not isinstance(value, str):
-            return False
+        if isinstance(value, str):
+            tmp_value: str = value.strip() if trim else value
 
-        tmp_value: str = value.strip() if trim else value
+            if String._TIME_24HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+                return True
 
-        if String._TIME_24HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
-            return True
+            if String._TIME_12HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+                return True
 
-        if String._TIME_12HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
-            return True
-
-        if String._TIME_COMPACT_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
-            return True
+            if String._TIME_COMPACT_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+                return True
 
         return False
 
@@ -585,8 +664,9 @@ class String:
             return value
 
         if cls.is_bool_like(value, trim=trim):
-            tmp_value: str = value.lower().strip() if trim else value.lower()
-            return tmp_value == "true"
+            if isinstance(value, str):
+                tmp_value: str = value.lower().strip() if trim else value.lower()
+                return tmp_value == "true"
 
         return default
 
@@ -614,7 +694,9 @@ class String:
             >>> String.to_float('-1.23') # -1.23
             >>> String.to_float('abc')   # None
         """
-        return float(value) if cls.is_float_like(value, trim=trim) else default
+        if cls.is_float_like(value, trim=trim) and value is not None:
+            return float(value)
+        return default
 
     @classmethod
     def to_int(
@@ -640,7 +722,9 @@ class String:
             >>> String.to_int('-123')  # -123
             >>> String.to_int('1.23')  # None
         """
-        return int(value) if cls.is_int_like(value, trim=trim) else default
+        if cls.is_int_like(value, trim=trim) and value is not None:
+            return int(value)
+        return default
 
     @classmethod
     def to_date(
@@ -672,6 +756,9 @@ class String:
         if not cls.is_date_like(value, trim=trim):
             return default
 
+        if not isinstance(value, str):
+            return default
+            
         dvalue: str = value.strip() if trim else value
 
         for pattern in cls._DATE_PATTERNS:
@@ -713,6 +800,9 @@ class String:
         if not cls.is_datetime_like(value, trim=trim):
             return default
 
+        if not isinstance(value, str):
+            return default
+            
         tmp_value: str = value.strip() if trim else value
 
         for pattern in cls._DATETIME_PATTERNS:
@@ -755,6 +845,9 @@ class String:
         if not cls.is_time_like(value, trim=trim):
             return default
 
+        if not isinstance(value, str):
+            return default
+            
         tmp_value: str = value.strip() if trim else value
 
         for pattern in cls._TIME_PATTERNS:
@@ -817,29 +910,45 @@ class String:
             >>> String.infer_type('true')          # DataType.BOOLEAN
             >>> String.infer_type('abc')           # DataType.STRING
         """
+        # Handle non-string types first
+        if isinstance(value, bool):
+            return DataType.BOOLEAN
+        elif isinstance(value, int):
+            return DataType.INTEGER
+        elif isinstance(value, float):
+            return DataType.FLOAT
+        elif isinstance(value, datetime):
+            return DataType.DATETIME
+        elif isinstance(value, time):
+            return DataType.TIME
+        elif isinstance(value, date):
+            return DataType.DATE
+        
+        # Handle string and None types
         if cls.is_none_like(value, trim=trim):
             return DataType.NONE
 
-        if cls.is_bool_like(value, trim=trim):
-            return DataType.BOOLEAN
-
-        if cls.is_datetime_like(value, trim=trim):
-            return DataType.DATETIME
-
-        if cls.is_time_like(value, trim=trim):
-            return DataType.TIME
-
-        if cls.is_date_like(value, trim=trim):
-            return DataType.DATE
-
-        if cls.is_int_like(value, trim=trim):
-            return DataType.INTEGER
-
-        if cls.is_float_like(value, trim=trim):
-            return DataType.FLOAT
-
         if cls.is_empty_like(value, trim=trim):
             return DataType.EMPTY
+
+        if isinstance(value, str):
+            if cls.is_bool_like(value, trim=trim):
+                return DataType.BOOLEAN
+
+            if cls.is_datetime_like(value, trim=trim):
+                return DataType.DATETIME
+
+            if cls.is_time_like(value, trim=trim):
+                return DataType.TIME
+
+            if cls.is_date_like(value, trim=trim):
+                return DataType.DATE
+
+            if cls.is_int_like(value, trim=trim):
+                return DataType.INTEGER
+
+            if cls.is_float_like(value, trim=trim):
+                return DataType.FLOAT
 
         return DataType.STRING
 
@@ -932,7 +1041,7 @@ def _determine_type_from_counts(
 _INCREMENTAL_TYPECHECK_THRESHOLD = 10_000
 
 def profile_values(
-    values: Iterable, 
+    values: Iterable[Any], 
     *, 
     trim: bool = True,
     use_incremental_typecheck: bool = True
@@ -970,7 +1079,7 @@ def profile_values(
         raise ValueError("values must be iterable")
 
     # Convert to list to handle generators and ensure we can iterate multiple times
-    values_list: list = list(values)
+    values_list: list[Any] = list(values)
     
     if not values_list:
         return DataType.EMPTY

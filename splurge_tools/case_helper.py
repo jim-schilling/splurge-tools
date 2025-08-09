@@ -7,7 +7,7 @@ Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
-This software is licensed under the MIT License.
+This module is licensed under the MIT License.
 """
 
 from functools import wraps
@@ -15,8 +15,8 @@ from typing import Callable, Any
 
 
 def handle_empty_value(
-    func: Callable[[str, Any], str]
-) -> Callable[[str, Any], str]:
+    func: Callable[..., str]
+) -> Callable[..., str]:
     """
     Decorator to handle empty value checks for case conversion methods.
     Returns empty string if input value is None or empty.

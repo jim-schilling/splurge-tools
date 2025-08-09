@@ -29,12 +29,19 @@ alwaysApply: true
 - Remove unused imports.
 - Use descriptive variable names with auxiliary verbs (e.g. is_active, has_permission).
 - Prefer iteration and modularization over code duplication.
-- For Object definitions/declarations (e.g. class, enum, dataclass), names with acronymns or abbreviations (e.g. DSVReader, CSVWriter, TransformXMLToJSON), shall be Pascal case like DsvReader, CsvWriter, TransformXmlToJson.
+- For Object definitions/declarations (e.g. class, enum, dataclass), names with acronyms or abbreviations (e.g. DSVReader, CSVWriter, TransformXMLToJSON), shall be Pascal case like DsvReader, CsvWriter, TransformXmlToJson.
 - All class and instance level fields shall be private by default (e.g. self._is_active, self._data_model).
 - Class and instance level fields shall have public property getters (e.g. is_active, data_model, file_name).
-- Prefer parameters in method signatures to be listed on separate lines.
+- Prefer parameters in method signatures and method calls to be listed on separate lines.
 - Default parameters for Method signatures shall be named (e.g def myfunc(value: str, trim:bool = True) will be def myfunc(value: str, *, trim: bool = True)).
 - Avoid magic strings and magic numbers, instead use private constants at module or class level.
 - For all method signatures with more than 2 parameters, place each parameter on separate line and close parenthesis on separate line.
 - For all method calls that span more than 1 line or with more than 2 parameters, place each parameter on separate line and close parenthesis on separate line.
 - Follow SOLID principles.
+- When updating a method or class signature, do not maintain backwards compatibility unless specifically told to do so.
+- For any line continuations, use parentheses only.
+- Coverage for tests shall target 85% code coverage of all public interfaces / methods.
+- Use module level exceptions as needed.
+- Do not test private methods.
+- Use actual methods, classes, interfaces, and data when possible for testing, to minimize amount of use of mocks.
+- Class level private methods shall prefer parameterization versus reliance on instance or class objects.

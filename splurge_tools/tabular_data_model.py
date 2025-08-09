@@ -1,20 +1,27 @@
 """
 Tabular data model classes for structured data operations.
 
-Copyright (c) 2025, Jim Schilling
+Copyright (c) 2025 Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
 
 import re
-from typing import Generator
+import warnings
+from typing import Generator, Iterator
 
+from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
 
 
-class TabularDataModel:
+class TabularDataModel(TabularDataProtocol):
     """
     Tabular data model for structured data.
+    
+    This class implements the TabularDataProtocol interface, providing
+    a consistent interface for tabular data operations.
     """
 
     def __init__(
@@ -62,7 +69,7 @@ class TabularDataModel:
         while len(self._column_names) < self._columns:
             self._column_names.append(f"column_{len(self._column_names)}")
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
-        self._column_types = {}
+        self._column_types: dict[str, DataType] = {}
 
     @staticmethod
     def process_headers(
@@ -224,7 +231,7 @@ class TabularDataModel:
         col_idx: int = self._column_index_map[name]
         return self._data[row_index][col_idx]
 
-    def __iter__(self) -> Generator[list[str], None, None]:
+    def __iter__(self) -> Iterator[list[str]]:
         return iter(self._data)
 
     def iter_rows(self) -> Generator[dict[str, str], None, None]:

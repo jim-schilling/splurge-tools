@@ -3,7 +3,9 @@ Data validation utilities.
 
 This module provides classes for data validation operations.
 
-Copyright (c) 2025, Jim Schilling
+Copyright (c) 2025 Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
@@ -11,15 +13,21 @@ This module is licensed under the MIT License.
 import re
 from typing import Any, Callable, Dict, List, Union
 
+from splurge_tools.protocols import DataValidatorProtocol
 
-class DataValidator:
+
+class DataValidator(DataValidatorProtocol):
     """
     A class for validating data against various rules and constraints.
+    
+    This class implements the DataValidatorProtocol interface, providing
+    a consistent interface for data validation operations.
     """
 
     def __init__(self) -> None:
         self._validators: Dict[str, List[Callable[[Any], bool]]] = {}
         self._custom_validators: Dict[str, Callable[[Any], bool]] = {}
+        self._errors: List[str] = []
 
     def add_validator(
         self,
@@ -53,10 +61,104 @@ class DataValidator:
 
     def validate(
         self,
+        data: Any
+    ) -> bool:
+        """
+        Validate the given data.
+
+        Args:
+            data: Data to validate (can be dict, list, or any other type)
+
+        Returns:
+            True if data is valid, False otherwise
+        """
+        self.clear_errors()
+        
+        if isinstance(data, dict):
+            return self._validate_dict(data)
+        elif isinstance(data, list):
+            return self._validate_list(data)
+        else:
+            # For non-dict/list data, check if any validators exist
+            if not self._validators:
+                return True  # No validators means everything is valid
+            
+            # Apply validators to the data itself
+            for field, validators in self._validators.items():
+                for validator in validators:
+                    if not validator(data):
+                        self._errors.append(f"Validation failed for {field}")
+                        return False
+            return True
+
+    def _validate_dict(
+        self,
+        data: Dict[str, Any]
+    ) -> bool:
+        """Validate dictionary data."""
+        is_valid = True
+        
+        for field, validators in self._validators.items():
+            if field not in data:
+                self._errors.append(f"Field '{field}' is required")
+                is_valid = False
+                continue
+
+            value = data[field]
+            for validator in validators:
+                if not validator(value):
+                    self._errors.append(f"Validation failed for field '{field}'")
+                    is_valid = False
+                    break
+        
+        return is_valid
+
+    def _validate_list(
+        self,
+        data: List[Any]
+    ) -> bool:
+        """Validate list data."""
+        is_valid = True
+        
+        for field, validators in self._validators.items():
+            try:
+                index = int(field)
+                if index >= len(data):
+                    self._errors.append(f"Index {index} is out of range")
+                    is_valid = False
+                    continue
+                
+                value = data[index]
+                for validator in validators:
+                    if not validator(value):
+                        self._errors.append(f"Validation failed for index {index}")
+                        is_valid = False
+                        break
+            except ValueError:
+                # Field is not a valid index, skip
+                continue
+        
+        return is_valid
+
+    def get_errors(self) -> List[str]:
+        """
+        Get list of validation errors.
+        
+        Returns:
+            List of error messages from the last validation
+        """
+        return self._errors.copy()
+
+    def clear_errors(self) -> None:
+        """Clear all validation errors."""
+        self._errors.clear()
+
+    def validate_detailed(
+        self,
         data: Dict[str, Any]
     ) -> Dict[str, List[str]]:
         """
-        Validate all fields in the data dictionary.
+        Validate all fields in the data dictionary and return detailed errors.
 
         Args:
             data: Dictionary of field names and values to validate

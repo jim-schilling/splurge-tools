@@ -5,7 +5,7 @@ Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
-This software is licensed under the MIT License.
+This module is licensed under the MIT License.
 """
 
 from os import PathLike
@@ -15,6 +15,13 @@ from typing import Optional, Union, Iterator
 from splurge_tools.string_tokenizer import StringTokenizer
 from splurge_tools.text_file_helper import TextFileHelper
 from splurge_tools.tabular_data_model import TabularDataModel
+
+
+# Module-level constants for DSV parsing
+_DEFAULT_CHUNK_SIZE = 100  # Default chunk size for streaming operations
+_DEFAULT_ENCODING = "utf-8"  # Default text encoding for file operations
+_DEFAULT_HEADER_ROWS = 0  # Default number of header rows to skip
+_DEFAULT_FOOTER_ROWS = 0  # Default number of footer rows to skip
 
 
 class DsvHelper:
@@ -111,21 +118,21 @@ class DsvHelper:
     @classmethod
     def parse_file(
         cls,
-        file_path: Union[PathLike, str],
+        file_path: Union[PathLike[str], str],
         delimiter: str,
         *,
         strip: bool = True,
         bookend: Optional[str] = None,
         bookend_strip: bool = True,
-        encoding: str = "utf-8",
-        skip_header_rows: int = 0,
-        skip_footer_rows: int = 0
+        encoding: str = _DEFAULT_ENCODING,
+        skip_header_rows: int = _DEFAULT_HEADER_ROWS,
+        skip_footer_rows: int = _DEFAULT_FOOTER_ROWS
     ) -> list[list[str]]:
         """
         Parse a file into a list of lists of strings.
 
         Args:
-            file_path (Union[PathLike, str]): The path to the file to parse.
+            file_path (Union[PathLike[str], str]): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
             bookend (Optional[str]): The bookend to use for text fields.
@@ -146,7 +153,7 @@ class DsvHelper:
             >>> DsvHelper.parse_file("data.csv", ",")
             [['header1', 'header2'], ['value1', 'value2']]
         """
-        lines: list[str] = TextFileHelper.load(
+        lines: list[str] = TextFileHelper.read(
             file_path,
             encoding=encoding,
             skip_header_rows=skip_header_rows,
@@ -164,22 +171,22 @@ class DsvHelper:
     @classmethod
     def parse_stream(
         cls,
-        file_path: Union[PathLike, str],
+        file_path: Union[PathLike[str], str],
         delimiter: str,
         *,
         strip: bool = True,
         bookend: Optional[str] = None,
         bookend_strip: bool = True,
-        encoding: str = "utf-8",
-        skip_header_rows: int = 0,
-        skip_footer_rows: int = 0,
-        chunk_size: int = 100
+        encoding: str = _DEFAULT_ENCODING,
+        skip_header_rows: int = _DEFAULT_HEADER_ROWS,
+        skip_footer_rows: int = _DEFAULT_FOOTER_ROWS,
+        chunk_size: int = _DEFAULT_CHUNK_SIZE
     ) -> Iterator[list[list[str]]]:
         """
         Stream-parse a DSV file in chunks of lines.
 
         Args:
-            file_path (Union[PathLike, str]): The path to the file to parse.
+            file_path (Union[PathLike[str], str]): The path to the file to parse.
             delimiter (str): The delimiter to use.
             strip (bool): Whether to strip whitespace from the strings.
             bookend (Optional[str]): The bookend to use for text fields.
@@ -212,7 +219,7 @@ class DsvHelper:
 
             # If skipping footer rows, use a buffer
             if skip_footer_rows > 0:
-                buffer = deque()  
+                buffer: deque[str] = deque()  
                 chunk = []  
                 for line in stream:
                     buffer.append(line.strip() if strip else line.rstrip("\n"))

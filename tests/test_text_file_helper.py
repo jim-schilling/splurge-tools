@@ -3,6 +3,7 @@ import tempfile
 import unittest
 
 from splurge_tools.text_file_helper import TextFileHelper
+from splurge_tools.exceptions import SplurgeFileNotFoundError, SplurgeValidationError
 
 
 class TestTextFileHelper(unittest.TestCase):
@@ -35,7 +36,7 @@ class TestTextFileHelper(unittest.TestCase):
         os.unlink(empty_file.name)
 
         # Test file not found
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(SplurgeFileNotFoundError):
             TextFileHelper.line_count("nonexistent_file.txt")
 
         # Test with different encoding
@@ -100,11 +101,11 @@ class TestTextFileHelper(unittest.TestCase):
         os.unlink(encoded_file.name)
 
         # Test invalid max_lines
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SplurgeValidationError):
             TextFileHelper.preview(self.temp_file.name, max_lines=0)
 
         # Test file not found
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(SplurgeFileNotFoundError):
             TextFileHelper.preview("nonexistent_file.txt")
 
     def test_load(self):
@@ -153,7 +154,7 @@ class TestTextFileHelper(unittest.TestCase):
         os.unlink(empty_file.name)
 
         # Test file not found
-        with self.assertRaises(FileNotFoundError):
+        with self.assertRaises(SplurgeFileNotFoundError):
             TextFileHelper.load("nonexistent_file.txt")
 
 

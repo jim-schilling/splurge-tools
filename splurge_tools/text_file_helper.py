@@ -12,17 +12,30 @@ Key features:
 - Complete file loading with header/footer skipping
 - Streaming file loading with configurable chunk sizes
 - Configurable whitespace handling and encoding
+- Secure file path validation
+- Resource management with context managers
 
 Copyright (c) 2025 Jim Schilling
 
 Please preserve this header and all related material when sharing!
 
-This software is licensed under the MIT License.
+This module is licensed under the MIT License.
 """
 
+import warnings
 from collections import deque
 from os import PathLike
+from pathlib import Path
 from typing import List, Union, Iterator
+
+from splurge_tools.exceptions import (
+    SplurgeFileNotFoundError,
+    SplurgeFilePermissionError,
+    SplurgeFileEncodingError,
+    SplurgeValidationError
+)
+from splurge_tools.path_validator import PathValidator
+from splurge_tools.resource_manager import safe_file_operation
 
 
 class TextFileHelper:
@@ -33,7 +46,7 @@ class TextFileHelper:
 
     @staticmethod
     def line_count(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         encoding: str = "utf-8"
     ) -> int:
@@ -51,16 +64,25 @@ class TextFileHelper:
             int: Number of lines in the file
 
         Raises:
-            FileNotFoundError: If the specified file doesn't exist
-            IOError: If there are issues reading the file
-            UnicodeDecodeError: If the file cannot be decoded with the specified encoding
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
+            SplurgeValidationError: If file path validation fails
         """
-        with open(file_name, "r", encoding=encoding) as stream:
+        # Validate file path
+        validated_path = PathValidator.validate_path(
+            Path(file_name),
+            must_exist=True,
+            must_be_file=True,
+            must_be_readable=True
+        )
+        
+        with safe_file_operation(validated_path, encoding=encoding) as stream:
             return sum(1 for _ in stream)
 
     @staticmethod
     def preview(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         max_lines: int = 100,
         strip: bool = True,
@@ -84,18 +106,29 @@ class TextFileHelper:
             List[str]: List of lines from the file
 
         Raises:
-            ValueError: If max_lines < 1
-            FileNotFoundError: If the specified file doesn't exist
-            IOError: If there are issues reading the file
-            UnicodeDecodeError: If the file cannot be decoded with the specified encoding
+            SplurgeValidationError: If max_lines < 1 or file path validation fails
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
         """
         if max_lines < 1:
-            raise ValueError("TextFileHelper.preview: max_lines is less than 1")
+            raise SplurgeValidationError(
+                "TextFileHelper.preview: max_lines is less than 1",
+                details="max_lines must be at least 1"
+            )
+        
+        # Validate file path
+        validated_path = PathValidator.validate_path(
+            Path(file_name),
+            must_exist=True,
+            must_be_file=True,
+            must_be_readable=True
+        )
         
         skip_header_rows = max(0, skip_header_rows)
         lines: List[str] = []
         
-        with open(file_name, "r", encoding=encoding) as stream:
+        with safe_file_operation(validated_path, encoding=encoding) as stream:
             # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
@@ -111,8 +144,8 @@ class TextFileHelper:
         return lines
 
     @staticmethod
-    def load_as_stream(
-        file_name: Union[PathLike, str],
+    def read_as_stream(
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -121,7 +154,7 @@ class TextFileHelper:
         chunk_size: int = 500
     ) -> Iterator[List[str]]:
         """
-        Load a text file as a stream of line chunks.
+        Read a text file as a stream of line chunks.
 
         This method yields chunks of lines from the file, allowing for
         memory-efficient processing of large files. Each chunk contains
@@ -140,18 +173,29 @@ class TextFileHelper:
             List[str]: Chunks of lines from the file
 
         Raises:
-            ValueError: If chunk_size < 100
-            FileNotFoundError: If the specified file doesn't exist
-            IOError: If there are issues reading the file
-            UnicodeDecodeError: If the file cannot be decoded with the specified encoding
+            SplurgeValidationError: If chunk_size < 100 or file path validation fails
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
         """
         if chunk_size < 100:
-            raise ValueError("TextFileHelper.load_as_stream: chunk_size is less than 100")
+            raise SplurgeValidationError(
+                "TextFileHelper.read_as_stream: chunk_size is less than 100",
+                details="chunk_size must be at least 100 for efficient streaming"
+            )
+        
+        # Validate file path
+        validated_path = PathValidator.validate_path(
+            Path(file_name),
+            must_exist=True,
+            must_be_file=True,
+            must_be_readable=True
+        )
         
         skip_header_rows = max(0, skip_header_rows)
         skip_footer_rows = max(0, skip_footer_rows)
         
-        with open(file_name, "r", encoding=encoding) as stream:
+        with safe_file_operation(validated_path, encoding=encoding) as stream:
             # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
@@ -187,24 +231,131 @@ class TextFileHelper:
                     yield current_chunk
             else:
                 # No footer skipping needed - simple streaming
-                current_chunk: List[str] = []
+                chunk: List[str] = []
                 
                 for line in stream:
                     processed_line = line.strip() if strip else line.rstrip("\n")
-                    current_chunk.append(processed_line)
+                    chunk.append(processed_line)
                     
                     # Yield chunk when it reaches the desired size
-                    if len(current_chunk) >= chunk_size:
-                        yield current_chunk
-                        current_chunk = []
+                    if len(chunk) >= chunk_size:
+                        yield chunk
+                        chunk = []
                 
                 # Yield any remaining lines in the final chunk
-                if current_chunk:
-                    yield current_chunk
+                if chunk:
+                    yield chunk
+
+    @staticmethod
+    def read(
+        file_name: Union[PathLike[str], str],
+        *,
+        strip: bool = True,
+        encoding: str = "utf-8",
+        skip_header_rows: int = 0,
+        skip_footer_rows: int = 0
+    ) -> List[str]:
+        """
+        Read the entire contents of a text file into a list of strings.
+
+        This method reads the complete file into memory, with options to
+        strip whitespace from each line and skip header/footer rows.
+
+        Args:
+            file_name: Path to the text file
+            strip: Whether to strip whitespace from lines (default: True)
+            encoding: File encoding to use (default: 'utf-8')
+            skip_header_rows: Number of rows to skip from the start (default: 0)
+            skip_footer_rows: Number of rows to skip from the end (default: 0)
+
+        Returns:
+            List[str]: List of all lines from the file, excluding skipped rows
+
+        Raises:
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
+            SplurgeValidationError: If file path validation fails
+        """
+        # Validate file path
+        validated_path = PathValidator.validate_path(
+            Path(file_name),
+            must_exist=True,
+            must_be_file=True,
+            must_be_readable=True
+        )
+        
+        skip_header_rows = max(0, skip_header_rows)
+        skip_footer_rows = max(0, skip_footer_rows)
+        
+        with safe_file_operation(validated_path, encoding=encoding) as stream:
+            for _ in range(skip_header_rows):
+                if not stream.readline():
+                    return []
+            lines: List[str] = [line.strip() if strip else line.rstrip("\n") for line in stream]
+            if skip_footer_rows > 0:
+                if skip_footer_rows >= len(lines):
+                    return []
+                lines = lines[:-skip_footer_rows]
+            return lines
+
+    @staticmethod
+    def load_as_stream(
+        file_name: Union[PathLike[str], str],
+        *,
+        strip: bool = True,
+        encoding: str = "utf-8",
+        skip_header_rows: int = 0,
+        skip_footer_rows: int = 0,
+        chunk_size: int = 500
+    ) -> Iterator[List[str]]:
+        """
+        Load a text file as a stream of line chunks.
+
+        This method yields chunks of lines from the file, allowing for
+        memory-efficient processing of large files. Each chunk contains
+        up to chunk_size lines. Uses a sliding window approach to handle
+        footer row skipping without loading the entire file into memory.
+
+        Args:
+            file_name: Path to the text file
+            strip: Whether to strip whitespace from lines (default: True)
+            encoding: File encoding to use (default: 'utf-8')
+            skip_header_rows: Number of rows to skip from the start (default: 0)
+            skip_footer_rows: Number of rows to skip from the end (default: 0)
+            chunk_size: Number of lines per chunk (default: 500)
+
+        Yields:
+            List[str]: Chunks of lines from the file
+
+        Raises:
+            SplurgeValidationError: If chunk_size < 100 or file path validation fails
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
+
+        Deprecated:
+            This method is deprecated and will be removed in a future version.
+            Use read_as_stream() instead.
+        """
+        warnings.warn(
+            "TextFileHelper.load_as_stream is deprecated and will be removed in a future version. "
+            "Use TextFileHelper.read_as_stream instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return TextFileHelper.read_as_stream(
+            Path(file_name),
+            strip=strip,
+            encoding=encoding,
+            skip_header_rows=skip_header_rows,
+            skip_footer_rows=skip_footer_rows,
+            chunk_size=chunk_size
+        )
 
     @staticmethod
     def load(
-        file_name: Union[PathLike, str],
+        file_name: Union[PathLike[str], str],
         *,
         strip: bool = True,
         encoding: str = "utf-8",
@@ -228,19 +379,25 @@ class TextFileHelper:
             List[str]: List of all lines from the file, excluding skipped rows
 
         Raises:
-            FileNotFoundError: If the specified file doesn't exist
-            IOError: If there are issues reading the file
-            UnicodeDecodeError: If the file cannot be decoded with the specified encoding
+            SplurgeFileNotFoundError: If the specified file doesn't exist
+            SplurgeFilePermissionError: If there are permission issues
+            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
+            SplurgeValidationError: If file path validation fails
+
+        Deprecated:
+            This method is deprecated and will be removed in a future version.
+            Use read() instead.
         """
-        skip_header_rows = max(0, skip_header_rows)
-        skip_footer_rows = max(0, skip_footer_rows)
-        with open(file_name, "r", encoding=encoding) as stream:
-            for _ in range(skip_header_rows):
-                if not stream.readline():
-                    return []
-            lines: List[str] = [line.strip() if strip else line.rstrip("\n") for line in stream]
-            if skip_footer_rows > 0:
-                if skip_footer_rows >= len(lines):
-                    return []
-                lines = lines[:-skip_footer_rows]
-            return lines
+        warnings.warn(
+            "TextFileHelper.load is deprecated and will be removed in a future version. "
+            "Use TextFileHelper.read instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return TextFileHelper.read(
+            Path(file_name),
+            strip=strip,
+            encoding=encoding,
+            skip_header_rows=skip_header_rows,
+            skip_footer_rows=skip_footer_rows
+        )

@@ -1,28 +1,40 @@
 #!/usr/bin/env python3
 """
-Example demonstrating StreamingTabularDataModel with large datasets.
+Streaming data processing example demonstrating memory-efficient data handling.
 
-This example shows how to process large CSV files without loading
-the entire dataset into memory using DsvHelper.parse_stream and
-StreamingTabularDataModel.
+This example shows how to process large datasets using streaming techniques
+that don't require loading the entire dataset into memory.
 
 Copyright (c) 2025, Jim Schilling
+
+Please preserve this header and all related material when sharing!
 
 This module is licensed under the MIT License.
 """
 
-import tempfile
 import os
-from typing import Iterator, Dict, List
+import tempfile
+from typing import Dict
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 
 
+# Module-level constants for streaming data processing
+_DEFAULT_NUM_ROWS = 10000  # Default number of rows to generate
+_DEFAULT_CHUNK_SIZE = 500  # Default chunk size for processing
+_DEFAULT_BUFFER_SIZE = 100  # Default buffer size for streaming model
+_PROGRESS_INTERVAL = 1000  # Interval for progress reporting
+_DEFAULT_AGE_MIN = 20  # Minimum age for generated data
+_DEFAULT_AGE_RANGE = 50  # Age range for generated data
+_DEFAULT_SALARY_BASE = 50000  # Base salary for generated data
+_DEFAULT_SALARY_INCREMENT = 100  # Salary increment per row
+
+
 def create_large_csv_file(
     file_path: str,
     *,
-    num_rows: int = 10000
+    num_rows: int = _DEFAULT_NUM_ROWS
 ) -> None:
     """
     Create a large CSV file for testing.
@@ -38,9 +50,9 @@ def create_large_csv_file(
         # Write data rows
         for i in range(num_rows):
             f.write(
-                f"{i},Person{i},{20 + (i % 50)},"
+                f"{i},Person{i},{_DEFAULT_AGE_MIN + (i % _DEFAULT_AGE_RANGE)},"
                 f"{['NYC', 'LA', 'CHI', 'HOU'][i % 4]},"
-                f"{50000 + (i * 100)},"
+                f"{_DEFAULT_SALARY_BASE + (i * _DEFAULT_SALARY_INCREMENT)},"
                 f"{['IT', 'HR', 'Sales', 'Marketing'][i % 4]}\n"
             )
 
@@ -60,7 +72,7 @@ def process_large_dataset_streaming(
     stream = DsvHelper.parse_stream(
         file_path,
         delimiter=",",
-        chunk_size=500,  # Process 500 lines at a time
+        chunk_size=_DEFAULT_CHUNK_SIZE,  # Process 500 lines at a time
         skip_header_rows=0  # We'll handle headers in the model
     )
     
@@ -69,7 +81,7 @@ def process_large_dataset_streaming(
         stream,
         header_rows=1,
         skip_empty_rows=True,
-        chunk_size=100  # Keep only 100 rows in memory at a time
+        chunk_size=_DEFAULT_BUFFER_SIZE  # Keep only 100 rows in memory at a time
     )
     
     print(f"Column names: {model.column_names}")
@@ -93,7 +105,7 @@ def process_large_dataset_streaming(
         department_counts[dept] = department_counts.get(dept, 0) + 1
         
         # Print progress every 1000 rows
-        if total_rows % 1000 == 0:
+        if total_rows % _PROGRESS_INTERVAL == 0:
             print(f"Processed {total_rows} rows...")
     
     print(f"\nProcessing complete!")
@@ -166,7 +178,7 @@ def compare_memory_usage() -> None:
     try:
         # Create a moderately large dataset
         print("Creating test dataset...")
-        create_large_csv_file(temp_file, num_rows=5000)
+        create_large_csv_file(temp_file, num_rows=5000)  # Using smaller dataset for demo
         
         print("File size:", os.path.getsize(temp_file), "bytes")
         print()
@@ -201,12 +213,12 @@ def demonstrate_column_operations() -> None:
             f.write("John,25,NYC,50000\n")
             f.write("Jane,30,LA,60000\n")
             f.write("Bob,35,CHI,55000\n")
-        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=_DEFAULT_BUFFER_SIZE)
         model = StreamingTabularDataModel(
             stream,
             header_rows=1,
             skip_empty_rows=True,
-            chunk_size=100
+            chunk_size=_DEFAULT_BUFFER_SIZE
         )
         print(f"Column names: {model.column_names}")
         print(f"Column count: {model.column_count}")
@@ -273,12 +285,12 @@ def demonstrate_error_handling() -> None:
             f.write("2,Jane,invalid_age,60000\n")  # Invalid age
             f.write("3,Bob,35,invalid_salary\n")   # Invalid salary
             f.write("4,Alice,28,52000\n")
-        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=_DEFAULT_BUFFER_SIZE)
         model = StreamingTabularDataModel(
             stream,
             header_rows=1,
             skip_empty_rows=True,
-            chunk_size=100
+            chunk_size=_DEFAULT_BUFFER_SIZE
         )
         print("Processing rows with error handling:")
         total_rows = 0
