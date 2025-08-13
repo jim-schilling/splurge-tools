@@ -13,7 +13,6 @@ import tempfile
 from pathlib import Path
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
-from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.type_helper import DataType
 
@@ -121,14 +120,14 @@ def multi_header_examples(multi_header_data):
 
 
 def typed_tabular_model_examples(employee_data):
-    """Demonstrate TypedTabularDataModel with schema validation."""
-    print("=== TypedTabularDataModel Examples ===\n")
+    """Demonstrate typed view with schema validation."""
+    print("=== Typed View Examples ===\n")
     
-    # Create typed model (automatically infers types)
-    typed_model = TypedTabularDataModel(
+    # Create typed view (automatically infers types)
+    typed_model = TabularDataModel(
         employee_data, 
         header_rows=1
-    )
+    ).to_typed()
     
     print(f"Typed model created successfully!")
     print(f"Dimensions: {typed_model.row_count} rows × {typed_model.column_count} columns")
@@ -146,7 +145,7 @@ def typed_tabular_model_examples(employee_data):
     # Demonstrate type inference
     print("Automatic type inference:")
     for col_name in typed_model.column_names:
-        col_type = typed_model.column_type(col_name)
+        col_type = TabularDataModel(employee_data, header_rows=1).column_type(col_name)
         print(f"  {col_name}: Inferred as {col_type.name}")
     print()
 
@@ -213,7 +212,7 @@ def data_model_comparison():
         ["Model Type", "Memory Usage", "Random Access", "Best Use Case"],
         ["TabularDataModel", "High", "Yes", "Small to medium datasets, analysis"],
         ["StreamingTabularDataModel", "Low", "No", "Large datasets, ETL processing"],
-        ["TypedTabularDataModel", "High", "Yes", "Type-safe data with validation"],
+        ["Typed View", "High", "Yes", "Type-safe data with validation"],
     ]
     
     print("Data Model Comparison:")
@@ -224,7 +223,7 @@ def data_model_comparison():
     print("Selection Guidelines:")
     print("• Use TabularDataModel for datasets < 100MB that fit in memory")
     print("• Use StreamingTabularDataModel for datasets > 100MB or limited memory")
-    print("• Use TypedTabularDataModel when type safety and validation are critical")
+    print("• Use TabularDataModel.to_typed() when type safety and validation are critical")
     print("• All models support multi-row headers and empty row handling")
     print()
 
@@ -317,7 +316,7 @@ if __name__ == "__main__":
         print("\nKey Takeaways:")
         print("• TabularDataModel provides full random access to in-memory data")
         print("• StreamingTabularDataModel enables processing of large datasets")
-        print("• TypedTabularDataModel adds type safety and validation")
+        print("• TabularDataModel.to_typed() adds type safety and validation")
         print("• Multi-row headers are automatically merged into column names")
         print("• Multiple iteration methods (list, dict, tuple) available")
         print("• Built-in type inference for automatic column type detection")

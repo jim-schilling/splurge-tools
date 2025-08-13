@@ -13,7 +13,6 @@ This module is licensed under the MIT License.
 """
 
 from typing import Any, Iterator, Generator, Protocol, runtime_checkable
-from collections.abc import Iterable
 
 from splurge_tools.type_helper import DataType
 
@@ -147,66 +146,33 @@ class TypeInferenceProtocol(Protocol):
 
 @runtime_checkable
 class StreamingTabularDataProtocol(Protocol):
-    """
-    Protocol for streaming tabular data models.
-    
-    This protocol defines the interface for streaming data models that process
-    data without loading entire datasets into memory. Unlike TabularDataProtocol,
-    this protocol focuses on streaming-friendly operations.
-    """
-    
+    """Unified minimal interface for streaming data models."""
+
     @property
     def column_names(self) -> list[str]:
-        """Get the list of column names."""
         ...
-    
+
     @property
     def column_count(self) -> int:
-        """Get the number of columns."""
         ...
-    
+
     def column_index(self, name: str) -> int:
-        """Get the index of a column by name."""
         ...
-    
+
     def __iter__(self) -> Iterator[list[str]]:
-        """Iterate over rows as lists."""
         ...
-    
+
     def iter_rows(self) -> Generator[dict[str, str], None, None]:
-        """Iterate over rows as dictionaries."""
         ...
-    
+
     def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
-        """Iterate over rows as tuples."""
         ...
-    
+
     def clear_buffer(self) -> None:
-        """Clear any internal buffer to free memory."""
         ...
-    
+
     def reset_stream(self) -> None:
-        """Reset the stream position if possible."""
         ...
 
 
-@runtime_checkable
-class ResourceManagerProtocol(Protocol):
-    """
-    Protocol for resource management operations.
-    
-    This protocol defines the interface for resource management components,
-    ensuring consistent resource handling behavior across different implementations.
-    """
-    
-    def acquire(self) -> Any:
-        """Acquire the managed resource."""
-        ...
-    
-    def release(self) -> None:
-        """Release the managed resource."""
-        ...
-    
-    def is_acquired(self) -> bool:
-        """Check if the resource is currently acquired."""
-        ...
+# Resource manager protocol removed; prefer direct context managers in resource_manager

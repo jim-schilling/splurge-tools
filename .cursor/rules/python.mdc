@@ -5,19 +5,20 @@ alwaysApply: true
 ---
 - Write concise, technical Python targeting v3.10-3.12. 
 - Follow PEP8. 
-- Document everything with docstrings. 
+- Document everything with Google style docstrings. 
 - For complex logic, preface block with comment.
 - Type annotate method signatures always.
 - Type annotate variables where clarity is needed. 
-- Allow line length of 100 characters.
+- Prefer line length max of 120 characters, except when to do so would require use of temporary variables.
 - Prefer list comprehensions over `map()` and `filter()`.
 - Avoid wildcard imports.
-- Avoid relative import paths.
+- Prefer absolute import paths.
 - Group imports at top of module: standard -> third-party -> local.
+- Avoid inline comments, except to clarify complex intent.
+- Avoid noisy comments for refactors or redesign, except to explain complex logic or clarify intent.
 - Avoid side effects in module-level code.
 - Optimize loops.
-- Use pytest and pytest-cov for testing.
-- Unittests shall be runnable using pytest and unittest.
+- Use pytest and pytest-cov for testing, defaulting to -x -v with pytest-cov.
 - Prioritize error handling.
 - Use guard clauses to handle preconditions and invalid state early.
 - Place the happy path last in the function.
@@ -45,3 +46,8 @@ alwaysApply: true
 - Do not test private methods.
 - Use actual methods, classes, interfaces, and data when possible for testing, to minimize amount of use of mocks.
 - Class level private methods shall prefer parameterization versus reliance on instance or class objects.
+- Prefer | instead of Optional or Union.
+- Prefer simple, straightforward design approach instead of over-engineered design.
+- Review codebase and tests for duplicate classes, methods, etc.
+- When possible, prefer shared test helpers for common logic.
+- Test behavior not implementation!

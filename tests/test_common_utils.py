@@ -9,7 +9,6 @@ import unittest
 import warnings
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
 
 from splurge_tools.common_utils import (
     deprecated_method,

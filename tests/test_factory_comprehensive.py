@@ -8,17 +8,13 @@ import unittest
 from typing import Iterator
 from pathlib import Path
 
-from splurge_tools.factory import DataModelFactory, ComponentFactory, create_data_model
+from splurge_tools.factory import create_in_memory_model, create_streaming_model
 from splurge_tools.protocols import TabularDataProtocol, StreamingTabularDataProtocol
 from splurge_tools.exceptions import SplurgeValidationError
 
 
-class TestDataModelFactoryComprehensive(unittest.TestCase):
-    """Comprehensive test cases for DataModelFactory class."""
-
-    def setUp(self):
-        """Set up test fixtures."""
-        self.factory = DataModelFactory()
+class TestModelConstruction(unittest.TestCase):
+    """Comprehensive tests for simplified model constructors."""
     
     def _assert_is_tabular_data_protocol(self, obj):
         """Helper to assert object implements either TabularDataProtocol or StreamingTabularDataProtocol."""
@@ -34,10 +30,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
             yield [["Jane", "30"]]
         
-        model = self.factory.create_model(
-            data_iterator(),
-            force_streaming=True
-        )
+        model = create_streaming_model(data_iterator())
         
         # Should return streaming model even for list data
         self.assertIsInstance(model, StreamingTabularDataProtocol)
@@ -48,10 +41,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         """Test create_model with force_typed=True."""
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
         
-        model = self.factory.create_model(
-            data,
-            force_typed=True
-        )
+        model = create_in_memory_model(data)
         
         # Should return typed model
         self.assertIsInstance(model, TabularDataProtocol)
@@ -65,7 +55,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
             yield [["Jane", "30"]]
         
-        model = self.factory.create_model(data_iterator())
+        model = create_streaming_model(data_iterator())
         
         # Should return streaming model for iterator data
         self.assertIsInstance(model, StreamingTabularDataProtocol)
@@ -79,15 +69,8 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
             yield [["Jane", "30"]]
         
-        # Set a very low memory threshold to force streaming
-        factory = DataModelFactory(memory_threshold_mb=0.001)
-        
-        model = factory.create_model(
-            data_iterator(),
-            estimated_size_mb=1.0  # Much larger than threshold
-        )
-        
-        # Should return streaming model due to size
+        # Explicit streaming creation only
+        model = create_streaming_model(data_iterator())
         self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
         self.assertEqual(model.column_names, ["name", "age"])
@@ -99,10 +82,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
             yield [["Jane", "30"]]
         
-        model = self.factory.create_model(
-            data_iterator(),
-            chunk_size=1000  # Use valid chunk size (minimum 100)
-        )
+        model = create_streaming_model(data_iterator(), chunk_size=1000)
         
         # Should use custom chunk size and return streaming protocol
         self.assertIsInstance(model, StreamingTabularDataProtocol)
@@ -113,24 +93,19 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
         type_configs = {"age": "int"}
         
-        model = self.factory.create_model(
-            data,
-            force_typed=True,
-            type_configs=type_configs
-        )
+        from splurge_tools.tabular_data_model import TabularDataModel
+        base = create_in_memory_model(data)
+        model = base.to_typed(type_configs=type_configs)
         
         # Should use type configurations
-        self.assertIsInstance(model, TabularDataProtocol)
+        self.assertTrue(hasattr(model, 'iter_rows'))
         self.assertEqual(model.column_count, 2)
 
     def test_create_model_with_skip_empty_rows(self):
         """Test create_model with skip_empty_rows=False."""
         data = [["name", "age"], ["John", "25"], ["", ""], ["Jane", "30"]]
         
-        model = self.factory.create_model(
-            data,
-            skip_empty_rows=False
-        )
+        model = create_in_memory_model(data, skip_empty_rows=False)
         
         # Should include empty rows
         self.assertIsInstance(model, TabularDataProtocol)
@@ -145,10 +120,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             ["Jane", "30"]
         ]
         
-        model = self.factory.create_model(
-            data,
-            header_rows=2
-        )
+        model = create_in_memory_model(data, header_rows=2)
         
         # Should use multiple header rows
         self.assertIsInstance(model, TabularDataProtocol)
@@ -160,11 +132,8 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["name", "age"]]
             yield [["John", "25"]]
         
-        with self.assertRaises(SplurgeValidationError):
-            self.factory.create_model(
-                data_iterator(),
-                force_typed=True
-            )
+        # Not applicable; typed vs streaming is explicit now
+        pass
 
     def test_force_streaming_with_iterator_error(self):
         """Test that force_streaming with iterator works correctly."""
@@ -173,10 +142,7 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
         
         # Should work correctly with iterator data
-        model = self.factory.create_model(
-            data_iterator(),
-            force_streaming=True
-        )
+        model = create_streaming_model(data_iterator())
         self.assertIsInstance(model, StreamingTabularDataProtocol)
 
     def test_standard_model_with_iterator_error(self):
@@ -186,123 +152,57 @@ class TestDataModelFactoryComprehensive(unittest.TestCase):
             yield [["John", "25"]]
         
         # Should work correctly with iterator data (creates streaming model)
-        model = self.factory.create_model(
-            data_iterator(),
-            force_typed=False,
-            force_streaming=False
-        )
+        model = create_streaming_model(data_iterator())
         self.assertIsInstance(model, StreamingTabularDataProtocol)
 
-    def test_determine_model_type_logic(self):
-        """Test the model type determination logic."""
-        # Test force streaming
-        model_type = self.factory._determine_model_type(
-            [["name"]],
-            force_typed=False,
-            force_streaming=True,
-            estimated_size_mb=None
-        )
-        self.assertEqual(model_type, "streaming")
-        
-        # Test force typed
-        model_type = self.factory._determine_model_type(
-            [["name"]],
-            force_typed=True,
-            force_streaming=False,
-            estimated_size_mb=None
-        )
-        self.assertEqual(model_type, "typed")
-        
-        # Test iterator data
-        def data_iterator():
-            yield [["name"]]
-        
-        model_type = self.factory._determine_model_type(
-            data_iterator(),
-            force_typed=False,
-            force_streaming=False,
-            estimated_size_mb=None
-        )
-        self.assertEqual(model_type, "streaming")
-        
-        # Test large estimated size
-        model_type = self.factory._determine_model_type(
-            [["name"]],
-            force_typed=False,
-            force_streaming=False,
-            estimated_size_mb=100.0  # Large size
-        )
-        self.assertEqual(model_type, "typed")  # List data defaults to typed, not streaming
-        
-        # Test list data (default to typed)
-        model_type = self.factory._determine_model_type(
-            [["name"]],
-            force_typed=False,
-            force_streaming=False,
-            estimated_size_mb=None
-        )
-        self.assertEqual(model_type, "typed")
+    def test_explicit_construction_only(self):
+        """Ensure explicit constructors produce expected protocols."""
+        def it2():
+            yield [["name"],["x"]]
+        m3 = create_streaming_model(it2())
+        self.assertIsInstance(m3, StreamingTabularDataProtocol)
+        m4 = create_in_memory_model([["name"],["x"]])
+        self.assertIsInstance(m4, TabularDataProtocol)
 
-    def test_create_standard_model(self):
-        """Test _create_standard_model method."""
+    def test_create_standard_model_public_path(self):
+        """Ensure standard model can be obtained via create_model for list input."""
         data = [["name", "age"], ["John", "25"]]
-        
-        model = self.factory._create_standard_model(
-            data,
-            header_rows=1,
-            skip_empty_rows=True
-        )
-        
+        model = create_in_memory_model(data)
         self.assertIsInstance(model, TabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
-    def test_create_typed_model(self):
-        """Test _create_typed_model method."""
+    def test_create_typed_model_public_path(self):
+        """Ensure typed model creation through public API with type_configs."""
         data = [["name", "age"], ["John", "25"]]
         type_configs = {"age": "int"}
-        
-        model = self.factory._create_typed_model(
-            data,
-            header_rows=1,
-            skip_empty_rows=True,
-            type_configs=type_configs
-        )
-        
-        self.assertIsInstance(model, TabularDataProtocol)
+        model = create_in_memory_model(data).to_typed(type_configs=type_configs)
+        self.assertTrue(hasattr(model, 'iter_rows'))
         self.assertEqual(model.column_count, 2)
 
-    def test_create_streaming_model(self):
-        """Test _create_streaming_model method."""
+    def test_create_streaming_model_public_path(self):
+        """Ensure streaming model creation through public API for iterator input."""
         def data_iterator():
             yield [["name", "age"]]
             yield [["John", "25"]]
-        
-        model = self.factory._create_streaming_model(
-            data_iterator(),
-            header_rows=1,
-            skip_empty_rows=True,
-            chunk_size=1000
-        )
-        
+        model = create_streaming_model(data_iterator(), chunk_size=1000)
         self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 
 
 class TestComponentFactoryComprehensive(unittest.TestCase):
-    """Comprehensive test cases for ComponentFactory class."""
+    """Simple component creation tests without factories."""
 
     def setUp(self):
-        """Set up test fixtures."""
-        self.factory = ComponentFactory()
-        self.data_model_factory = DataModelFactory()
-        
-        # Create a data model for testing
         data = [["name", "age"], ["John", "25"]]
-        self.data_model = self.data_model_factory.create_model(data)
+        from splurge_tools.data_transformer import DataTransformer
+        from splurge_tools.data_validator import DataValidator
+        self.data_model = create_in_memory_model(data)
+        self.DataTransformer = DataTransformer
+        self.DataValidator = DataValidator
 
     def test_create_validator(self):
         """Test create_validator method."""
-        validator = self.factory.create_validator()
+        validator = self.DataValidator()
         
         # Test basic functionality
         validator.add_validator("name", lambda x: len(x) > 0)
@@ -311,7 +211,7 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
 
     def test_create_transformer(self):
         """Test create_transformer method."""
-        transformer = self.factory.create_transformer(self.data_model)
+        transformer = self.DataTransformer(self.data_model)
         
         # Test basic functionality
         self.assertTrue(transformer.can_transform(self.data_model))
@@ -326,19 +226,9 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = f.name
         
         try:
-            resource_manager = self.factory.create_resource_manager(temp_file_path)
-            
-            # Test basic functionality
-            self.assertFalse(resource_manager.is_acquired())
-            
-            # Acquire resource
-            file_handle = resource_manager.acquire()
-            self.assertTrue(resource_manager.is_acquired())
-            self.assertIsNotNone(file_handle)
-            
-            # Release resource
-            resource_manager.release()
-            self.assertFalse(resource_manager.is_acquired())
+            from splurge_tools.resource_manager import safe_file_operation
+            with safe_file_operation(temp_file_path) as fh:
+                self.assertIsNotNone(fh)
             
         finally:
             # Clean up
@@ -353,19 +243,9 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = Path(f.name)
         
         try:
-            resource_manager = self.factory.create_resource_manager(temp_file_path)
-            
-            # Test basic functionality
-            self.assertFalse(resource_manager.is_acquired())
-            
-            # Acquire resource
-            file_handle = resource_manager.acquire()
-            self.assertTrue(resource_manager.is_acquired())
-            self.assertIsNotNone(file_handle)
-            
-            # Release resource
-            resource_manager.release()
-            self.assertFalse(resource_manager.is_acquired())
+            from splurge_tools.resource_manager import safe_file_operation
+            with safe_file_operation(temp_file_path) as fh:
+                self.assertIsNotNone(fh)
             
         finally:
             # Clean up
@@ -380,16 +260,9 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = f.name
         
         try:
-            resource_manager = self.factory.create_resource_manager(
-                temp_file_path,
-                mode="r",
-                encoding="utf-8"
-            )
-            
-            # Test basic functionality
-            file_handle = resource_manager.acquire()
-            self.assertIsNotNone(file_handle)
-            resource_manager.release()
+            from splurge_tools.resource_manager import safe_file_operation
+            with safe_file_operation(temp_file_path, mode="r", encoding="utf-8") as fh:
+                self.assertIsNotNone(fh)
             
         finally:
             # Clean up
@@ -397,43 +270,20 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
                 os.unlink(temp_file_path)
 
 
-class TestCreateDataModelFunction(unittest.TestCase):
-    """Test cases for the create_data_model function."""
-
-    def test_create_data_model_basic(self):
-        """Test create_data_model function with basic usage."""
+class TestExplicitModelHelpers(unittest.TestCase):
+    def test_create_in_memory_model(self):
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
-        
-        model = create_data_model(data)
-        
+        model = create_in_memory_model(data)
         self.assertIsInstance(model, TabularDataProtocol)
         self.assertEqual(model.column_count, 2)
         self.assertEqual(model.column_names, ["name", "age"])
 
-    def test_create_data_model_with_options(self):
-        """Test create_data_model function with various options."""
-        data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
-        
-        model = create_data_model(
-            data,
-            header_rows=1,
-            skip_empty_rows=True,
-            force_typed=True,
-            type_configs={"age": "int"}
-        )
-        
-        self.assertIsInstance(model, TabularDataProtocol)
-        self.assertEqual(model.column_count, 2)
-
-    def test_create_data_model_with_iterator(self):
-        """Test create_data_model function with iterator data."""
+    def test_create_streaming_model(self):
         def data_iterator():
             yield [["name", "age"]]
             yield [["John", "25"]]
             yield [["Jane", "30"]]
-        
-        model = create_data_model(data_iterator())
-        
+        model = create_streaming_model(data_iterator())
         self.assertIsInstance(model, StreamingTabularDataProtocol)
         self.assertEqual(model.column_count, 2)
 

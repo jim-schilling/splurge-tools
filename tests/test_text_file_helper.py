@@ -108,30 +108,30 @@ class TestTextFileHelper(unittest.TestCase):
         with self.assertRaises(SplurgeFileNotFoundError):
             TextFileHelper.preview("nonexistent_file.txt")
 
-    def test_load(self):
+    def test_read(self):
         """Test file loading functionality"""
         # Test normal case with default parameters (strip=True)
-        loaded_lines = TextFileHelper.load(self.temp_file.name)
+        loaded_lines = TextFileHelper.read(self.temp_file.name)
         self.assertEqual(len(loaded_lines), 5)
         self.assertEqual(loaded_lines[0], "Line 1")
         self.assertEqual(loaded_lines[3], "Line 4 with spaces")
 
         # Test with strip=False
-        loaded_lines = TextFileHelper.load(self.temp_file.name, strip=False)
+        loaded_lines = TextFileHelper.read(self.temp_file.name, strip=False)
         self.assertEqual(loaded_lines[3], "  Line 4 with spaces  ")
 
         # Test with skip_header_rows
-        loaded_lines = TextFileHelper.load(self.temp_file.name, skip_header_rows=2)
+        loaded_lines = TextFileHelper.read(self.temp_file.name, skip_header_rows=2)
         self.assertEqual(len(loaded_lines), 3)
         self.assertEqual(loaded_lines[0], "Line 3")
 
         # Test with skip_footer_rows
-        loaded_lines = TextFileHelper.load(self.temp_file.name, skip_footer_rows=2)
+        loaded_lines = TextFileHelper.read(self.temp_file.name, skip_footer_rows=2)
         self.assertEqual(len(loaded_lines), 3)
         self.assertEqual(loaded_lines[-1], "Line 3")
 
         # Test with both skip_header_rows and skip_footer_rows
-        loaded_lines = TextFileHelper.load(
+        loaded_lines = TextFileHelper.read(
             self.temp_file.name, skip_header_rows=1, skip_footer_rows=1
         )
         self.assertEqual(len(loaded_lines), 3)
@@ -143,19 +143,19 @@ class TestTextFileHelper(unittest.TestCase):
             mode="w", encoding="utf-16", delete=False
         ) as encoded_file:
             encoded_file.write("Line 1\nLine 2")
-        loaded_lines = TextFileHelper.load(encoded_file.name, encoding="utf-16")
+        loaded_lines = TextFileHelper.read(encoded_file.name, encoding="utf-16")
         self.assertEqual(loaded_lines, ["Line 1", "Line 2"])
         os.unlink(encoded_file.name)
 
         # Test empty file
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as empty_file:
             empty_file.write("")
-        self.assertEqual(TextFileHelper.load(empty_file.name), [])
+        self.assertEqual(TextFileHelper.read(empty_file.name), [])
         os.unlink(empty_file.name)
 
         # Test file not found
         with self.assertRaises(SplurgeFileNotFoundError):
-            TextFileHelper.load("nonexistent_file.txt")
+            TextFileHelper.read("nonexistent_file.txt")
 
 
 if __name__ == "__main__":

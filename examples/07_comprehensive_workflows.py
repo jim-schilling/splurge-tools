@@ -15,7 +15,6 @@ from datetime import date, timedelta
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
-from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
 from splurge_tools.text_normalizer import TextNormalizer
 from splurge_tools.case_helper import CaseHelper
 from splurge_tools.string_tokenizer import StringTokenizer

@@ -7,13 +7,12 @@ import tempfile
 import unittest
 from typing import Iterator
 
-from splurge_tools.factory import DataModelFactory, ComponentFactory
+from splurge_tools.factory import create_in_memory_model, create_streaming_model
 from splurge_tools.protocols import (
     TabularDataProtocol,
     StreamingTabularDataProtocol,
     DataValidatorProtocol,
     DataTransformerProtocol,
-    ResourceManagerProtocol,
     TypeInferenceProtocol
 )
 from splurge_tools.type_helper import TypeInference, DataType
@@ -23,14 +22,13 @@ class TestFactoryProtocols(unittest.TestCase):
     """Test that factory methods return objects that implement the correct protocols."""
     
     def setUp(self):
-        self.data_model_factory = DataModelFactory()
-        self.component_factory = ComponentFactory()
+        pass
     
     def test_data_model_factory_returns_protocol_compliant_objects(self):
         """Test that DataModelFactory returns TabularDataProtocol compliant objects."""
         # Test with list data
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
-        model = self.data_model_factory.create_model(data)
+        model = create_in_memory_model(data)
         
         # Verify it implements the protocol
         self.assertIsInstance(model, TabularDataProtocol)
@@ -53,7 +51,7 @@ class TestFactoryProtocols(unittest.TestCase):
             yield [["John", "25"]]
             yield [["Jane", "30"]]
         
-        model = self.data_model_factory.create_model(data_iterator())
+        model = create_streaming_model(data_iterator())
         
         # Verify it implements the streaming protocol (iterator data creates streaming models)
         self.assertIsInstance(model, StreamingTabularDataProtocol)
@@ -64,7 +62,8 @@ class TestFactoryProtocols(unittest.TestCase):
     
     def test_component_factory_validator(self):
         """Test that ComponentFactory.create_validator returns DataValidatorProtocol compliant objects."""
-        validator = self.component_factory.create_validator()
+        from splurge_tools.data_validator import DataValidator
+        validator = DataValidator()
         
         # Verify it implements the protocol
         self.assertIsInstance(validator, DataValidatorProtocol)
@@ -83,9 +82,9 @@ class TestFactoryProtocols(unittest.TestCase):
         """Test that ComponentFactory.create_transformer returns DataTransformerProtocol compliant objects."""
         # Create a data model first
         data = [["name", "age"], ["John", "25"]]
-        data_model = self.data_model_factory.create_model(data)
-        
-        transformer = self.component_factory.create_transformer(data_model)
+        data_model = create_in_memory_model(data)
+        from splurge_tools.data_transformer import DataTransformer
+        transformer = DataTransformer(data_model)
         
         # Verify it implements the protocol
         self.assertIsInstance(transformer, DataTransformerProtocol)
@@ -118,54 +117,27 @@ class TestFactoryProtocols(unittest.TestCase):
         self.assertEqual(type_inference.infer_type("123"), DataType.INTEGER)
         self.assertEqual(type_inference.convert_value("123"), 123)
     
-    def test_component_factory_resource_manager(self):
-        """Test that ComponentFactory.create_resource_manager returns ResourceManagerProtocol compliant objects."""
+    def test_resource_context_manager(self):
+        """Test that safe_file_operation provides file handles."""
         # Create a temporary file for testing
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
             f.write("test content")
             temp_file_path = f.name
         
         try:
-            resource_manager = self.component_factory.create_resource_manager(temp_file_path)
-            
-            # Verify it implements the protocol
-            self.assertIsInstance(resource_manager, ResourceManagerProtocol)
-            
-            # Test protocol methods exist
-            self.assertTrue(hasattr(resource_manager, 'acquire'))
-            self.assertTrue(hasattr(resource_manager, 'release'))
-            self.assertTrue(hasattr(resource_manager, 'is_acquired'))
-            
-            # Test basic functionality
-            self.assertFalse(resource_manager.is_acquired())
-            
-            # Acquire the resource
-            file_handle = resource_manager.acquire()
-            self.assertTrue(resource_manager.is_acquired())
-            self.assertIsNotNone(file_handle)
-            
-            # Release the resource
-            resource_manager.release()
-            self.assertFalse(resource_manager.is_acquired())
+            from splurge_tools.resource_manager import safe_file_operation
+            with safe_file_operation(temp_file_path) as fh:
+                self.assertIsNotNone(fh)
             
         finally:
             # Clean up
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
     
-    def test_factory_validation(self):
-        """Test that factory validation works correctly."""
-        # Test that invalid data raises appropriate errors
+    def test_construction_validation(self):
+        """Basic validation on explicit constructors."""
         with self.assertRaises(Exception):
-            self.data_model_factory.create_model(None)
-        
-        # Test that conflicting requirements raise errors
-        with self.assertRaises(Exception):
-            self.data_model_factory.create_model(
-                [["name"], ["John"]], 
-                force_typed=True, 
-                force_streaming=True
-            )
+            create_streaming_model(None)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
