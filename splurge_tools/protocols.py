@@ -13,7 +13,6 @@ This module is licensed under the MIT License.
 """
 
 from typing import Any, Iterator, Generator, Protocol, runtime_checkable
-from collections.abc import Iterable
 
 from splurge_tools.type_helper import DataType
 
@@ -176,15 +175,4 @@ class StreamingTabularDataProtocol(Protocol):
         ...
 
 
-@runtime_checkable
-class ResourceManagerProtocol(Protocol):
-    """Deprecated; kept for compatibility with tests. Prefer safe_* context managers."""
-
-    def acquire(self) -> Any:
-        ...
-
-    def release(self) -> None:
-        ...
-
-    def is_acquired(self) -> bool:
-        ...
+# Resource manager protocol removed; prefer direct context managers in resource_manager

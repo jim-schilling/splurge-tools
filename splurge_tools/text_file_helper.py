@@ -22,7 +22,6 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import warnings
 from collections import deque
 from os import PathLike
 from pathlib import Path
@@ -299,105 +298,4 @@ class TextFileHelper:
                 lines = lines[:-skip_footer_rows]
             return lines
 
-    @staticmethod
-    def load_as_stream(
-        file_name: PathLike[str] | str,
-        *,
-        strip: bool = True,
-        encoding: str = "utf-8",
-        skip_header_rows: int = 0,
-        skip_footer_rows: int = 0,
-        chunk_size: int = 500
-    ) -> Iterator[List[str]]:
-        """
-        Load a text file as a stream of line chunks.
-
-        This method yields chunks of lines from the file, allowing for
-        memory-efficient processing of large files. Each chunk contains
-        up to chunk_size lines. Uses a sliding window approach to handle
-        footer row skipping without loading the entire file into memory.
-
-        Args:
-            file_name: Path to the text file
-            strip: Whether to strip whitespace from lines (default: True)
-            encoding: File encoding to use (default: 'utf-8')
-            skip_header_rows: Number of rows to skip from the start (default: 0)
-            skip_footer_rows: Number of rows to skip from the end (default: 0)
-            chunk_size: Number of lines per chunk (default: 500)
-
-        Yields:
-            List[str]: Chunks of lines from the file
-
-        Raises:
-            SplurgeValidationError: If chunk_size < 100 or file path validation fails
-            SplurgeFileNotFoundError: If the specified file doesn't exist
-            SplurgeFilePermissionError: If there are permission issues
-            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
-
-        Deprecated:
-            This method is deprecated and will be removed in a future version.
-            Use read_as_stream() instead.
-        """
-        warnings.warn(
-            "TextFileHelper.load_as_stream is deprecated and will be removed in a future version. "
-            "Use TextFileHelper.read_as_stream instead.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        return TextFileHelper.read_as_stream(
-            Path(file_name),
-            strip=strip,
-            encoding=encoding,
-            skip_header_rows=skip_header_rows,
-            skip_footer_rows=skip_footer_rows,
-            chunk_size=chunk_size
-        )
-
-    @staticmethod
-    def load(
-        file_name: PathLike[str] | str,
-        *,
-        strip: bool = True,
-        encoding: str = "utf-8",
-        skip_header_rows: int = 0,
-        skip_footer_rows: int = 0
-    ) -> List[str]:
-        """
-        Load the entire contents of a text file into a list of strings.
-
-        This method reads the complete file into memory, with options to
-        strip whitespace from each line and skip header/footer rows.
-
-        Args:
-            file_name: Path to the text file
-            strip: Whether to strip whitespace from lines (default: True)
-            encoding: File encoding to use (default: 'utf-8')
-            skip_header_rows: Number of rows to skip from the start (default: 0)
-            skip_footer_rows: Number of rows to skip from the end (default: 0)
-
-        Returns:
-            List[str]: List of all lines from the file, excluding skipped rows
-
-        Raises:
-            SplurgeFileNotFoundError: If the specified file doesn't exist
-            SplurgeFilePermissionError: If there are permission issues
-            SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding
-            SplurgeValidationError: If file path validation fails
-
-        Deprecated:
-            This method is deprecated and will be removed in a future version.
-            Use read() instead.
-        """
-        warnings.warn(
-            "TextFileHelper.load is deprecated and will be removed in a future version. "
-            "Use TextFileHelper.read instead.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        return TextFileHelper.read(
-            Path(file_name),
-            strip=strip,
-            encoding=encoding,
-            skip_header_rows=skip_header_rows,
-            skip_footer_rows=skip_footer_rows
-        )
+    # Removed deprecated load/load_as_stream methods; use read/read_as_stream instead

@@ -13,7 +13,6 @@ from splurge_tools.protocols import (
     StreamingTabularDataProtocol,
     DataValidatorProtocol,
     DataTransformerProtocol,
-    ResourceManagerProtocol,
     TypeInferenceProtocol
 )
 from splurge_tools.type_helper import TypeInference, DataType

@@ -334,7 +334,6 @@ python -m build --sdist
 - **DataValidatorProtocol**: Added `DataValidatorProtocol` with required methods `validate()`, `get_errors()`, and `clear_errors()`
 - **DataTransformerProtocol**: Added `DataTransformerProtocol` with required methods `transform()` and `can_transform()`
 - **TypeInferenceProtocol**: Added `TypeInferenceProtocol` with required methods `can_infer()`, `infer_type()`, and `convert_value()`
-- **ResourceManagerProtocol**: Added `ResourceManagerProtocol` with required methods `acquire()`, `release()`, and `is_acquired()`
 - **Enhanced RandomHelper**: Added new `as_base58_like()` method for generating Base58-like strings with guaranteed character diversity:
   - Ensures at least one alphabetic character, one digit, and one symbol (if provided)
   - Validates symbols against the `SYMBOLS` constant for security

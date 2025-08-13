@@ -26,7 +26,7 @@ from splurge_tools.exceptions import (
     SplurgeFileEncodingError
 )
 from splurge_tools.path_validator import PathValidator
-from splurge_tools.protocols import ResourceManagerProtocol
+ 
 
 
 # Module-level constants for resource management
@@ -36,7 +36,7 @@ _DEFAULT_MODE = "r"  # Default file mode for reading
 _DEFAULT_TEMP_MODE = "w+b"  # Default mode for temporary files
 
 
-class ResourceManager(ResourceManagerProtocol):
+class ResourceManager:
     """
     Generic resource manager that implements the ResourceManagerProtocol.
     
