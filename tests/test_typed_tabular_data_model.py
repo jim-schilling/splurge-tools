@@ -12,11 +12,11 @@ import unittest
 from datetime import date, datetime, time
 
 from splurge_tools.type_helper import DataType
-from splurge_tools.typed_tabular_data_model import TypeConfig, TypedTabularDataModel
+from splurge_tools.tabular_data_model import TabularDataModel
 
 
-class TestTypedTabularDataModel(unittest.TestCase):
-    """Test cases for TypedTabularDataModel."""
+class TestTypedView(unittest.TestCase):
+    """Test cases for typed view via TabularDataModel.to_typed()."""
 
     def setUp(self):
         """Set up test data."""
@@ -30,25 +30,17 @@ class TestTypedTabularDataModel(unittest.TestCase):
 
         # Custom type configurations
         self.custom_configs = {
-            DataType.BOOLEAN: TypeConfig(empty_default=False, none_default=True),
-            DataType.INTEGER: TypeConfig(empty_default=-1, none_default=0),
-            DataType.FLOAT: TypeConfig(empty_default=0.0, none_default=0.0),
-            DataType.DATE: TypeConfig(
-                empty_default=date(1900, 1, 1), none_default=None
-            ),
-            DataType.DATETIME: TypeConfig(
-                empty_default=datetime(1900, 1, 1), none_default=None
-            ),
-            DataType.TIME: TypeConfig(
-                empty_default=time(0, 0, 0), none_default=None
-            ),
+            DataType.BOOLEAN: True,
+            DataType.INTEGER: -1,
+            DataType.FLOAT: 0.0,
+            DataType.DATE: date(1900, 1, 1),
+            DataType.DATETIME: datetime(1900, 1, 1),
+            DataType.TIME: time(0, 0, 0),
         }
 
-        # Create models with default and custom configurations
-        self.default_model = TypedTabularDataModel(self.test_data)
-        self.custom_model = TypedTabularDataModel(
-            self.test_data, type_configs=self.custom_configs
-        )
+        base = TabularDataModel(self.test_data)
+        self.default_model = base.to_typed()
+        self.custom_model = base.to_typed(type_configs=self.custom_configs)
 
     def test_column_types(self):
         """Test that column types are correctly inferred."""
@@ -282,10 +274,9 @@ class TestTypedTabularDataModel(unittest.TestCase):
         ]
 
         # Create model with custom config for MIXED type
-        mixed_configs = {
-            DataType.MIXED: TypeConfig(empty_default="EMPTY", none_default="NONE")
-        }
-        mixed_model = TypedTabularDataModel(mixed_data, type_configs=mixed_configs)
+        mixed_configs = {DataType.MIXED: "NONE"}
+        base = TabularDataModel(mixed_data)
+        mixed_model = base.to_typed(type_configs=mixed_configs)
 
         # Test that MIXED type values are preserved
         self.assertEqual(

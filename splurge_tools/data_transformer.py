@@ -15,7 +15,6 @@ from typing import Any, Callable, Dict, List
 
 from splurge_tools.protocols import DataTransformerProtocol, TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
-from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
 
 
 class DataTransformer(DataTransformerProtocol):

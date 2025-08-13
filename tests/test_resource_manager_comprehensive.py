@@ -6,7 +6,7 @@ import unittest
 import tempfile
 import os
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Any
 
 from splurge_tools.resource_manager import (
     ResourceManager,
@@ -17,7 +17,6 @@ from splurge_tools.resource_manager import (
     temporary_file,
     safe_stream_operation
 )
-from splurge_tools.protocols import ResourceManagerProtocol
 from splurge_tools.exceptions import (
     SplurgeResourceAcquisitionError,
     SplurgeResourceReleaseError
@@ -32,31 +31,32 @@ class TestResourceManagerComprehensive(unittest.TestCase):
         self.resource_manager = ResourceManager()
 
     def test_initial_state(self):
-        """Test initial state of resource manager."""
+        """Test initial state of resource manager via public API."""
         self.assertFalse(self.resource_manager.is_acquired())
-        self.assertIsNone(self.resource_manager._resource)
 
     def test_acquire_when_already_acquired(self):
         """Test acquire when resource is already acquired."""
-        # Mock the resource creation to avoid NotImplementedError
-        self.resource_manager._create_resource = lambda: "test_resource"
-        
-        # First acquisition should succeed
-        resource = self.resource_manager.acquire()
+        # Use a simple concrete subclass to avoid touching privates
+        class SimpleManager(ResourceManager):
+            def _create_resource(self) -> Any:  # type: ignore[override]
+                return "test_resource"
+
+        mgr = SimpleManager()
+        resource = mgr.acquire()
         self.assertEqual(resource, "test_resource")
-        self.assertTrue(self.resource_manager.is_acquired())
-        
-        # Second acquisition should fail
+        self.assertTrue(mgr.is_acquired())
+
         with self.assertRaises(SplurgeResourceAcquisitionError):
-            self.resource_manager.acquire()
+            mgr.acquire()
 
     def test_acquire_with_exception(self):
         """Test acquire when resource creation fails."""
-        # Mock the resource creation to raise an exception
-        self.resource_manager._create_resource = lambda: (_ for _ in ()).throw(Exception("Creation failed"))
-        
+        class FailingManager(ResourceManager):
+            def _create_resource(self) -> Any:  # type: ignore[override]
+                raise Exception("Creation failed")
+
         with self.assertRaises(SplurgeResourceAcquisitionError):
-            self.resource_manager.acquire()
+            FailingManager().acquire()
 
     def test_release_when_not_acquired(self):
         """Test release when resource is not acquired."""
@@ -66,16 +66,17 @@ class TestResourceManagerComprehensive(unittest.TestCase):
 
     def test_release_with_exception(self):
         """Test release when cleanup fails."""
-        # Mock the resource creation and cleanup
-        self.resource_manager._create_resource = lambda: "test_resource"
-        self.resource_manager._cleanup_resource = lambda: (_ for _ in ()).throw(Exception("Cleanup failed"))
-        
-        # Acquire first
-        self.resource_manager.acquire()
-        
-        # Release should raise exception
+        class CleanupFailManager(ResourceManager):
+            def _create_resource(self) -> Any:  # type: ignore[override]
+                return "test_resource"
+
+            def _cleanup_resource(self) -> None:  # type: ignore[override]
+                raise Exception("Cleanup failed")
+
+        mgr = CleanupFailManager()
+        mgr.acquire()
         with self.assertRaises(SplurgeResourceReleaseError):
-            self.resource_manager.release()
+            mgr.release()
 
     def test_release_with_closeable_resource(self):
         """Test release with a resource that has a close method."""
@@ -88,18 +89,25 @@ class TestResourceManagerComprehensive(unittest.TestCase):
                 self.closed = True
         
         mock_resource = MockResource()
-        self.resource_manager._resource = mock_resource
-        self.resource_manager._is_acquired_flag = True
-        
-        # Release should call close method
-        self.resource_manager.release()
-        self.assertTrue(mock_resource.closed)
-        self.assertFalse(self.resource_manager.is_acquired())
 
-    def test_create_resource_not_implemented(self):
-        """Test that _create_resource raises NotImplementedError."""
-        with self.assertRaises(NotImplementedError):
-            self.resource_manager._create_resource()
+        class CloseableManager(ResourceManager):
+            def __init__(self, res: Any) -> None:
+                super().__init__()
+                self._res = res
+
+            def _create_resource(self) -> Any:  # type: ignore[override]
+                return self._res
+
+        mgr = CloseableManager(mock_resource)
+        mgr.acquire()
+        mgr.release()
+        self.assertTrue(mock_resource.closed)
+        self.assertFalse(mgr.is_acquired())
+
+    def test_acquire_on_base_manager_raises(self):
+        """Base ResourceManager acquire should fail via public API."""
+        with self.assertRaises(SplurgeResourceAcquisitionError):
+            ResourceManager().acquire()
 
 
 class TestFileResourceManagerComprehensive(unittest.TestCase):

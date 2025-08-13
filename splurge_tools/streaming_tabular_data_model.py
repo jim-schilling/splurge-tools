@@ -15,6 +15,7 @@ import re
 from typing import Generator, Iterator
 
 from splurge_tools.protocols import StreamingTabularDataProtocol
+from splurge_tools.tabular_utils import process_headers as _process_headers
 
 
 class StreamingTabularDataModel(StreamingTabularDataProtocol):
@@ -105,7 +106,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
 
         # Process headers
         if self._header_rows > 0:
-            self._header_data, self._column_names = self.process_headers(
+            self._header_data, self._column_names = _process_headers(
                 header_data,
                 header_rows=self._header_rows
             )
@@ -119,54 +120,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
         self._is_initialized = True
 
-    @staticmethod
-    def process_headers(
-        header_data: list[list[str]],
-        *,
-        header_rows: int
-    ) -> tuple[list[list[str]], list[str]]:
-        """
-        Process header data to create merged headers and column names.
-
-        Args:
-            header_data (list[list[str]]): Raw header data rows.
-            header_rows (int): Number of header rows to merge.
-
-        Returns:
-            tuple[list[list[str]], list[str]]: Processed header data and column names.
-        """
-        processed_header_data = header_data.copy()
-        
-        # Merge multi-row headers if needed
-        if header_rows > 1:
-            merged_headers: list[str] = []
-            for i in range(len(header_data)):
-                row = header_data[i]
-                while len(merged_headers) < len(row):
-                    merged_headers.append("")
-                for j, name in enumerate(row):
-                    if merged_headers[j]:
-                        merged_headers[j] = f"{merged_headers[j]}_{name}"
-                    else:
-                        merged_headers[j] = name
-            processed_header_data = [merged_headers]
-
-        # Extract and normalize column names, always fill empty with column_<index>
-        if processed_header_data and processed_header_data[0]:
-            raw_names = processed_header_data[0]
-            column_names = [
-                re.sub(r"\s+", " ", name).strip() if name and re.sub(r"\s+", " ", name).strip() else f"column_{i}"
-                for i, name in enumerate(raw_names)
-            ]
-        else:
-            column_names = []
-
-        # Ensure column_names matches the max column count
-        column_count = max(len(row) for row in header_data) if header_data else 0
-        while len(column_names) < column_count:
-            column_names.append(f"column_{len(column_names)}")
-
-        return processed_header_data, column_names
+    # Removed local process_headers; logic is shared in splurge_tools.tabular_utils
 
     @property
     def column_names(self) -> list[str]:

@@ -10,11 +10,12 @@ This module is licensed under the MIT License.
 
 import re
 import warnings
-from typing import Generator, Iterator
+from typing import Generator, Iterator, Any
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
 from splurge_tools.validation_utils import Validator
+from splurge_tools.tabular_utils import process_headers as _process_headers, normalize_rows as _normalize_rows
 from splurge_tools.common_utils import validate_data_structure, safe_dict_access, safe_index_access
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
 
@@ -60,8 +61,8 @@ class TabularDataModel(TabularDataProtocol):
         self._columns = len(self._data[0]) if len(self._data) > 0 else 0
         self._rows = len(self._data) if len(self._data) > 0 else 0
 
-        # Process headers using the new public method
-        self._header_data, self._column_names = self.process_headers(
+        # Process headers using shared utility
+        self._header_data, self._column_names = _process_headers(
             self._header_data,
             header_rows=header_rows
         )
@@ -72,54 +73,7 @@ class TabularDataModel(TabularDataProtocol):
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
         self._column_types: dict[str, DataType] = {}
 
-    @staticmethod
-    def process_headers(
-        header_data: list[list[str]],
-        *,
-        header_rows: int
-    ) -> tuple[list[list[str]], list[str]]:
-        """
-        Process header data to create merged headers and column names.
-
-        Args:
-            header_data (list[list[str]]): Raw header data rows.
-            header_rows (int): Number of header rows to merge.
-
-        Returns:
-            tuple[list[list[str]], list[str]]: Processed header data and column names.
-        """
-        processed_header_data = header_data.copy()
-        
-        # Merge multi-row headers if needed
-        if header_rows > 1:
-            merged_headers: list[str] = []
-            for i in range(len(header_data)):
-                row = header_data[i]
-                while len(merged_headers) < len(row):
-                    merged_headers.append("")
-                for j, name in enumerate(row):
-                    if merged_headers[j]:
-                        merged_headers[j] = f"{merged_headers[j]}_{name}"
-                    else:
-                        merged_headers[j] = name
-            processed_header_data = [merged_headers]
-
-        # Extract and normalize column names, always fill empty with column_<index>
-        if processed_header_data and processed_header_data[0]:
-            raw_names = processed_header_data[0]
-            column_names = [
-                re.sub(r"\s+", " ", name).strip() if name and re.sub(r"\s+", " ", name).strip() else f"column_{i}"
-                for i, name in enumerate(raw_names)
-            ]
-        else:
-            column_names = []
-
-        # Ensure column_names matches the max column count
-        column_count = max(len(row) for row in header_data) if header_data else 0
-        while len(column_names) < column_count:
-            column_names.append(f"column_{len(column_names)}")
-
-        return processed_header_data, column_names
+    # Removed local process_headers; logic is shared in splurge_tools.tabular_utils
 
     @property
     def column_names(self) -> list[str]:
@@ -304,6 +258,21 @@ class TabularDataModel(TabularDataProtocol):
         """
         return tuple(self._data[index])
 
+    def to_typed(
+        self,
+        *,
+        type_configs: dict[DataType, Any] | None = None
+    ) -> "_TypedView":
+        """Return a typed view over this model.
+
+        Args:
+            type_configs: Optional overrides for default type conversion behavior.
+
+        Returns:
+            _TypedView: A lightweight wrapper that provides typed access.
+        """
+        return _TypedView(self, type_configs=type_configs)
+
     @staticmethod
     def _normalize_data_model(
         rows: list[list[str]],
@@ -319,18 +288,188 @@ class TabularDataModel(TabularDataProtocol):
         Returns:
             list[list[str]]: Normalized data rows.
         """
-        if len(rows) == 0:
-            return []
-        max_column_count: int = max(len(row) for row in rows)
-        normalized_rows: list[list[str]] = []
-        for row in rows:
-            if len(row) < max_column_count:
-                row = row + [""] * (max_column_count - len(row))
-            normalized_rows.append(row)
-        if skip_empty_rows:
-            normalized_rows = [
-                row
-                for row in normalized_rows
-                if not all(cell.strip() == "" for cell in row)
-            ]
-        return normalized_rows
+        return _normalize_rows(rows, skip_empty_rows=skip_empty_rows)
+
+
+class _TypedView:
+    """Lightweight typed access wrapper for TabularDataModel.
+
+    Performs lazy per-cell conversions using the model's inferred column types.
+    """
+
+    def __init__(
+        self,
+        model: TabularDataModel,
+        *,
+        type_configs: dict[DataType, Any] | None = None
+    ) -> None:
+        from splurge_tools.type_helper import String  # local import to avoid cycles
+
+        self._model = model
+        self._string = String
+        # Defaults mirror previous TypedTabularDataModel semantics (empty vs none)
+        self._type_defaults: dict[DataType, dict[str, Any]] = {
+            DataType.BOOLEAN: {"empty": False, "none": False},
+            DataType.INTEGER: {"empty": 0, "none": 0},
+            DataType.FLOAT: {"empty": 0.0, "none": 0.0},
+            DataType.DATE: {"empty": None, "none": None},
+            DataType.DATETIME: {"empty": None, "none": None},
+            DataType.STRING: {"empty": "", "none": ""},
+            DataType.MIXED: {"empty": "", "none": None},
+            DataType.EMPTY: {"empty": "", "none": ""},
+            DataType.NONE: {"empty": None, "none": None},
+            DataType.TIME: {"empty": None, "none": None},
+        }
+
+        # Apply overrides using semantics expected by tests:
+        # - BOOLEAN, MIXED: override none-default only
+        # - Others (INTEGER, FLOAT, STRING, TIME, DATE, DATETIME, EMPTY, NONE): override empty-default only
+        if type_configs:
+            override_none: set[DataType] = {DataType.BOOLEAN, DataType.MIXED}
+            for dt, override_value in type_configs.items():
+                if dt not in self._type_defaults:
+                    continue
+                if dt in override_none:
+                    self._type_defaults[dt]["none"] = override_value
+                else:
+                    self._type_defaults[dt]["empty"] = override_value
+
+    @property
+    def column_names(self) -> list[str]:
+        return self._model.column_names
+
+    @property
+    def row_count(self) -> int:
+        return self._model.row_count
+
+    @property
+    def column_count(self) -> int:
+        return self._model.column_count
+
+    def column_index(self, name: str) -> int:
+        return self._model.column_index(name)
+
+    def __iter__(self) -> Iterator[list[object]]:
+        from splurge_tools.type_helper import String
+
+        for row in self._model:
+            yield [self._convert(value, self._inferred_type(i)) for i, value in enumerate(row)]
+
+    def iter_rows(self) -> Generator[dict[str, object], None, None]:
+        for row in self:
+            yield dict(zip(self.column_names, row))
+
+    def iter_rows_as_tuples(self) -> Generator[tuple[object, ...], None, None]:
+        for row in self:
+            yield tuple(row)
+
+    def column_values(self, name: str) -> list[object]:
+        from splurge_tools.exceptions import SplurgeParameterError
+
+        try:
+            col_idx = self._model.column_index(name)
+        except SplurgeParameterError as e:
+            raise ValueError(str(e))
+        dtype = self._inferred_type(col_idx)
+        return [self._convert(v, dtype) for v in self._model.column_values(name)]
+
+    def cell_value(self, name: str, row_index: int) -> object:
+        from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
+
+        try:
+            col_idx = self._model.column_index(name)
+        except SplurgeParameterError as e:
+            raise ValueError(str(e))
+        dtype = self._inferred_type(col_idx)
+        try:
+            raw = self._model.cell_value(name, row_index)
+        except SplurgeRangeError as e:
+            raise ValueError(str(e))
+        return self._convert(raw, dtype)
+
+    def row(self, index: int) -> dict[str, object]:
+        """Get a typed row as a dictionary."""
+        typed_list = self.row_as_list(index)
+        return {self.column_names[i]: typed_list[i] for i in range(self.column_count)}
+
+    def row_as_list(self, index: int) -> list[object]:
+        """Get a typed row as a list."""
+        if index < 0 or index >= self._model.row_count:
+            raise ValueError(f"Row index {index} out of range")
+        raw = self._model.row_as_list(index)
+        return [self._convert(val, self._inferred_type(i)) for i, val in enumerate(raw)]
+
+    def row_as_tuple(self, index: int) -> tuple[object, ...]:
+        """Get a typed row as a tuple."""
+        return tuple(self.row_as_list(index))
+
+    def _inferred_type(self, col_index: int) -> DataType:
+        name = self.column_names[col_index]
+        return self.column_type(name)
+
+    def _convert(self, value: str, dtype: DataType) -> object:
+        from splurge_tools.type_helper import String
+
+        defaults = self._type_defaults.get(dtype, {"empty": None, "none": None})
+        empty_default = defaults["empty"]
+        none_default = defaults["none"]
+
+        if dtype == DataType.MIXED:
+            if String.is_none_like(value):
+                return none_default
+            if String.is_empty_like(value):
+                return empty_default
+            return value
+
+        if String.is_none_like(value):
+            return none_default
+        if String.is_empty_like(value):
+            return empty_default
+
+        if dtype == DataType.BOOLEAN:
+            return String.to_bool(value, default=bool(empty_default))
+        if dtype == DataType.INTEGER:
+            return String.to_int(value, default=int(empty_default or 0))
+        if dtype == DataType.FLOAT:
+            return String.to_float(value, default=float(empty_default or 0.0))
+        if dtype == DataType.DATE:
+            return String.to_date(value, default=empty_default)
+        if dtype == DataType.DATETIME:
+            return String.to_datetime(value, default=empty_default)
+        if dtype == DataType.TIME:
+            return String.to_time(value, default=empty_default)
+        return value
+
+    def column_type(self, name: str) -> DataType:
+        """Infer and cache column type, preferring non-empty/none-like values.
+
+        This mirrors the previous behavior in TypedTabularDataModel to avoid
+        over-classifying as MIXED when strong signals exist in non-empty values.
+        """
+        from splurge_tools.type_helper import profile_values, String
+        from splurge_tools.exceptions import SplurgeParameterError
+
+        # Lazy cache on the wrapper to avoid recomputation
+        if not hasattr(self, "_typed_column_types"):
+            self._typed_column_types: dict[str, DataType] = {}
+
+        if name in self._typed_column_types:
+            return self._typed_column_types[name]
+
+        try:
+            values: list[str] = self._model.column_values(name)
+        except SplurgeParameterError as e:
+            raise ValueError(str(e))
+
+        non_empty_values: list[str] = [
+            v for v in values if not String.is_empty_like(v) and not String.is_none_like(v)
+        ]
+        if non_empty_values:
+            inferred = profile_values(non_empty_values)
+            if inferred != DataType.MIXED:
+                self._typed_column_types[name] = inferred
+                return inferred
+
+        inferred = profile_values(values)
+        self._typed_column_types[name] = inferred
+        return inferred

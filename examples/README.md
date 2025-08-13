@@ -23,7 +23,7 @@ This directory contains comprehensive examples demonstrating the major features 
 3. **[03_tabular_data_models.py](03_tabular_data_models.py)**
    - In-memory TabularDataModel for full data access
    - StreamingTabularDataModel for large datasets
-   - TypedTabularDataModel with schema validation
+   - TabularDataModel.to_typed() for typed access with schema validation
    - Multi-row header processing
    - Different iteration methods (list, dict, tuple)
 

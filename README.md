@@ -179,10 +179,58 @@ python -m pytest tests/ --cov=splurge_tools
 
 Build distribution:
 ```bash
-python -m build
+python -m build --sdist
 ```
 
 ## Changelog
+
+### [2025.4.0] - 2025-08-13
+
+- Moved to CalVer versioning scheme (Year.Minor.Micro)
+
+#### Breaking Changes
+- Removed factory pattern and heuristics:
+  - Deleted `DataModelFactory`, `ComponentFactory`, and `create_data_model()`.
+  - Introduced explicit constructors in `splurge_tools/factory.py`:
+    - `create_in_memory_model(data, *, header_rows=1, skip_empty_rows=True)`
+    - `create_streaming_model(stream, *, header_rows=1, skip_empty_rows=True, chunk_size=1000)`
+- Removed `TypedTabularDataModel`. Typed access is now provided via a lightweight view:
+  - `TabularDataModel.to_typed(type_configs: dict[DataType, Any] | None = None)`
+- Simplified protocols and resource management guidance:
+  - Streamlined `StreamingTabularDataProtocol` documentation to a minimal, unified interface.
+  - Deprecated `ResourceManagerProtocol` usage in favor of direct context managers.
+
+#### Added
+- `splurge_tools/tabular_utils.py`: Shared utilities for tabular processing
+  - `process_headers()` — multi-row header merging and normalization
+  - `normalize_rows()` — row padding and empty-row filtering
+  - `should_skip_row()` and `auto_column_names()` helpers
+- `TabularDataModel.to_typed()` typed view:
+  - Iterates typed rows (`__iter__`, `iter_rows`, `iter_rows_as_tuples`)
+  - Random access (`row`, `row_as_list`, `row_as_tuple`)
+  - Column APIs (`column_values`, `cell_value`, `column_type`)
+  - Lazy conversion with caching; no data duplication
+
+#### Changed
+- Unified header and row normalization logic in both in-memory and streaming models using `tabular_utils`.
+- Updated examples and tests to use explicit constructors and `to_typed()`; removed factory usage.
+- `DataTransformer` import cleanup (removed dependency on deleted `TypedTabularDataModel`).
+
+#### Removed
+- `splurge_tools/typed_tabular_data_model.py` and all references.
+- Factory helpers and wrapper-based resource manager creation.
+
+#### Fixed
+- Typed view default behavior for empty vs. none-like values to match previous semantics:
+  - Supports override semantics via `type_configs` (per `DataType`).
+  - Distinguishes empty defaults from none defaults for accurate conversions.
+
+#### Migration Guide
+- Replace factory usage:
+  - `create_data_model(data)` → `create_in_memory_model(data)` or `create_streaming_model(stream)`
+  - `ComponentFactory.create_validator()`/`create_transformer()` → instantiate classes directly
+- Replace `TypedTabularDataModel(...)` with `TabularDataModel(...).to_typed(...)`.
+- Replace `ComponentFactory.create_resource_manager(...)` with `safe_file_operation(...)` or `FileResourceManager` directly.
 
 ### [0.3.2] - 2025-08-09
 
@@ -221,8 +269,8 @@ python -m build
   - `TextNormalizer` methods: Corrected method names (`remove_special_chars`, `remove_control_chars`)
   - `Validator` utility methods: Fixed parameter signatures for validation utilities
 - **Unicode Compatibility**: Resolved Windows terminal encoding issues by replacing Unicode symbols with ASCII equivalents
-- **Import Dependencies**: Fixed missing imports and factory pattern references throughout examples
-- **Type System Integration**: Corrected `TypedTabularDataModel` instantiation without invalid schema parameters
+- **Import Dependencies**: Fixed missing imports and removed factory pattern references throughout examples
+- **Type System Integration**: Replaced `TypedTabularDataModel` with `TabularDataModel.to_typed()` for typed access
 
 #### Performance
 - **Example Execution**: All 7 examples now execute successfully with average runtime of 0.12s per example
@@ -430,7 +478,7 @@ python -m build
 ### [0.2.3] - 2025-07-05
 
 #### Changed
-- **API Simplification**: Removed the `multi_row_headers` parameter from `TabularDataModel`, `StreamingTabularDataModel`, `TypedTabularDataModel`, and `DsvHelper.profile_columns`. Multi-row header merging is now controlled solely by the `header_rows` parameter, which specifies how many rows to merge for column names. This change simplifies the API and eliminates redundant parameters.
+- **API Simplification**: Removed the `multi_row_headers` parameter from `TabularDataModel`, `StreamingTabularDataModel`, and `DsvHelper.profile_columns`. Multi-row header merging is now controlled solely by the `header_rows` parameter.
 - **StreamingTabularDataModel API Refinement**: Streamlined the `StreamingTabularDataModel` API to focus on streaming functionality by removing random access methods (`row()`, `row_as_list()`, `row_as_tuple()`, `cell_value()`) and column analysis methods (`column_values()`, `column_type()`). This creates a cleaner, more consistent streaming paradigm.
 - **Tests and Examples Updated**: All tests and example scripts have been updated to use only the `header_rows` parameter for multi-row header merging. Any usage of `multi_row_headers` has been removed.
 - **StringTokenizer Tests Refactored**: Consolidated and removed redundant tests in `test_string_tokenizer.py` for improved maintainability and clarity. Test coverage and edge case handling remain comprehensive.
@@ -457,7 +505,7 @@ python -m build
 - **Streaming Data Example**: Added comprehensive example demonstrating `StreamingTabularDataModel` usage, including memory usage comparison with traditional loading methods.
 
 #### Fixed
-- **Header Processing**: Fixed header processing logic in all data models (`StreamingTabularDataModel`, `TabularDataModel`, `TypedTabularDataModel`) to properly handle empty headers by filling them with `column_<index>` names. Headers like `"Name,,City"` now correctly become `["Name", "column_1", "City"]`.
+- **Header Processing**: Fixed header processing logic in all data models (`StreamingTabularDataModel`, `TabularDataModel`) to properly handle empty headers by filling them with `column_<index>` names. Headers like `"Name,,City"` now correctly become `["Name", "column_1", "City"]`.
 - **DSV Parsing**: Fixed `StringTokenizer.parse` to preserve empty fields instead of filtering them out. This ensures that `"Name,,City"` is parsed as `["Name", "", "City"]` instead of `["Name", "City"]`, maintaining data integrity.
 - **Row Padding and Dynamic Column Expansion**: Fixed row padding logic in `StreamingTabularDataModel` to properly handle uneven rows and dynamically expand columns during iteration.
 - **File Handling**: Fixed file permission errors in tests by ensuring proper cleanup of temporary files and stream exhaustion.

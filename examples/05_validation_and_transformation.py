@@ -13,8 +13,6 @@ Licensed under the MIT License.
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.tabular_data_model import TabularDataModel
-from splurge_tools.typed_tabular_data_model import TypedTabularDataModel
-# from splurge_tools.factory import ComponentFactory, DataModelFactory
 from splurge_tools.validation_utils import Validator
 from splurge_tools.type_helper import DataType
 
@@ -316,58 +314,15 @@ def advanced_transformation_examples(sales_data):
 
 
 def factory_pattern_examples():
-    """Demonstrate factory pattern usage."""
-    print("=== Factory Pattern Examples ===\n")
-    
-    # Create various components using factories
-    print("Creating components with factories:")
-    
-    # Create validator
+    """Demonstrate simple explicit construction usage (no factories)."""
+    print("=== Explicit Construction Examples ===\n")
     validator = DataValidator()
     print(f"OK Validator created: {type(validator).__name__}")
-    
-    # Create data model using factory
-    sample_data = [
-        ["Name", "Value"],
-        ["A", "1"],
-        ["B", "2"],
-    ]
-    
+    sample_data = [["Name", "Value"], ["A", "1"], ["B", "2"]]
     model = TabularDataModel(sample_data, header_rows=1)
     print(f"OK Data model created: {type(model).__name__}")
-    
-    # Create transformer
     transformer = DataTransformer(model)
     print(f"OK Transformer created: {type(transformer).__name__}")
-    
-    print()
-    
-    # Demonstrate factory configuration
-    print("Factory configuration examples:")
-    
-    # Different model types
-    typed_model = TypedTabularDataModel(
-        sample_data,
-        header_rows=1
-    )
-    print(f"OK Typed model created: {type(typed_model).__name__}")
-    
-    # Resource manager (if file exists)
-    try:
-        import tempfile
-        temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-        temp_file.write("test content")
-        temp_file.close()
-        
-        # resource_manager = ComponentFactory.create_resource_manager(temp_file.name)  # Not available
-        print("OK Resource manager creation skipped (ComponentFactory not available)")
-        
-        # Clean up
-        import os
-        os.unlink(temp_file.name)
-    except Exception as e:
-        print(f"Resource manager creation failed: {e}")
-    
     print()
 
 

@@ -89,8 +89,8 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
             self.assertEqual(row_count, 1000)
 
-            # Test that buffer is empty after iteration (streaming behavior)
-            self.assertEqual(len(model._buffer), 0)
+            # Test that subsequent iteration has no stale buffered rows
+            self.assertEqual(list(model.iter_rows()), [])
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -288,12 +288,12 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
             # Test initial state
             self.assertEqual(model.column_names, ["Name", "Age"])
-            self.assertTrue(model._is_initialized)
+            self.assertEqual(model.column_names, ["Name", "Age"])
 
             # Reset stream
             model.reset_stream()
-            self.assertFalse(model._is_initialized)
-            self.assertEqual(len(model._buffer), 0)
+            # After reset, a new iterator should be required; verify no rows until provided
+            self.assertEqual(list(model.iter_rows()), [])
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -404,12 +404,8 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
                 chunk_size=100
             )
 
-            # Test that initialization is marked as complete
-            self.assertTrue(model._is_initialized)
-
-            # Call initialization again - should return early
-            model._initialize_from_stream()
-            self.assertTrue(model._is_initialized)
+            # Publicly observable behavior: column names available and consistent
+            self.assertEqual(model.column_names, ["Name", "Age"])
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -422,33 +418,34 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
     def test_streaming_model_process_headers_edge_cases(self) -> None:
         """Test process_headers with various edge cases."""
-        # Test with empty data
-        result = StreamingTabularDataModel.process_headers([], header_rows=0)
+        # Test with empty data via shared utility
+        from splurge_tools.tabular_utils import process_headers
+        result = process_headers([], header_rows=0)
         self.assertEqual(result, ([], []))
         
         # Test with empty column names
         header_data = [["", "", ""]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        result = process_headers(header_data, header_rows=1)
         self.assertEqual(result[1], ["column_0", "column_1", "column_2"])
         
         # Test with mixed empty and non-empty names
         header_data = [["Name", "", "City"]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        result = process_headers(header_data, header_rows=1)
         self.assertEqual(result[1], ["Name", "column_1", "City"])
         
         # Test with column count padding
         header_data = [["Name", "Age"], ["John", "25", "Extra"]]  # Second row has more columns
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=2)
+        result = process_headers(header_data, header_rows=2)
         self.assertEqual(len(result[1]), 3)  # Should have 3 columns based on max row length
         
         # Test with single empty row
         header_data = [[""]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=1)
+        result = process_headers(header_data, header_rows=1)
         self.assertEqual(result[1], ["column_0"])
         
         # Test with multiple empty rows
         header_data = [[""], [""], [""]]
-        result = StreamingTabularDataModel.process_headers(header_data, header_rows=3)
+        result = process_headers(header_data, header_rows=3)
         self.assertEqual(result[1], ["column_0"])
 
     def test_streaming_model_dynamic_column_expansion(self) -> None:
