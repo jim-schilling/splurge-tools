@@ -745,7 +745,7 @@ def test_validation_edge_case_coverage():
     assert not Base58.is_valid(mixed_string)
 
 
-def test_validation_exception_path():
+def test_validation_exception_path(monkeypatch):
     """Test the exception path in the try-except block for 100% coverage."""
     # Create a custom class that raises an exception during membership testing
     class BadAlphabet:
@@ -753,21 +753,19 @@ def test_validation_exception_path():
             raise RuntimeError("Test exception")
     
     # Use monkeypatching to safely test the exception path
-    with pytest.MonkeyPatch().context() as m:
-        # Temporarily replace the ALPHABET to trigger the exception
-        m.setattr(Base58, 'ALPHABET', BadAlphabet())
-        
-        # This should trigger the exception and return False
-        result = Base58.is_valid("test")
-        assert result is False, f"Expected False, got {result}"
-        
-        # Test with a longer string to ensure the exception is triggered
-        result2 = Base58.is_valid("longer_test_string")
-        assert result2 is False, f"Expected False, got {result2}"
-        
-        # Test with empty string to ensure exception path is covered
-        result3 = Base58.is_valid("")
-        assert result3 is False, f"Expected False, got {result3}"
+    monkeypatch.setattr(Base58, 'ALPHABET', BadAlphabet())
+    
+    # This should trigger the exception and return False
+    result = Base58.is_valid("test")
+    assert result is False, f"Expected False, got {result}"
+    
+    # Test with a longer string to ensure the exception is triggered
+    result2 = Base58.is_valid("longer_test_string")
+    assert result2 is False, f"Expected False, got {result2}"
+    
+    # Test with empty string to ensure exception path is covered
+    result3 = Base58.is_valid("")
+    assert result3 is False, f"Expected False, got {result3}"
 
 
 def test_decode_num_zero_edge_case():
