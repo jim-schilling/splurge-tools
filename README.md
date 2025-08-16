@@ -184,6 +184,8 @@ python -m build --sdist
 
 ## Changelog
 
+### [2025.4.1] - 2025-08-16
+
 ### [2025.4.0] - 2025-08-13
 
 - Moved to CalVer versioning scheme (Year.Minor.Micro)
