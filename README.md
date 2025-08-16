@@ -186,6 +186,38 @@ python -m build --sdist
 
 ### [2025.4.1] - 2025-08-16
 
+#### Added
+- **Enhanced Base58 Error Handling**: Introduced specific exception types for better error clarity:
+  - `Base58Error`: Base class for all base-58 related errors
+  - `Base58TypeError`: Raised when input type validation fails
+  - `Base58ValidationError`: Raised when base-58 validation fails
+- **Improved Base58 Class Structure**: Refactored `Base58` class with better organization:
+  - Separated alphabet constants (`DIGITS`, `ALPHA_UPPER`, `ALPHA_LOWER`, `ALPHABET`)
+  - Enhanced type checking with specific error messages
+  - Improved input validation and error handling
+
+#### Changed
+- **Base58 Method Signatures**: Updated method signatures for better type safety:
+  - `decode()` method now requires non-None string input
+  - `is_valid()` method now requires string input with proper type checking
+  - Removed redundant `is_valid_base58()` alias method
+- **Enhanced Test Coverage**: Comprehensive test suite improvements:
+  - Converted from unittest to pytest for better test organization
+  - Added extensive error handling test cases
+  - Improved test coverage for edge cases and error conditions
+  - Enhanced validation testing for all Base58 operations
+
+#### Fixed
+- **Base58 Decoding Edge Cases**: Fixed handling of edge cases in base-58 decoding:
+  - Improved handling of all-zero byte sequences
+  - Better handling of leading zero bytes in encoded data
+  - Enhanced validation for empty and invalid inputs
+- **Error Message Clarity**: Improved error messages for better debugging and user experience
+
+#### Performance
+- **Test Execution**: Improved test performance and reliability with pytest framework
+- **Error Handling**: More efficient error detection and reporting
+
 ### [2025.4.0] - 2025-08-13
 
 - Moved to CalVer versioning scheme (Year.Minor.Micro)
