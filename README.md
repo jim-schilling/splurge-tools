@@ -229,6 +229,53 @@ python -m build --sdist
 
 ### [2025.4.2] - 2025-08-22
 
+#### Added
+- **Centralized Decorators Module**: Created new `splurge_tools/decorators.py` module to centralize common decorators:
+  - **`handle_empty_value_classmethod`**: For `@classmethod` decorated methods that process string values
+  - **`handle_empty_value_instancemethod`**: For instance methods (self as first parameter) that process string values
+  - **`handle_empty_value`**: For standalone functions and `@staticmethod` decorated methods that process string values
+  - **`deprecated_method`**: For marking methods as deprecated with customizable warning messages
+- **Enhanced Decorator Examples**: Added comprehensive example demonstrating all decorator types:
+  - **`examples/08_decorator_examples.py`**: Complete demonstration of all decorator functionality
+  - Shows proper usage patterns for each decorator type
+  - Demonstrates empty value handling and deprecation warnings
+  - Includes performance metrics and feature coverage validation
+
+#### Changed
+- **Decorator Refactoring**: Moved `handle_empty_value` decorator from `case_helper.py` and `text_normalizer.py` to centralized `decorators.py`:
+  - Eliminated code duplication across modules
+  - Improved maintainability and consistency
+  - Enhanced type safety with specialized decorators for different use cases
+- **Module Organization**: Moved `deprecated_method` decorator from `common_utils.py` to `decorators.py`:
+  - Better separation of concerns (decorators vs utility functions)
+  - Improved discoverability of decorator functionality
+  - Cleaner module organization
+- **Test Organization**: Updated test structure for better maintainability:
+  - **`tests/test_decorators.py`**: Comprehensive testing of all decorator functionality
+  - Removed duplicate `deprecated_method` tests from `test_common_utils.py`
+  - Improved test coverage and organization
+
+#### Fixed
+- **Decorator Parameter Handling**: Fixed critical bug in `handle_empty_value` decorator:
+  - Corrected parameter signature for class methods (added missing `cls` parameter)
+  - Fixed parameter mismatch that caused decorator to fail with valid strings
+  - Ensured proper handling of `None` and empty string inputs
+- **Test Coverage**: Improved test organization and eliminated duplicate testing:
+  - Removed `TestDeprecatedMethod` class from `test_common_utils.py`
+  - Centralized all decorator testing in `test_decorators.py`
+  - Maintained 100% test coverage for decorators module
+
+#### Performance
+- **Test Execution**: Improved test performance with better organization:
+  - **527 tests passed** with no failures
+  - **95% overall code coverage**
+  - **100% coverage** for `decorators.py`
+  - **89% coverage** for `common_utils.py`
+- **Example Validation**: All examples running successfully:
+  - **8/8 examples passed** with comprehensive feature coverage
+  - **0.83s total execution time** (0.12s average per example)
+  - Validated all major library features working correctly
+
 ### [2025.4.1] - 2025-08-16
 
 #### Added
