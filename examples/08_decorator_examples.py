@@ -4,7 +4,7 @@ Example demonstrating the three different handle_empty_value decorators.
 This example shows how to use:
 - handle_empty_value_classmethod: For @classmethod decorated methods
 - handle_empty_value_instancemethod: For instance methods (self as first parameter)
-- handle_empty_value_function: For standalone functions
+- handle_empty_value: For standalone methods and @staticmethod decorated methods
 """
 
 from splurge_tools.decorators import (

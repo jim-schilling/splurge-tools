@@ -70,6 +70,7 @@ def main():
         "05_validation_and_transformation.py",
         "06_random_data_generation.py",
         "07_comprehensive_workflows.py",
+        "08_decorator_examples.py",
     ]
     
     # Verify all example files exist
@@ -159,7 +160,8 @@ def main():
         "Text processing and normalization",
         "Data validation and transformation",
         "Random data generation",
-        "Comprehensive ETL workflows"
+        "Comprehensive ETL workflows",
+        "Decorator examples"
     ]
     
     for i, feature in enumerate(features):

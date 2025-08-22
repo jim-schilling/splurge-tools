@@ -162,8 +162,7 @@ def old_process(value: str) -> str:
 **Decorator Types:**
 - **`handle_empty_value_classmethod`**: For `@classmethod` decorated methods
 - **`handle_empty_value_instancemethod`**: For instance methods (self as first parameter)
-- **`handle_empty_value_function`**: For standalone functions
-- **`handle_empty_value`**: Backward compatibility alias (defaults to classmethod version)
+- **`handle_empty_value`**: For standalone methods and `@staticmethod` decorated methods
 - **`deprecated_method`**: For marking methods as deprecated with customizable warnings
 
 ## Development
@@ -227,6 +226,8 @@ python -m build --sdist
 ```
 
 ## Changelog
+
+### [2025.4.2] - 2025-08-22
 
 ### [2025.4.1] - 2025-08-16
 
