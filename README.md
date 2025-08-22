@@ -131,7 +131,7 @@ The package provides specialized decorators for handling empty values in string 
 from splurge_tools.decorators import (
     handle_empty_value_classmethod,
     handle_empty_value_instancemethod,
-    handle_empty_value_function
+    handle_empty_value
 )
 
 class StringProcessor:
@@ -144,7 +144,7 @@ class StringProcessor:
     def instance_process(self, value: str) -> str:
         return f"{self.prefix}{value.upper()}"
 
-@handle_empty_value_function
+@handle_empty_value
 def standalone_process(value: str) -> str:
     return f"function:{value.upper()}"
 
