@@ -86,7 +86,7 @@ def handle_empty_value_instancemethod(
     return wrapper
 
 
-def handle_empty_value_function(
+def handle_empty_value(
     func: Callable[..., str]
 ) -> Callable[..., str]:
     """
@@ -102,7 +102,7 @@ def handle_empty_value_function(
         Decorated function that handles empty values
         
     Example:
-        @handle_empty_value_function
+        @handle_empty_value
         def process_string(value: str) -> str:
             return value.upper()
     """
@@ -117,11 +117,6 @@ def handle_empty_value_function(
         return func(value, *args, **kwargs)
 
     return wrapper
-
-
-# Backward compatibility alias - defaults to classmethod version
-# since that's what was used in the original implementation
-handle_empty_value = handle_empty_value_classmethod
 
 
 def deprecated_method(

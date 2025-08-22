@@ -8,7 +8,7 @@ from unittest.mock import Mock
 from splurge_tools.decorators import (
     handle_empty_value_classmethod,
     handle_empty_value_instancemethod,
-    handle_empty_value_function,
+    handle_empty_value,
     handle_empty_value,
     deprecated_method
 )
@@ -83,7 +83,7 @@ class TestDecorators(unittest.TestCase):
         """Test that None values return empty string for standalone functions."""
         mock_func = Mock(return_value="processed")
         
-        @handle_empty_value_function
+        @handle_empty_value
         def test_function(value: str) -> str:
             return mock_func(value)
         
@@ -95,7 +95,7 @@ class TestDecorators(unittest.TestCase):
         """Test that valid strings are processed normally for standalone functions."""
         mock_func = Mock(return_value="processed")
         
-        @handle_empty_value_function
+        @handle_empty_value
         def test_function(value: str) -> str:
             return mock_func(value)
         
@@ -167,7 +167,7 @@ class TestDecorators(unittest.TestCase):
             return f"instance:{self}:{value}"
         
         # Function version
-        @handle_empty_value_function
+        @handle_empty_value
         def standalone_function(value: str) -> str:
             return f"function:{value}"
         

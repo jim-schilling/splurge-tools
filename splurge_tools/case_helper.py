@@ -10,7 +10,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from splurge_tools.decorators import handle_empty_value
+from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
 
 
 class CaseHelper:
@@ -27,10 +27,9 @@ class CaseHelper:
     - Ensures consistent handling of mixed input formats
     """
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize(
-        cls,
         value: str
     ) -> str:
         """
@@ -50,7 +49,7 @@ class CaseHelper:
         return value.replace("_", " ").replace("-", " ")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_train(
         cls,
         value: str,
@@ -76,7 +75,7 @@ class CaseHelper:
         return value.title().replace(" ", "-")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_sentence(
         cls,
         value: str,
@@ -102,7 +101,7 @@ class CaseHelper:
         return value.capitalize()
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_camel(
         cls,
         value: str,
@@ -133,7 +132,7 @@ class CaseHelper:
         return words[0].lower() + "".join(word.title() for word in words[1:])
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_snake(
         cls,
         value: str,
@@ -159,7 +158,7 @@ class CaseHelper:
         return value.lower().replace(" ", "_")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_kebab(
         cls,
         value: str,
@@ -185,7 +184,7 @@ class CaseHelper:
         return value.lower().replace(" ", "-")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_pascal(
         cls,
         value: str,

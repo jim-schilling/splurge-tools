@@ -13,7 +13,7 @@ import unicodedata
 from typing import Any, Pattern
 
 from splurge_tools.case_helper import CaseHelper
-from splurge_tools.decorators import handle_empty_value
+from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
 
 
 class TextNormalizer:
@@ -40,10 +40,9 @@ class TextNormalizer:
     _WHITESPACE_PATTERN: Pattern[str] = re.compile(r"\s+")
     _CONTROL_CHARS_PATTERN: Pattern[str] = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def remove_accents(
-        cls,
         value: str
     ) -> str:
         """
@@ -66,7 +65,7 @@ class TextNormalizer:
         )
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def normalize_whitespace(
         cls,
         value: str,
@@ -97,10 +96,9 @@ class TextNormalizer:
             value = cls._WHITESPACE_PATTERN.sub(" ", value)
         return value.strip()
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def remove_special_chars(
-        cls,
         value: str,
         *,
         keep_chars: str = ""
@@ -122,10 +120,9 @@ class TextNormalizer:
         pattern: str = f"[^\\w\\s{re.escape(keep_chars)}]"
         return re.sub(pattern, "", value)
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize_line_endings(
-        cls,
         value: str,
         *,
         line_ending: str = "\n"
@@ -146,7 +143,7 @@ class TextNormalizer:
         return re.sub(r"\r\n|\r|\n", line_ending, value)
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_ascii(
         cls,
         value: str,
@@ -173,7 +170,7 @@ class TextNormalizer:
         )
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def remove_control_chars(
         cls,
         value: str
@@ -192,10 +189,9 @@ class TextNormalizer:
         """
         return cls._CONTROL_CHARS_PATTERN.sub("", value)
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize_quotes(
-        cls,
         value: str,
         *,
         quote_char: str = '"'
@@ -220,10 +216,9 @@ class TextNormalizer:
         result: str = temp.replace("§APOS§", "'")
         return result
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize_dashes(
-        cls,
         value: str,
         *,
         dash_char: str = "-"
@@ -244,10 +239,9 @@ class TextNormalizer:
         """
         return re.sub(r"[–—]", dash_char, value)
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize_spaces(
-        cls,
         value: str
     ) -> str:
         """
@@ -264,10 +258,9 @@ class TextNormalizer:
         """
         return " ".join(value.split())
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def normalize_case(
-        cls,
         value: str,
         *,
         case: str = "lower"
@@ -297,10 +290,9 @@ class TextNormalizer:
             return CaseHelper.to_sentence(value)
         return value
 
-    @classmethod
+    @staticmethod
     @handle_empty_value
     def remove_duplicate_chars(
-        cls,
         value: str,
         *,
         chars: str = " -."

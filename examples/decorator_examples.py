@@ -10,7 +10,7 @@ This example shows how to use:
 from splurge_tools.decorators import (
     handle_empty_value_classmethod,
     handle_empty_value_instancemethod,
-    handle_empty_value_function,
+    handle_empty_value,
     deprecated_method
 )
 
@@ -33,7 +33,7 @@ class StringProcessor:
         return f"{self.prefix}{value.upper()}"
 
 
-@handle_empty_value_function
+@handle_empty_value
 def standalone_process_string(value: str) -> str:
     """Standalone function that processes strings."""
     return f"function:{value.upper()}"
