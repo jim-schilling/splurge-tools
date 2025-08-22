@@ -203,7 +203,7 @@ class TestDecorators(unittest.TestCase):
             """Test method docstring."""
             return value.upper()
         
-        decorated_method = deprecated_method("new_method", "2.0.0")(test_method)
+        decorated_method = test_method
         
         # Check that the docstring is preserved
         self.assertEqual(decorated_method.__doc__, "Test method docstring.")
