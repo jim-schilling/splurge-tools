@@ -10,28 +10,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from functools import wraps
-from typing import Callable, Any
-
-
-def handle_empty_value(
-    func: Callable[..., str]
-) -> Callable[..., str]:
-    """
-    Decorator to handle empty value checks for case conversion methods.
-    Returns empty string if input value is None or empty.
-    """
-    @wraps(func)
-    def wrapper(
-        value: str,
-        *args: Any,
-        **kwargs: Any
-    ) -> str:
-        if value is None or not value:
-            return ""
-        return func(value, *args, **kwargs)
-
-    return wrapper
+from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
 
 
 class CaseHelper:
@@ -70,7 +49,7 @@ class CaseHelper:
         return value.replace("_", " ").replace("-", " ")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_train(
         cls,
         value: str,
@@ -82,7 +61,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in train case format
@@ -96,7 +75,7 @@ class CaseHelper:
         return value.title().replace(" ", "-")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_sentence(
         cls,
         value: str,
@@ -108,7 +87,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in sentence case format
@@ -122,7 +101,7 @@ class CaseHelper:
         return value.capitalize()
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_camel(
         cls,
         value: str,
@@ -134,7 +113,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in camel case format
@@ -153,7 +132,7 @@ class CaseHelper:
         return words[0].lower() + "".join(word.title() for word in words[1:])
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_snake(
         cls,
         value: str,
@@ -165,7 +144,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in snake case format
@@ -179,7 +158,7 @@ class CaseHelper:
         return value.lower().replace(" ", "_")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_kebab(
         cls,
         value: str,
@@ -191,7 +170,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in kebab case format
@@ -205,7 +184,7 @@ class CaseHelper:
         return value.lower().replace(" ", "-")
 
     @classmethod
-    @handle_empty_value
+    @handle_empty_value_classmethod
     def to_pascal(
         cls,
         value: str,
@@ -217,7 +196,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in pascal case format
