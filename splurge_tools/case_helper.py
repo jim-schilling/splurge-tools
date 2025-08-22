@@ -10,28 +10,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from functools import wraps
-from typing import Callable, Any
-
-
-def handle_empty_value(
-    func: Callable[..., str]
-) -> Callable[..., str]:
-    """
-    Decorator to handle empty value checks for case conversion methods.
-    Returns empty string if input value is None or empty.
-    """
-    @wraps(func)
-    def wrapper(
-        value: str,
-        *args: Any,
-        **kwargs: Any
-    ) -> str:
-        if value is None or not value:
-            return ""
-        return func(value, *args, **kwargs)
-
-    return wrapper
+from splurge_tools.decorators import handle_empty_value
 
 
 class CaseHelper:
@@ -48,9 +27,10 @@ class CaseHelper:
     - Ensures consistent handling of mixed input formats
     """
 
-    @staticmethod
+    @classmethod
     @handle_empty_value
     def normalize(
+        cls,
         value: str
     ) -> str:
         """
@@ -82,7 +62,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in train case format
@@ -108,7 +88,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in sentence case format
@@ -134,7 +114,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in camel case format
@@ -165,7 +145,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in snake case format
@@ -191,7 +171,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in kebab case format
@@ -217,7 +197,7 @@ class CaseHelper:
 
         Args:
             value: Input string to convert
-            normalize: If True, converts underscores and hyphens to spaces first
+            normalize: If True, converts underscores and hyphens to spaces first (default: True)
 
         Returns:
             String in pascal case format

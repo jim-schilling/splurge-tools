@@ -6,12 +6,10 @@ Comprehensive unit tests for the common_utils module.
 
 import tempfile
 import unittest
-import warnings
 from pathlib import Path
 from typing import Any
 
 from splurge_tools.common_utils import (
-    deprecated_method,
     safe_file_operation,
     ensure_minimum_columns,
     safe_index_access,
@@ -27,66 +25,6 @@ from splurge_tools.exceptions import (
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError
 )
-
-
-class TestDeprecatedMethod(unittest.TestCase):
-    """Test cases for deprecated_method decorator."""
-
-    def test_deprecated_warning(self):
-        """Test that deprecated methods issue warnings."""
-        @deprecated_method("new_function")
-        def old_function(x: int) -> int:
-            return x * 2
-        
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = old_function(5)
-            
-            self.assertEqual(result, 10)
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertIn("old_function is deprecated", str(w[0].message))
-            self.assertIn("Use new_function instead", str(w[0].message))
-
-    def test_deprecated_with_custom_version(self):
-        """Test deprecated method with custom version."""
-        @deprecated_method("replacement_func", version="v2.0")
-        def legacy_function() -> str:
-            return "legacy"
-        
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = legacy_function()
-            
-            self.assertEqual(result, "legacy")
-            self.assertIn("removed in a v2.0", str(w[0].message))
-
-    def test_deprecated_preserves_function_metadata(self):
-        """Test that decorator preserves function metadata."""
-        @deprecated_method("new_func")
-        def documented_function(x: int, y: str = "default") -> str:
-            """This is a documented function."""
-            return f"{x}_{y}"
-        
-        # Function should work normally
-        result = documented_function(42, "test")
-        self.assertEqual(result, "42_test")
-        
-        # Metadata should be preserved
-        self.assertEqual(documented_function.__name__, "documented_function")
-
-    def test_deprecated_with_args_and_kwargs(self):
-        """Test deprecated method with various argument types."""
-        @deprecated_method("better_function")
-        def flexible_function(*args: Any, **kwargs: Any) -> dict:
-            return {"args": args, "kwargs": kwargs}
-        
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always")
-            result = flexible_function(1, 2, 3, name="test", value=42)
-            
-            expected = {"args": (1, 2, 3), "kwargs": {"name": "test", "value": 42}}
-            self.assertEqual(result, expected)
 
 
 class TestSafeFileOperation(unittest.TestCase):

@@ -11,8 +11,6 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import warnings
-from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Iterator, TypeVar, Union
 from collections.abc import Iterable
@@ -27,35 +25,6 @@ from splurge_tools.exceptions import (
 from splurge_tools.validation_utils import Validator
 
 T = TypeVar('T')
-F = TypeVar('F', bound=Callable[..., Any])
-
-
-def deprecated_method(
-    replacement: str,
-    version: str = "future version"
-) -> Callable[[F], F]:
-    """
-    Decorator to mark methods as deprecated.
-    
-    Args:
-        replacement: Name of the replacement method/function
-        version: Version when the method will be removed
-        
-    Returns:
-        Decorated function that issues deprecation warning
-    """
-    def decorator(func: F) -> F:
-        @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            warnings.warn(
-                f"{func.__name__} is deprecated and will be removed in a {version}. "
-                f"Use {replacement} instead.",
-                DeprecationWarning,
-                stacklevel=2
-            )
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
 
 
 def safe_file_operation(

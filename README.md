@@ -42,6 +42,7 @@ pip install splurge-tools
 - **`data_validator.py`**: Data validation framework with custom validation rules
 - **`data_transformer.py`**: Data transformation utilities for converting between formats
 - **`random_helper.py`**: Random data generation for testing, including realistic test data and secure Base58-like string generation with guaranteed character diversity
+- **`decorators.py`**: Common decorators for handling empty values in string processing methods
 
 ### Key Capabilities
 - **Streaming Support**: Process datasets larger than available RAM with configurable chunk sizes
@@ -121,6 +122,49 @@ print(token)  # Example: "A3bC7dE9fG2hJ4kL"
 secure_id = RandomHelper.as_base58_like(20, symbols="!@#$", secure=True)
 print(secure_id)  # Example: "A3!bC7@dE9#fG2$hJ4"
 ```
+
+### Empty Value Handling Decorators
+
+The package provides specialized decorators for handling empty values in string processing methods:
+
+```python
+from splurge_tools.decorators import (
+    handle_empty_value_classmethod,
+    handle_empty_value_instancemethod,
+    handle_empty_value_function
+)
+
+class StringProcessor:
+    @classmethod
+    @handle_empty_value_classmethod
+    def class_process(cls, value: str) -> str:
+        return f"class:{value.upper()}"
+    
+    @handle_empty_value_instancemethod
+    def instance_process(self, value: str) -> str:
+        return f"{self.prefix}{value.upper()}"
+
+@handle_empty_value_function
+def standalone_process(value: str) -> str:
+    return f"function:{value.upper()}"
+
+# All decorators handle None and empty strings gracefully
+StringProcessor.class_process(None)      # Returns ""
+StringProcessor.class_process("")        # Returns ""
+StringProcessor.class_process("hello")   # Returns "class:HELLO"
+
+# Deprecated method example
+@deprecated_method("new_process_method", "2.0.0")
+def old_process(value: str) -> str:
+    return value.upper()
+```
+
+**Decorator Types:**
+- **`handle_empty_value_classmethod`**: For `@classmethod` decorated methods
+- **`handle_empty_value_instancemethod`**: For instance methods (self as first parameter)
+- **`handle_empty_value_function`**: For standalone functions
+- **`handle_empty_value`**: Backward compatibility alias (defaults to classmethod version)
+- **`deprecated_method`**: For marking methods as deprecated with customizable warnings
 
 ## Development
 

@@ -84,6 +84,28 @@ class TestCaseHelper(unittest.TestCase):
             with self.subTest(input_str=input_str):
                 self.assertEqual(CaseHelper.to_pascal(input_str), expected)
 
+    def test_handle_empty_values(self):
+        """Test that empty values are handled correctly by the decorator."""
+        # Test None values
+        self.assertEqual(CaseHelper.to_train(None), "")
+        self.assertEqual(CaseHelper.to_sentence(None), "")
+        self.assertEqual(CaseHelper.to_camel(None), "")
+        self.assertEqual(CaseHelper.to_snake(None), "")
+        self.assertEqual(CaseHelper.to_kebab(None), "")
+        self.assertEqual(CaseHelper.to_pascal(None), "")
+        
+        # Test empty strings
+        self.assertEqual(CaseHelper.to_train(""), "")
+        self.assertEqual(CaseHelper.to_sentence(""), "")
+        self.assertEqual(CaseHelper.to_camel(""), "")
+        self.assertEqual(CaseHelper.to_snake(""), "")
+        self.assertEqual(CaseHelper.to_kebab(""), "")
+        self.assertEqual(CaseHelper.to_pascal(""), "")
+        
+        # Test whitespace-only strings (should not be considered empty)
+        self.assertEqual(CaseHelper.to_train("   "), "---")
+        self.assertEqual(CaseHelper.to_sentence("   "), "   ")
+
 
 if __name__ == "__main__":
     unittest.main()

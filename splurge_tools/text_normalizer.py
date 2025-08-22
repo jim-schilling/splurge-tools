@@ -10,22 +10,10 @@ This module is licensed under the MIT License.
 
 import re
 import unicodedata
-from functools import wraps
-from typing import Any, Callable, Pattern
+from typing import Any, Pattern
 
 from splurge_tools.case_helper import CaseHelper
-
-
-def handle_empty_value(
-    func: Callable[..., str]
-) -> Callable[..., str]:
-    """Decorator to handle empty value checks for normalization methods."""
-    @wraps(func)
-    def wrapper(value: str, *args: Any, **kwargs: Any) -> str:
-        if value is None or not value:
-            return ""
-        return func(value, *args, **kwargs)
-    return wrapper
+from splurge_tools.decorators import handle_empty_value
 
 
 class TextNormalizer:
@@ -51,7 +39,6 @@ class TextNormalizer:
 
     _WHITESPACE_PATTERN: Pattern[str] = re.compile(r"\s+")
     _CONTROL_CHARS_PATTERN: Pattern[str] = re.compile(r"[\x00-\x1f\x7f-\x9f]")
-    _SPECIAL_CHARS_PATTERN: Pattern[str] = re.compile(r"[^\w\s-]")
 
     @classmethod
     @handle_empty_value
@@ -72,8 +59,6 @@ class TextNormalizer:
             "café" -> "cafe"
             "résumé" -> "resume"
         """
-        if value is None:
-            return ""
         return "".join(
             c
             for c in unicodedata.normalize("NFKD", value)
@@ -85,6 +70,7 @@ class TextNormalizer:
     def normalize_whitespace(
         cls,
         value: str,
+        *,
         preserve_newlines: bool = False
     ) -> str:
         """
@@ -92,7 +78,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            preserve_newlines: Whether to preserve newline characters
+            preserve_newlines: Whether to preserve newline characters (default: False)
 
         Returns:
             String with normalized whitespace
@@ -116,6 +102,7 @@ class TextNormalizer:
     def remove_special_chars(
         cls,
         value: str,
+        *,
         keep_chars: str = ""
     ) -> str:
         """
@@ -123,7 +110,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            keep_chars: Additional characters to preserve
+            keep_chars: Additional characters to preserve (default: "")
 
         Returns:
             String with special characters removed
@@ -132,8 +119,6 @@ class TextNormalizer:
             "hello@world!" -> "helloworld"
             "hello@world!" (keep_chars="@") -> "hello@world"
         """
-        if value is None:
-            return ""
         pattern: str = f"[^\\w\\s{re.escape(keep_chars)}]"
         return re.sub(pattern, "", value)
 
@@ -142,6 +127,7 @@ class TextNormalizer:
     def normalize_line_endings(
         cls,
         value: str,
+        *,
         line_ending: str = "\n"
     ) -> str:
         """
@@ -149,7 +135,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            line_ending: Desired line ending character
+            line_ending: Desired line ending character (default: "\n")
 
         Returns:
             String with normalized line endings
@@ -172,7 +158,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            replacement: Character to use for non-ASCII characters
+            replacement: Character to use for non-ASCII characters (default: "")
 
         Returns:
             ASCII string
@@ -219,7 +205,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            quote_char: Desired quote character
+            quote_char: Desired quote character (default: '"')
 
         Returns:
             String with normalized quotes
@@ -229,8 +215,6 @@ class TextNormalizer:
             "hello 'world'" -> 'hello "world"'
             "hello 'world's" -> 'hello "world's"'
         """
-        if value is None:
-            return ""
         temp: str = re.sub(r"(\w)'(\w)", r"\1§APOS§\2", value)
         temp = temp.replace('"', quote_char).replace("'", quote_char)
         result: str = temp.replace("§APOS§", "'")
@@ -249,7 +233,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            dash_char: Desired dash character
+            dash_char: Desired dash character (default: "-")
 
         Returns:
             String with normalized dashes
@@ -293,7 +277,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            case: Desired case ('lower', 'upper', 'title', 'sentence')
+            case: Desired case ('lower', 'upper', 'title', 'sentence') (default: "lower")
 
         Returns:
             String with normalized case
@@ -326,7 +310,7 @@ class TextNormalizer:
 
         Args:
             value: Input string to normalize
-            chars: String of characters to deduplicate (default: space and dash)
+            chars: String of characters to deduplicate (default: " -.")
 
         Returns:
             String with duplicate characters removed
