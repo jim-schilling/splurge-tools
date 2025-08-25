@@ -230,12 +230,7 @@ python -m build --sdist
 ### [2025.4.3] - 2025-08-25
 
 #### Added
-- **Comprehensive Validation Utilities**: Added extensive validation methods to `validation_utils.py`:
-  - `Validator.is_valid_email()`: Email address validation using regex patterns
-  - `Validator.is_valid_url()`: URL validation with scheme and netloc checking
-  - `Validator.is_valid_phone_number()`: Phone number validation for US and international formats
-  - `Validator.is_valid_credit_card()`: Credit card validation using Luhn algorithm
-  - `Validator.is_valid_postal_code()`: Postal code validation for US, CA, and UK formats
+- **Enhanced Validation Framework**: Improved validation utilities in `validation_utils.py` with generic validation methods for type checking, range validation, and format validation
 - **Enhanced Common Utilities**: Added new utility functions to `common_utils.py`:
   - `normalize_string()`: Centralized string normalization with trimming and empty handling
   - `is_empty_or_none()`: Unified empty value checking for strings and collections
@@ -264,9 +259,7 @@ python -m build --sdist
 - **DSV Helper Optimization**: Reduced duplication in streaming logic:
   - Extracted `_process_stream_chunk()`, `_handle_footer_skipping()`, `_handle_simple_streaming()`
   - Centralized stream processing logic for better maintainability
-- **Data Validator Enhancement**: Added static validator methods:
-  - `DataValidator.email()`, `url()`, `phone_number()`, `credit_card()`, `postal_code()`
-  - Enhanced validation system with custom rules support
+- **Library Genericization**: Removed domain-specific validation methods (email, URL, phone, credit card, postal code) to make the library more generic and focused on core utilities
 
 #### Fixed
 - **Linter Errors**: Fixed method signature issues in `text_normalizer.py`

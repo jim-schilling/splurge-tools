@@ -294,44 +294,4 @@ class DataValidator(DataValidatorProtocol):
         """Validator that checks if a number is within a range."""
         return lambda x: min_val <= float(x) <= max_val
 
-    @staticmethod
-    def email() -> Callable[[Any], bool]:
-        """Validator that checks if a value is a valid email address."""
-        try:
-            return lambda x: Validator.is_valid_email(x, "email") is not None
-        except Exception:
-            return lambda x: False
 
-    @staticmethod
-    def url() -> Callable[[Any], bool]:
-        """Validator that checks if a value is a valid URL."""
-        try:
-            return lambda x: Validator.is_valid_url(x, "url") is not None
-        except Exception:
-            return lambda x: False
-
-    @staticmethod
-    def phone_number() -> Callable[[Any], bool]:
-        """Validator that checks if a value is a valid phone number."""
-        try:
-            return lambda x: Validator.is_valid_phone_number(x, "phone") is not None
-        except Exception:
-            return lambda x: False
-
-    @staticmethod
-    def credit_card() -> Callable[[Any], bool]:
-        """Validator that checks if a value is a valid credit card number."""
-        try:
-            return lambda x: Validator.is_valid_credit_card(x, "credit_card") is not None
-        except Exception:
-            return lambda x: False
-
-    @staticmethod
-    def postal_code(
-        country: str = "US"
-    ) -> Callable[[Any], bool]:
-        """Validator that checks if a value is a valid postal code."""
-        try:
-            return lambda x: Validator.is_valid_postal_code(x, "postal_code", country=country) is not None
-        except Exception:
-            return lambda x: False
