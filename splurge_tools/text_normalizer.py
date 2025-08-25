@@ -14,6 +14,7 @@ from typing import Any, Pattern
 
 from splurge_tools.case_helper import CaseHelper
 from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
+from splurge_tools.common_utils import safe_string_operation
 
 
 class TextNormalizer:
@@ -317,3 +318,43 @@ class TextNormalizer:
             pattern: str = f"{re.escape(char)}{{2,}}"
             result = re.sub(pattern, char, result)
         return result
+
+    @classmethod
+    def safe_normalize(
+        cls,
+        value: str | None,
+        operation: str,
+        **kwargs: Any
+    ) -> str:
+        """
+        Safely apply a normalization operation with consistent error handling.
+        
+        Args:
+            value: String value to normalize
+            operation: Name of the normalization operation to apply
+            **kwargs: Additional arguments for the operation
+            
+        Returns:
+            Normalized string value
+            
+        Raises:
+            ValueError: If operation is not recognized
+        """
+        operations = {
+            'remove_accents': cls.remove_accents,
+            'normalize_whitespace': lambda v: cls.normalize_whitespace(v, **kwargs),
+            'remove_special_chars': lambda v: cls.remove_special_chars(v, **kwargs),
+            'normalize_line_endings': lambda v: cls.normalize_line_endings(v, **kwargs),
+            'to_ascii': lambda v: cls.to_ascii(v, **kwargs),
+            'remove_control_chars': cls.remove_control_chars,
+            'normalize_quotes': lambda v: cls.normalize_quotes(v, **kwargs),
+            'normalize_dashes': lambda v: cls.normalize_dashes(v, **kwargs),
+            'normalize_spaces': cls.normalize_spaces,
+            'normalize_case': lambda v: cls.normalize_case(v, **kwargs),
+            'remove_duplicate_chars': lambda v: cls.remove_duplicate_chars(v, **kwargs),
+        }
+        
+        if operation not in operations:
+            raise ValueError(f"Unknown normalization operation: {operation}")
+        
+        return safe_string_operation(value, operations[operation])

@@ -11,6 +11,7 @@ This module is licensed under the MIT License.
 """
 
 from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
+from splurge_tools.common_utils import safe_string_operation
 
 
 class CaseHelper:
@@ -208,3 +209,39 @@ class CaseHelper:
         if normalize:
             value = cls.normalize(value)
         return "".join(word.title() for word in value.split())
+
+    @classmethod
+    def safe_convert_case(
+        cls,
+        value: str | None,
+        case_type: str,
+        *,
+        normalize: bool = True
+    ) -> str:
+        """
+        Safely convert a string to a specific case type with consistent error handling.
+        
+        Args:
+            value: String value to convert
+            case_type: Type of case conversion ('train', 'sentence', 'camel', 'snake', 'kebab', 'pascal')
+            normalize: Whether to normalize separators first
+            
+        Returns:
+            Converted string value
+            
+        Raises:
+            ValueError: If case_type is not recognized
+        """
+        case_operations = {
+            'train': lambda v: cls.to_train(v, normalize=normalize),
+            'sentence': lambda v: cls.to_sentence(v, normalize=normalize),
+            'camel': lambda v: cls.to_camel(v, normalize=normalize),
+            'snake': lambda v: cls.to_snake(v, normalize=normalize),
+            'kebab': lambda v: cls.to_kebab(v, normalize=normalize),
+            'pascal': lambda v: cls.to_pascal(v, normalize=normalize),
+        }
+        
+        if case_type not in case_operations:
+            raise ValueError(f"Unknown case type: {case_type}")
+        
+        return safe_string_operation(value, case_operations[case_type])

@@ -1,8 +1,6 @@
 """
 Simplified constructors for tabular data models.
 
-Backwards-incompatible change: factories and heuristics removed in favor of
-explicit constructors.
 """
 
 from typing import Iterator
