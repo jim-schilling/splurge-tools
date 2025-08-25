@@ -259,7 +259,7 @@ python -m build --sdist
 - **DSV Helper Optimization**: Reduced duplication in streaming logic:
   - Extracted `_process_stream_chunk()`, `_handle_footer_skipping()`, `_handle_simple_streaming()`
   - Centralized stream processing logic for better maintainability
-- **Library Genericization**: Removed domain-specific validation methods (email, URL, phone, credit card, postal code) to make the library more generic and focused on core utilities
+- **Library Genericization**: Removed domain-specific validation methods.
 
 #### Fixed
 - **Linter Errors**: Fixed method signature issues in `text_normalizer.py`
