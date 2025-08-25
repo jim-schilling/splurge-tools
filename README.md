@@ -267,12 +267,6 @@ python -m build --sdist
   - Fixed case sensitivity issues in boolean type checking
   - Corrected empty value handling for non-string types
   - Updated test expectations to match actual implementation behavior
-- **Validation Logic**: Fixed validation method implementations:
-  - Corrected email regex patterns and error messages
-  - Fixed URL parsing logic for scheme-less URLs
-  - Updated phone number patterns to match actual validation behavior
-  - Corrected credit card Luhn algorithm implementation
-  - Fixed postal code patterns for supported countries
 
 #### Testing
 - **Comprehensive Test Coverage**: Added extensive test suites for new functionality:
