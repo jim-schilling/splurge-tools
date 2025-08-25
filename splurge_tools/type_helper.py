@@ -22,6 +22,8 @@ from datetime import date, datetime, time
 from enum import Enum
 from typing import Any, Iterable
 
+from splurge_tools.common_utils import normalize_string, is_empty_or_none
+
 
 class DataType(Enum):
     """
@@ -212,6 +214,34 @@ class String:
     _TIME_COMPACT_REGEX = re.compile(r"""^(\d{2})(\d{2})(\d{2})?$""")
 
     @classmethod
+    def _normalize_input(
+        cls,
+        value: str | bool | None,
+        *,
+        trim: bool = True
+    ) -> str | None:
+        """
+        Normalize input value for type checking operations.
+        
+        Args:
+            value: Value to normalize
+            trim: Whether to trim whitespace
+            
+        Returns:
+            Normalized string value or None
+        """
+        if value is None:
+            return None
+        
+        if isinstance(value, bool):
+            return str(value).lower()
+        
+        if isinstance(value, str):
+            return value.strip() if trim else value
+        
+        return str(value)
+
+    @classmethod
     def is_bool_like(
         cls,
         value: str | bool | None,
@@ -226,20 +256,25 @@ class String:
             trim: Whether to trim whitespace before checking
 
         Returns:
-            True if value is bool or string 'true'/'false'
+            True if value is bool or string 'true'/'false' (case insensitive)
 
         Examples:
             >>> String.is_bool_like('true')  # True
             >>> String.is_bool_like('false') # True
+            >>> String.is_bool_like('TRUE')  # True
+            >>> String.is_bool_like('FALSE') # True
             >>> String.is_bool_like('yes')   # False
         """
+        if value is None:
+            return False
+        
         if isinstance(value, bool):
             return True
-
+        
         if isinstance(value, str):
-            tmp_value: str = value.lower().strip() if trim else value.lower()
-            return tmp_value in ["true", "false"]
-
+            normalized = value.strip().lower() if trim else value.lower()
+            return normalized in ["true", "false"]
+        
         return False
 
     @classmethod
@@ -268,8 +303,8 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value: str = value.strip().lower() if trim else value.lower()
-            return tmp_value in ["none", "null"]
+            normalized = value.strip().lower() if trim else value.lower()
+            return normalized in ["none", "null"]
 
         return False
 
@@ -296,9 +331,12 @@ class String:
             >>> String.is_empty_like('abc')   # False
             >>> String.is_empty_like(None)    # False
         """
+        if value is None:
+            return False
+        
         if not isinstance(value, str):
             return False
-
+        
         return not value.strip() if trim else not value
 
     @classmethod
@@ -330,10 +368,8 @@ class String:
             return True
 
         if isinstance(value, str):
-            return (
-                cls._FLOAT_REGEX.match(value.strip() if trim else value)
-                is not None
-            )
+            normalized = value.strip() if trim else value
+            return cls._FLOAT_REGEX.match(normalized) is not None
         
         return False
 
@@ -366,8 +402,8 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value: str = value.strip() if trim else value
-            return cls._INTEGER_REGEX.match(tmp_value) is not None
+            normalized = value.strip() if trim else value
+            return cls._INTEGER_REGEX.match(normalized) is not None
         
         return False
 
@@ -398,8 +434,10 @@ class String:
 
         if isinstance(value, (int, float)):
             return True
+        
         if isinstance(value, str):
             return cls.is_float_like(value, trim=trim) or cls.is_int_like(value, trim=trim)
+        
         return False
 
     @classmethod
@@ -515,12 +553,12 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value: str = value.strip() if trim else value
+            normalized = value.strip() if trim else value
 
-            if String._DATE_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
+            if String._DATE_YYYY_MM_DD_REGEX.match(normalized) and cls._is_date_like(normalized):
                 return True
 
-            if String._DATE_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_date_like(tmp_value):
+            if String._DATE_MM_DD_YYYY_REGEX.match(normalized) and cls._is_date_like(normalized):
                 return True
 
         return False
@@ -582,12 +620,12 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value: str = value.strip() if trim else value
+            normalized = value.strip() if trim else value
 
-            if String._DATETIME_YYYY_MM_DD_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
+            if String._DATETIME_YYYY_MM_DD_REGEX.match(normalized) and cls._is_datetime_like(normalized):
                 return True
 
-            if String._DATETIME_MM_DD_YYYY_REGEX.match(tmp_value) and cls._is_datetime_like(tmp_value):
+            if String._DATETIME_MM_DD_YYYY_REGEX.match(normalized) and cls._is_datetime_like(normalized):
                 return True
 
         return False
@@ -623,15 +661,15 @@ class String:
             return True
 
         if isinstance(value, str):
-            tmp_value: str = value.strip() if trim else value
+            normalized = value.strip() if trim else value
 
-            if String._TIME_24HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+            if String._TIME_24HOUR_REGEX.match(normalized) and cls._is_time_like(normalized):
                 return True
 
-            if String._TIME_12HOUR_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+            if String._TIME_12HOUR_REGEX.match(normalized) and cls._is_time_like(normalized):
                 return True
 
-            if String._TIME_COMPACT_REGEX.match(tmp_value) and cls._is_time_like(tmp_value):
+            if String._TIME_COMPACT_REGEX.match(normalized) and cls._is_time_like(normalized):
                 return True
 
         return False
@@ -658,6 +696,8 @@ class String:
         Examples:
             >>> String.to_bool('true')   # True
             >>> String.to_bool('false')  # False
+            >>> String.to_bool('TRUE')   # True
+            >>> String.to_bool('FALSE')  # False
             >>> String.to_bool('yes')    # None
         """
         if isinstance(value, bool):
@@ -665,8 +705,9 @@ class String:
 
         if cls.is_bool_like(value, trim=trim):
             if isinstance(value, str):
-                tmp_value: str = value.lower().strip() if trim else value.lower()
-                return tmp_value == "true"
+                normalized = value.strip().lower() if trim else value.lower()
+                return normalized == "true"
+            return str(value).lower() == "true"
 
         return default
 
@@ -759,11 +800,11 @@ class String:
         if not isinstance(value, str):
             return default
             
-        dvalue: str = value.strip() if trim else value
+        normalized = value.strip() if trim else value
 
         for pattern in cls._DATE_PATTERNS:
             try:
-                tmp_value = datetime.strptime(dvalue, pattern)
+                tmp_value = datetime.strptime(normalized, pattern)
                 return tmp_value.date()
             except ValueError:
                 pass
@@ -803,11 +844,11 @@ class String:
         if not isinstance(value, str):
             return default
             
-        tmp_value: str = value.strip() if trim else value
+        normalized = value.strip() if trim else value
 
         for pattern in cls._DATETIME_PATTERNS:
             try:
-                tvalue = datetime.strptime(tmp_value, pattern)
+                tvalue = datetime.strptime(normalized, pattern)
                 return tvalue
             except ValueError:
                 pass
@@ -848,11 +889,11 @@ class String:
         if not isinstance(value, str):
             return default
             
-        tmp_value: str = value.strip() if trim else value
+        normalized = value.strip() if trim else value
 
         for pattern in cls._TIME_PATTERNS:
             try:
-                tvalue = datetime.strptime(tmp_value, pattern)
+                tvalue = datetime.strptime(normalized, pattern)
                 return tvalue.time()
             except ValueError:
                 pass
@@ -1293,14 +1334,11 @@ def is_empty(value: Any) -> bool:
     """
     if value is None:
         return True
-
-    if isinstance(value, str) and not value.strip():
-        return True
-
-    if isinstance(value, (list, tuple, set)) and not value:
-        return True
-
-    if isinstance(value, dict) and not value:
-        return True
-
+    
+    if isinstance(value, str):
+        return not value.strip()
+    
+    if hasattr(value, '__len__'):
+        return len(value) == 0
+    
     return False

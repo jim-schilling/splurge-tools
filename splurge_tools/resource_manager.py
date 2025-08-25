@@ -519,3 +519,66 @@ def safe_stream_operation(
     manager = StreamResourceManager(stream, auto_close=auto_close)
     with manager as stream_handle:
         yield stream_handle
+
+
+def _handle_file_error(
+    error: Exception,
+    file_path: Path,
+    operation: str
+) -> None:
+    """
+    Handle file operation errors with consistent error mapping.
+    
+    Args:
+        error: The original exception
+        file_path: Path to the file that caused the error
+        operation: Description of the operation that failed
+        
+    Raises:
+        SplurgeFileNotFoundError: If file not found
+        SplurgeFilePermissionError: If permission denied
+        SplurgeFileEncodingError: If encoding error
+        SplurgeResourceAcquisitionError: For other file errors
+    """
+    if isinstance(error, FileNotFoundError):
+        raise SplurgeFileNotFoundError(
+            f"File not found during {operation}: {file_path}",
+            details=str(error)
+        )
+    elif isinstance(error, PermissionError):
+        raise SplurgeFilePermissionError(
+            f"Permission denied during {operation}: {file_path}",
+            details=str(error)
+        )
+    elif isinstance(error, UnicodeDecodeError):
+        raise SplurgeFileEncodingError(
+            f"Encoding error during {operation}: {file_path}",
+            details=str(error)
+        )
+    else:
+        raise SplurgeResourceAcquisitionError(
+            f"Failed to {operation} file: {file_path}",
+            details=str(error)
+        )
+
+
+def _handle_resource_cleanup_error(
+    error: Exception,
+    resource_name: str,
+    operation: str
+) -> None:
+    """
+    Handle resource cleanup errors with consistent error mapping.
+    
+    Args:
+        error: The original exception
+        resource_name: Name or path of the resource
+        operation: Description of the cleanup operation that failed
+        
+    Raises:
+        SplurgeResourceReleaseError: For resource cleanup errors
+    """
+    raise SplurgeResourceReleaseError(
+        f"Failed to {operation} {resource_name}",
+        details=str(error)
+    )

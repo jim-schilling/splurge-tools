@@ -347,3 +347,147 @@ def create_error_context(
         context_parts.append(f"Info: {additional_info}")
     
     return " | ".join(context_parts)
+
+
+def normalize_string(
+    value: str | None,
+    *,
+    trim: bool = True,
+    handle_empty: bool = True,
+    empty_default: str = ""
+) -> str:
+    """
+    Normalize string values with consistent handling of None, empty, and whitespace.
+    
+    Args:
+        value: String value to normalize
+        trim: Whether to trim whitespace
+        handle_empty: Whether to handle empty values specially
+        empty_default: Default value for empty strings
+        
+    Returns:
+        Normalized string value
+    """
+    if value is None:
+        return empty_default if handle_empty else ""
+    
+    if not isinstance(value, str):
+        return str(value)
+    
+    if trim:
+        value = value.strip()
+    
+    if handle_empty and not value:
+        return empty_default
+    
+    return value
+
+
+def is_empty_or_none(value: Any, *, trim: bool = True) -> bool:
+    """
+    Check if a value is None, empty, or contains only whitespace.
+    
+    Args:
+        value: Value to check
+        trim: Whether to trim whitespace before checking
+        
+    Returns:
+        True if value is empty, None, or whitespace-only
+    """
+    if value is None:
+        return True
+    
+    if not isinstance(value, str):
+        return False
+    
+    return not value.strip() if trim else not value
+
+
+def safe_string_operation(
+    value: str | None,
+    operation: Callable[[str], str],
+    *,
+    trim: bool = True,
+    handle_empty: bool = True,
+    empty_default: str = ""
+) -> str:
+    """
+    Safely apply a string operation with consistent empty value handling.
+    
+    Args:
+        value: String value to process
+        operation: Function to apply to non-empty strings
+        trim: Whether to trim whitespace
+        handle_empty: Whether to handle empty values specially
+        empty_default: Default value for empty strings
+        
+    Returns:
+        Processed string value
+    """
+    normalized = normalize_string(value, trim=trim, handle_empty=handle_empty, empty_default=empty_default)
+    
+    if not normalized and handle_empty:
+        return empty_default
+    
+    return operation(normalized)
+
+
+def validate_string_parameters(
+    value: Any,
+    param_name: str,
+    *,
+    allow_none: bool = False,
+    allow_empty: bool = False,
+    min_length: int | None = None,
+    max_length: int | None = None
+) -> str:
+    """
+    Validate string parameters with comprehensive error checking.
+    
+    Args:
+        value: Value to validate
+        param_name: Name of parameter for error messages
+        allow_none: Whether None values are allowed
+        allow_empty: Whether empty strings are allowed
+        min_length: Minimum string length (if not None)
+        max_length: Maximum string length (if not None)
+        
+    Returns:
+        Validated string value
+        
+    Raises:
+        SplurgeParameterError: If validation fails
+    """
+    if value is None:
+        if not allow_none:
+            raise SplurgeParameterError(
+                f"{param_name} cannot be None",
+                details="None values are not allowed for this parameter"
+            )
+        return ""
+    
+    if not isinstance(value, str):
+        raise SplurgeParameterError(
+            f"{param_name} must be a string, got {type(value).__name__}",
+            details=f"Expected string, received: {repr(value)}"
+        )
+    
+    if not value and not allow_empty:
+        raise SplurgeParameterError(
+            f"{param_name} cannot be empty",
+            details="Empty strings are not allowed for this parameter"
+        )
+    
+    if min_length is not None and len(value) < min_length:
+        raise SplurgeParameterError(
+            f"{param_name} must be at least {min_length} characters long",
+            details=f"Got {len(value)} characters, minimum required: {min_length}"
+        )
+    
+    if max_length is not None and len(value) > max_length:
+        raise SplurgeParameterError(
+            f"{param_name} must be at most {max_length} characters long",
+            details=f"Got {len(value)} characters, maximum allowed: {max_length}"
+        )
+    
+    return value

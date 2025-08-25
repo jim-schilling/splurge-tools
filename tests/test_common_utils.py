@@ -17,7 +17,11 @@ from splurge_tools.common_utils import (
     validate_data_structure,
     create_parameter_validator,
     batch_validate_rows,
-    create_error_context
+    create_error_context,
+    normalize_string,
+    is_empty_or_none,
+    safe_string_operation,
+    validate_string_parameters
 )
 from splurge_tools.exceptions import (
     SplurgeParameterError,
@@ -702,6 +706,349 @@ class TestCreateErrorContext(unittest.TestCase):
         self.assertEqual(parts[2], "Row: 5")
         self.assertEqual(parts[3], "Column: col")
         self.assertEqual(parts[4], "Info: info")
+
+
+class TestNormalizeString(unittest.TestCase):
+    """Test cases for normalize_string function."""
+
+    def test_basic_normalization(self):
+        """Test basic string normalization."""
+        # Test None input
+        result = normalize_string(None)
+        self.assertEqual(result, "")
+        
+        # Test empty string
+        result = normalize_string("")
+        self.assertEqual(result, "")
+        
+        # Test whitespace string
+        result = normalize_string("   ")
+        self.assertEqual(result, "")
+        
+        # Test normal string
+        result = normalize_string("hello")
+        self.assertEqual(result, "hello")
+        
+        # Test string with leading/trailing whitespace
+        result = normalize_string("  hello  ")
+        self.assertEqual(result, "hello")
+
+    def test_trim_parameter(self):
+        """Test trim parameter behavior."""
+        # Test with trim=True (default)
+        result = normalize_string("  hello  ", trim=True)
+        self.assertEqual(result, "hello")
+        
+        # Test with trim=False
+        result = normalize_string("  hello  ", trim=False)
+        self.assertEqual(result, "  hello  ")
+
+    def test_handle_empty_parameter(self):
+        """Test handle_empty parameter behavior."""
+        # Test with handle_empty=True (default)
+        result = normalize_string("", handle_empty=True)
+        self.assertEqual(result, "")
+        
+        result = normalize_string("   ", handle_empty=True)
+        self.assertEqual(result, "")
+        
+        # Test with handle_empty=False
+        result = normalize_string("", handle_empty=False)
+        self.assertEqual(result, "")
+        
+        result = normalize_string("   ", handle_empty=False, trim=True)
+        self.assertEqual(result, "")
+
+    def test_empty_default_parameter(self):
+        """Test empty_default parameter behavior."""
+        # Test with custom empty default
+        result = normalize_string("", empty_default="default")
+        self.assertEqual(result, "default")
+        
+        result = normalize_string("   ", empty_default="default")
+        self.assertEqual(result, "default")
+        
+        result = normalize_string(None, empty_default="default")
+        self.assertEqual(result, "default")
+        
+        # Test with non-empty string
+        result = normalize_string("hello", empty_default="default")
+        self.assertEqual(result, "hello")
+
+    def test_edge_cases(self):
+        """Test edge cases for string normalization."""
+        # Test with various whitespace characters
+        result = normalize_string("\t\n\r\f\v")
+        self.assertEqual(result, "")
+        
+        # Test with mixed whitespace
+        result = normalize_string("  \t\n  hello  \r\f\v  ")
+        self.assertEqual(result, "hello")
+        
+        # Test with unicode whitespace
+        result = normalize_string("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a")
+        self.assertEqual(result, "")
+
+
+class TestIsEmptyOrNone(unittest.TestCase):
+    """Test cases for is_empty_or_none function."""
+
+    def test_none_values(self):
+        """Test None values."""
+        self.assertTrue(is_empty_or_none(None))
+        self.assertTrue(is_empty_or_none(None, trim=True))
+        self.assertTrue(is_empty_or_none(None, trim=False))
+
+    def test_empty_strings(self):
+        """Test empty string values."""
+        self.assertTrue(is_empty_or_none(""))
+        self.assertTrue(is_empty_or_none("", trim=True))
+        self.assertTrue(is_empty_or_none("", trim=False))
+
+    def test_whitespace_strings(self):
+        """Test whitespace string values."""
+        self.assertTrue(is_empty_or_none("   "))
+        self.assertTrue(is_empty_or_none("   ", trim=True))
+        self.assertFalse(is_empty_or_none("   ", trim=False))
+
+    def test_non_empty_strings(self):
+        """Test non-empty string values."""
+        self.assertFalse(is_empty_or_none("hello"))
+        self.assertFalse(is_empty_or_none("hello", trim=True))
+        self.assertFalse(is_empty_or_none("hello", trim=False))
+        
+        self.assertFalse(is_empty_or_none("  hello  "))
+        self.assertFalse(is_empty_or_none("  hello  ", trim=True))
+        self.assertFalse(is_empty_or_none("  hello  ", trim=False))
+
+    def test_non_string_values(self):
+        """Test non-string values."""
+        self.assertFalse(is_empty_or_none(123))
+        self.assertFalse(is_empty_or_none(0))
+        self.assertFalse(is_empty_or_none(False))
+        self.assertFalse(is_empty_or_none(True))
+        self.assertFalse(is_empty_or_none([]))
+        self.assertFalse(is_empty_or_none({}))
+        self.assertFalse(is_empty_or_none(()))
+        self.assertFalse(is_empty_or_none([1, 2, 3]))
+        self.assertFalse(is_empty_or_none({"key": "value"}))
+
+    def test_edge_cases(self):
+        """Test edge cases for empty checking."""
+        # Test with various whitespace characters
+        self.assertTrue(is_empty_or_none("\t\n\r\f\v"))
+        self.assertTrue(is_empty_or_none("\t\n\r\f\v", trim=True))
+        self.assertFalse(is_empty_or_none("\t\n\r\f\v", trim=False))
+        
+        # Test with unicode whitespace
+        self.assertTrue(is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a"))
+        self.assertTrue(is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a", trim=True))
+        self.assertFalse(is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a", trim=False))
+
+
+class TestSafeStringOperation(unittest.TestCase):
+    """Test cases for safe_string_operation function."""
+
+    def test_basic_operations(self):
+        """Test basic string operations."""
+        def upper_case(s):
+            return s.upper()
+        
+        # Test with normal string
+        result = safe_string_operation("hello", upper_case)
+        self.assertEqual(result, "HELLO")
+        
+        # Test with None
+        result = safe_string_operation(None, upper_case)
+        self.assertEqual(result, "")
+        
+        # Test with empty string
+        result = safe_string_operation("", upper_case)
+        self.assertEqual(result, "")
+
+    def test_trim_parameter(self):
+        """Test trim parameter behavior."""
+        def upper_case(s):
+            return s.upper()
+        
+        # Test with trim=True (default)
+        result = safe_string_operation("  hello  ", upper_case, trim=True)
+        self.assertEqual(result, "HELLO")
+        
+        # Test with trim=False
+        result = safe_string_operation("  hello  ", upper_case, trim=False)
+        self.assertEqual(result, "  HELLO  ")
+
+    def test_handle_empty_parameter(self):
+        """Test handle_empty parameter behavior."""
+        def upper_case(s):
+            return s.upper()
+        
+        # Test with handle_empty=True (default)
+        result = safe_string_operation("", upper_case, handle_empty=True)
+        self.assertEqual(result, "")
+        
+        # Test with handle_empty=False
+        result = safe_string_operation("", upper_case, handle_empty=False)
+        self.assertEqual(result, "")
+
+    def test_empty_default_parameter(self):
+        """Test empty_default parameter behavior."""
+        def upper_case(s):
+            return s.upper()
+        
+        # Test with custom empty default
+        result = safe_string_operation("", upper_case, empty_default="DEFAULT")
+        self.assertEqual(result, "DEFAULT")
+        
+        result = safe_string_operation(None, upper_case, empty_default="DEFAULT")
+        self.assertEqual(result, "DEFAULT")
+        
+        # Test with non-empty string
+        result = safe_string_operation("hello", upper_case, empty_default="DEFAULT")
+        self.assertEqual(result, "HELLO")
+
+    def test_operation_errors(self):
+        """Test operation error handling."""
+        def failing_operation(s):
+            raise ValueError("Operation failed")
+        
+        # Test that operation errors are propagated
+        with self.assertRaises(ValueError):
+            safe_string_operation("hello", failing_operation)
+
+    def test_edge_cases(self):
+        """Test edge cases for safe string operations."""
+        def reverse_string(s):
+            return s[::-1]
+        
+        # Test with various string types
+        result = safe_string_operation("hello", reverse_string)
+        self.assertEqual(result, "olleh")
+        
+        result = safe_string_operation("", reverse_string)
+        self.assertEqual(result, "")
+        
+        result = safe_string_operation(None, reverse_string)
+        self.assertEqual(result, "")
+
+
+class TestValidateStringParameters(unittest.TestCase):
+    """Test cases for validate_string_parameters function."""
+
+    def test_valid_strings(self):
+        """Test valid string inputs."""
+        # Test basic string
+        result = validate_string_parameters("hello", "test_param")
+        self.assertEqual(result, "hello")
+        
+        # Test string with spaces
+        result = validate_string_parameters("hello world", "test_param")
+        self.assertEqual(result, "hello world")
+        
+        # Test string with special characters
+        result = validate_string_parameters("hello@#$%", "test_param")
+        self.assertEqual(result, "hello@#$%")
+
+    def test_allow_none_parameter(self):
+        """Test allow_none parameter behavior."""
+        # Test with allow_none=False (default)
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters(None, "test_param")
+        self.assertIn("test_param cannot be None", str(cm.exception))
+        
+        # Test with allow_none=True
+        result = validate_string_parameters(None, "test_param", allow_none=True)
+        self.assertEqual(result, "")
+
+    def test_allow_empty_parameter(self):
+        """Test allow_empty parameter behavior."""
+        # Test with allow_empty=False (default)
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters("", "test_param")
+        self.assertIn("test_param cannot be empty", str(cm.exception))
+        
+        # Test with allow_empty=True
+        result = validate_string_parameters("", "test_param", allow_empty=True)
+        self.assertEqual(result, "")
+
+    def test_min_length_parameter(self):
+        """Test min_length parameter behavior."""
+        # Test with valid length
+        result = validate_string_parameters("hello", "test_param", min_length=3)
+        self.assertEqual(result, "hello")
+        
+        # Test with invalid length
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters("hi", "test_param", min_length=3)
+        self.assertIn("test_param must be at least 3 characters long", str(cm.exception))
+
+    def test_max_length_parameter(self):
+        """Test max_length parameter behavior."""
+        # Test with valid length
+        result = validate_string_parameters("hello", "test_param", max_length=10)
+        self.assertEqual(result, "hello")
+        
+        # Test with invalid length
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters("hello world", "test_param", max_length=5)
+        self.assertIn("test_param must be at most 5 characters long", str(cm.exception))
+
+    def test_length_range_parameter(self):
+        """Test min_length and max_length together."""
+        # Test with valid length
+        result = validate_string_parameters("hello", "test_param", min_length=3, max_length=10)
+        self.assertEqual(result, "hello")
+        
+        # Test with too short
+        with self.assertRaises(SplurgeParameterError):
+            validate_string_parameters("hi", "test_param", min_length=3, max_length=10)
+        
+        # Test with too long
+        with self.assertRaises(SplurgeParameterError):
+            validate_string_parameters("hello world", "test_param", min_length=3, max_length=10)
+
+    def test_invalid_inputs(self):
+        """Test invalid input types."""
+        # Test with non-string types
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters(123, "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+        self.assertIn("got int", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters([], "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+        self.assertIn("got list", str(cm.exception))
+        
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters({}, "test_param")
+        self.assertIn("test_param must be a string", str(cm.exception))
+        self.assertIn("got dict", str(cm.exception))
+
+    def test_error_messages(self):
+        """Test error message details."""
+        with self.assertRaises(SplurgeParameterError) as cm:
+            validate_string_parameters(42, "my_parameter")
+        
+        exception = cm.exception
+        self.assertIn("my_parameter must be a string", exception.message)
+        self.assertIn("Expected string, received: 42", exception.details)
+
+    def test_edge_cases(self):
+        """Test edge cases for string parameter validation."""
+        # Test with very long string
+        long_string = "a" * 1000
+        result = validate_string_parameters(long_string, "test_param", max_length=1001)
+        self.assertEqual(result, long_string)
+        
+        # Test with zero length
+        result = validate_string_parameters("", "test_param", allow_empty=True, min_length=0)
+        self.assertEqual(result, "")
+        
+        # Test with exact length match
+        result = validate_string_parameters("hello", "test_param", min_length=5, max_length=5)
+        self.assertEqual(result, "hello")
 
 
 if __name__ == "__main__":

@@ -877,5 +877,20 @@ class TestValidatorEdgeCases(unittest.TestCase):
             Validator.is_non_empty_string("   ", "test_param", allow_whitespace_only=False)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     unittest.main()

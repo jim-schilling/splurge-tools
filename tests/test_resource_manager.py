@@ -456,5 +456,202 @@ class TestContextManagers(unittest.TestCase):
         self.assertTrue(stream.closed)
 
 
+class TestErrorHandlingFunctions(unittest.TestCase):
+    """Test cases for error handling utility functions."""
+
+    def test_handle_file_error(self):
+        """Test _handle_file_error function."""
+        from splurge_tools.resource_manager import _handle_file_error
+        from splurge_tools.exceptions import SplurgeFileNotFoundError, SplurgeFilePermissionError, SplurgeFileEncodingError, SplurgeResourceAcquisitionError
+        
+        # Test FileNotFoundError
+        file_path = Path("/nonexistent/file.txt")
+        error = FileNotFoundError("No such file or directory")
+        
+        with self.assertRaises(SplurgeFileNotFoundError) as cm:
+            _handle_file_error(error, file_path, "read")
+        
+        exception = cm.exception
+        self.assertIn("File not found during read", exception.message)
+        self.assertIn("No such file or directory", exception.details)
+        
+        # Test PermissionError
+        error = PermissionError("Permission denied")
+        
+        with self.assertRaises(SplurgeFilePermissionError) as cm:
+            _handle_file_error(error, file_path, "write")
+        
+        exception = cm.exception
+        self.assertIn("Permission denied during write", exception.message)
+        self.assertIn("Permission denied", exception.details)
+        
+        # Test UnicodeDecodeError
+        error = UnicodeDecodeError("utf-8", b"invalid bytes", 0, 10, "invalid start byte")
+        
+        with self.assertRaises(SplurgeFileEncodingError) as cm:
+            _handle_file_error(error, file_path, "read")
+        
+        exception = cm.exception
+        self.assertIn("Encoding error during read", exception.message)
+        self.assertIn("invalid start byte", exception.details)
+        
+        # Test UnicodeEncodeError
+        error = UnicodeEncodeError("utf-8", "invalid string", 0, 10, "invalid character")
+        
+        with self.assertRaises(SplurgeResourceAcquisitionError) as cm:
+            _handle_file_error(error, file_path, "write")
+        
+        exception = cm.exception
+        self.assertIn("Failed to write file", exception.message)
+        self.assertIn("invalid character", exception.details)
+        
+        # Test other OSError
+        error = OSError("Other OS error")
+        
+        with self.assertRaises(SplurgeResourceAcquisitionError) as cm:
+            _handle_file_error(error, file_path, "access")
+        
+        exception = cm.exception
+        self.assertIn("Failed to access file", exception.message)
+        self.assertIn("Other OS error", exception.details)
+        
+        # Test non-OSError
+        error = ValueError("Some other error")
+        
+        with self.assertRaises(SplurgeResourceAcquisitionError) as cm:
+            _handle_file_error(error, file_path, "process")
+        
+        exception = cm.exception
+        self.assertIn("Failed to process file", exception.message)
+        self.assertIn("Some other error", exception.details)
+
+    def test_handle_resource_cleanup_error(self):
+        """Test _handle_resource_cleanup_error function."""
+        from splurge_tools.resource_manager import _handle_resource_cleanup_error
+        from splurge_tools.exceptions import SplurgeResourceReleaseError
+        
+        # Test various error types
+        error = OSError("Cleanup failed")
+        
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
+            _handle_resource_cleanup_error(error, "test_resource", "close")
+        
+        exception = cm.exception
+        self.assertIn("Failed to close test_resource", exception.message)
+        self.assertIn("Cleanup failed", exception.details)
+        
+        # Test with different resource and operation
+        error = ValueError("Invalid state")
+        
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
+            _handle_resource_cleanup_error(error, "database_connection", "release")
+        
+        exception = cm.exception
+        self.assertIn("Failed to release database_connection", exception.message)
+        self.assertIn("Invalid state", exception.details)
+        
+        # Test with different error types
+        error = RuntimeError("Runtime cleanup error")
+        
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
+            _handle_resource_cleanup_error(error, "memory_pool", "cleanup")
+        
+        exception = cm.exception
+        self.assertIn("Failed to cleanup memory_pool", exception.message)
+        self.assertIn("Runtime cleanup error", exception.details)
+
+    def test_error_handling_integration(self):
+        """Test error handling integration with context managers."""
+        from splurge_tools.resource_manager import FileResourceManager, TemporaryFileManager
+        
+        # Test FileResourceManager with file not found
+        with self.assertRaises(SplurgeFileNotFoundError):
+            with FileResourceManager("/nonexistent/file.txt", mode="r"):
+                pass
+        
+        # Test FileResourceManager with permission error (if possible)
+        # This might not work on all systems, so we'll test the structure
+        try:
+            with FileResourceManager("/root/protected_file.txt", mode="w"):
+                pass
+        except (SplurgeFilePermissionError, SplurgeFileNotFoundError):
+            # Expected behavior
+            pass
+        
+        # Test TemporaryFileManager cleanup error simulation
+        # This is harder to test directly, but we can verify the structure
+        temp_manager = TemporaryFileManager()
+        with temp_manager as temp_file:
+            # Normal operation should work
+            self.assertTrue(temp_manager.file_path.exists())
+        
+        # Test StreamResourceManager with valid stream
+        from splurge_tools.resource_manager import StreamResourceManager
+        
+        # Test with valid stream
+        test_stream = iter([1, 2, 3])
+        with StreamResourceManager(test_stream) as stream:
+            # Should work normally
+            pass
+
+    def test_error_context_preservation(self):
+        """Test that error context is preserved in error messages."""
+        from splurge_tools.resource_manager import _handle_file_error
+        
+        file_path = Path("/test/file.txt")
+        error = FileNotFoundError("File not found")
+        
+        with self.assertRaises(SplurgeFileNotFoundError) as cm:
+            _handle_file_error(error, file_path, "read")
+        
+        exception = cm.exception
+        # Verify the operation context is included
+        self.assertIn("read", exception.message)
+        # Verify the original error details are preserved
+        self.assertIn("File not found", exception.details)
+
+    def test_error_type_mapping(self):
+        """Test that error types are correctly mapped."""
+        from splurge_tools.resource_manager import _handle_file_error
+        from splurge_tools.exceptions import (
+            SplurgeFileNotFoundError,
+            SplurgeFilePermissionError,
+            SplurgeFileEncodingError,
+            SplurgeResourceAcquisitionError
+        )
+        
+        file_path = Path("/test/file.txt")
+        
+        # Test FileNotFoundError mapping
+        error = FileNotFoundError("Not found")
+        with self.assertRaises(SplurgeFileNotFoundError):
+            _handle_file_error(error, file_path, "read")
+        
+        # Test PermissionError mapping
+        error = PermissionError("Permission denied")
+        with self.assertRaises(SplurgeFilePermissionError):
+            _handle_file_error(error, file_path, "write")
+        
+        # Test UnicodeDecodeError mapping
+        error = UnicodeDecodeError("utf-8", b"invalid", 0, 1, "invalid")
+        with self.assertRaises(SplurgeFileEncodingError):
+            _handle_file_error(error, file_path, "read")
+        
+        # Test UnicodeEncodeError mapping (falls through to general error handling)
+        error = UnicodeEncodeError("utf-8", "invalid", 0, 1, "invalid")
+        with self.assertRaises(SplurgeResourceAcquisitionError):
+            _handle_file_error(error, file_path, "write")
+        
+        # Test other OSError mapping
+        error = OSError("Other error")
+        with self.assertRaises(SplurgeResourceAcquisitionError):
+            _handle_file_error(error, file_path, "access")
+        
+        # Test non-OSError mapping
+        error = ValueError("Value error")
+        with self.assertRaises(SplurgeResourceAcquisitionError):
+            _handle_file_error(error, file_path, "process")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,7 @@ import re
 from typing import Any, Callable, Dict, List
 
 from splurge_tools.protocols import DataValidatorProtocol
+from splurge_tools.validation_utils import Validator
 
 
 class DataValidator(DataValidatorProtocol):
@@ -182,6 +183,82 @@ class DataValidator(DataValidatorProtocol):
 
         return errors
 
+    def validate_with_custom_rules(
+        self,
+        data: Dict[str, Any],
+        rules: Dict[str, List[str]]
+    ) -> bool:
+        """
+        Validate data using predefined validation rules.
+        
+        Args:
+            data: Dictionary of field names and values to validate
+            rules: Dictionary mapping field names to lists of rule names
+            
+        Returns:
+            True if all validations pass, False otherwise
+        """
+        self.clear_errors()
+        
+        for field, rule_names in rules.items():
+            if field not in data:
+                self._errors.append(f"Field '{field}' is required")
+                continue
+                
+            value = data[field]
+            for rule_name in rule_names:
+                if rule_name in self._custom_validators:
+                    if not self._custom_validators[rule_name](value):
+                        self._errors.append(f"Rule '{rule_name}' failed for field '{field}'")
+                else:
+                    self._errors.append(f"Unknown validation rule: {rule_name}")
+        
+        return len(self._errors) == 0
+
+    def add_field_validators(
+        self,
+        field: str,
+        *validators: Callable[[Any], bool]
+    ) -> None:
+        """
+        Add multiple validators for a field at once.
+        
+        Args:
+            field: The field name to validate
+            *validators: Variable number of validator functions
+        """
+        if field not in self._validators:
+            self._validators[field] = []
+        self._validators[field].extend(validators)
+
+    def remove_field_validators(
+        self,
+        field: str
+    ) -> None:
+        """
+        Remove all validators for a specific field.
+        
+        Args:
+            field: The field name to remove validators for
+        """
+        if field in self._validators:
+            del self._validators[field]
+
+    def get_field_validators(
+        self,
+        field: str
+    ) -> List[Callable[[Any], bool]]:
+        """
+        Get all validators for a specific field.
+        
+        Args:
+            field: The field name to get validators for
+            
+        Returns:
+            List of validator functions for the field
+        """
+        return self._validators.get(field, []).copy()
+
     @staticmethod
     def required() -> Callable[[Any], bool]:
         """Validator that checks if a value is not None or empty."""
@@ -216,3 +293,5 @@ class DataValidator(DataValidatorProtocol):
     ) -> Callable[[Any], bool]:
         """Validator that checks if a number is within a range."""
         return lambda x: min_val <= float(x) <= max_val
+
+
