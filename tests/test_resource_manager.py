@@ -25,8 +25,7 @@ from splurge_tools.exceptions import (
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
     SplurgeFileEncodingError,
-    SplurgePathValidationError,
-    SplurgeResourceError
+    SplurgePathValidationError
 )
 
 
@@ -529,12 +528,12 @@ class TestErrorHandlingFunctions(unittest.TestCase):
     def test_handle_resource_cleanup_error(self):
         """Test _handle_resource_cleanup_error function."""
         from splurge_tools.resource_manager import _handle_resource_cleanup_error
-        from splurge_tools.exceptions import SplurgeResourceError
+        from splurge_tools.exceptions import SplurgeResourceReleaseError
         
         # Test various error types
         error = OSError("Cleanup failed")
         
-        with self.assertRaises(SplurgeResourceError) as cm:
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
             _handle_resource_cleanup_error(error, "test_resource", "close")
         
         exception = cm.exception
@@ -544,7 +543,7 @@ class TestErrorHandlingFunctions(unittest.TestCase):
         # Test with different resource and operation
         error = ValueError("Invalid state")
         
-        with self.assertRaises(SplurgeResourceError) as cm:
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
             _handle_resource_cleanup_error(error, "database_connection", "release")
         
         exception = cm.exception
@@ -554,7 +553,7 @@ class TestErrorHandlingFunctions(unittest.TestCase):
         # Test with different error types
         error = RuntimeError("Runtime cleanup error")
         
-        with self.assertRaises(SplurgeResourceError) as cm:
+        with self.assertRaises(SplurgeResourceReleaseError) as cm:
             _handle_resource_cleanup_error(error, "memory_pool", "cleanup")
         
         exception = cm.exception

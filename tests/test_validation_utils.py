@@ -1223,22 +1223,22 @@ class TestValidatorIsValidCreditCard(unittest.TestCase):
     def test_valid_credit_cards(self):
         """Test valid credit card numbers."""
         valid_cards = [
-            # Visa
+            # Visa (16 digits)
             "453201511283034",
-            "453201511283034",
-            "453201511283034",
-            # MasterCard
+            "4532362853455387",
+            "4532838541657518",
+            # MasterCard (16 digits)
             "542523343010993",
-            "542523343010993",
-            "542523343010993",
-            # American Express
+            "5425557766125442",
+            "5425249747346954",
+            # American Express (15 digits)
             "37424545540014",
-            "37424545540014",
-            "37424545540014",
-            # Discover
+            "374281327068726",
+            "374211327845146",
+            # Discover (16 digits)
             "601100099013949",
-            "601100099013949",
-            "601100099013949",
+            "6011325018107016",
+            "6011300157775451",
         ]
         
         for card in valid_cards:
