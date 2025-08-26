@@ -131,7 +131,7 @@ def process_large_dataset_traditional(
     print(f"Processing large dataset (traditional): {file_path}")
     
     # Load entire file into memory
-    data = DsvHelper.parse_file(file_path, ",")
+    data = DsvHelper.parse_file(file_path, delimiter=",")
     
     # Create traditional model
     from splurge_tools.tabular_data_model import TabularDataModel
@@ -213,7 +213,7 @@ def demonstrate_column_operations() -> None:
             f.write("John,25,NYC,50000\n")
             f.write("Jane,30,LA,60000\n")
             f.write("Bob,35,CHI,55000\n")
-        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=_DEFAULT_BUFFER_SIZE)
+        stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=_DEFAULT_BUFFER_SIZE)
         model = StreamingTabularDataModel(
             stream,
             header_rows=1,
@@ -252,7 +252,7 @@ def demonstrate_data_profiling() -> None:
             f.write("2,Jane,30,60000,false,2024-01-02\n")
             f.write("3,Bob,35,55000,true,2024-01-03\n")
             f.write("4,Alice,28,52000,true,2024-01-04\n")
-        data = DsvHelper.parse_file(temp_file, ",")
+        data = DsvHelper.parse_file(temp_file, delimiter=",")
         from splurge_tools.tabular_data_model import TabularDataModel
         model = TabularDataModel(
             data,
@@ -285,7 +285,7 @@ def demonstrate_error_handling() -> None:
             f.write("2,Jane,invalid_age,60000\n")  # Invalid age
             f.write("3,Bob,35,invalid_salary\n")   # Invalid salary
             f.write("4,Alice,28,52000\n")
-        stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=_DEFAULT_BUFFER_SIZE)
+        stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=_DEFAULT_BUFFER_SIZE)
         model = StreamingTabularDataModel(
             stream,
             header_rows=1,

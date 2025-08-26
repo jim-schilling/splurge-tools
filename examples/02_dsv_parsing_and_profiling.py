@@ -219,9 +219,9 @@ def error_handling_examples(files):
     
     # Test various error conditions
     error_scenarios = [
-        ("Empty delimiter", lambda: DsvHelper.parse("a,b,c", "")),
-        ("None delimiter", lambda: DsvHelper.parse("a,b,c", None)),
-        ("Non-existent file", lambda: DsvHelper.parse_file("nonexistent.csv", ",")),
+        ("Empty delimiter", lambda: DsvHelper.parse("a,b,c", delimiter="")),
+        ("None delimiter", lambda: DsvHelper.parse("a,b,c", delimiter=None)),
+        ("Non-existent file", lambda: DsvHelper.parse_file("nonexistent.csv", delimiter=",")),
     ]
     
     for scenario_name, test_func in error_scenarios:
