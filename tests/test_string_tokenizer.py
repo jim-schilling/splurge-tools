@@ -175,11 +175,49 @@ class TestStringTokenizerRemoveBookends:
 
     def test_remove_brackets(self) -> None:
         """Test removing brackets from both ends."""
+        # Since [hello] doesn't end with [, nothing is removed
         result = StringTokenizer.remove_bookends("[hello]", bookend="[")
         assert result == "[hello]"
+        
+    def test_remove_matching_brackets(self) -> None:
+        """Test removing matching brackets from both ends."""
+        # Since [hello] doesn't end with [, nothing is removed
+        result = StringTokenizer.remove_bookends("[hello]", bookend="[")
+        assert result == "[hello]"
+        
+    def test_remove_matching_quotes(self) -> None:
+        """Test removing matching quotes from both ends."""
+        result = StringTokenizer.remove_bookends("'hello'", bookend="'")
+        assert result == "hello"
+        
+    def test_remove_matching_brackets_both_ends(self) -> None:
+        """Test removing matching brackets when they appear on both ends."""
+        result = StringTokenizer.remove_bookends("[hello]", bookend="[")
+        assert result == "[hello]"
+        
+    def test_remove_matching_parentheses_both_ends(self) -> None:
+        """Test removing matching parentheses when they appear on both ends."""
+        result = StringTokenizer.remove_bookends("(hello)", bookend="(")
+        assert result == "(hello)"
+        
+    def test_remove_matching_brackets_actual(self) -> None:
+        """Test removing matching brackets when they actually match on both ends."""
+        result = StringTokenizer.remove_bookends("[hello[", bookend="[")
+        assert result == "hello"
+        
+    def test_remove_matching_parentheses_actual(self) -> None:
+        """Test removing matching parentheses when they actually match on both ends."""
+        result = StringTokenizer.remove_bookends("(hello(", bookend="(")
+        assert result == "hello"
+        
+    def test_remove_matching_double_brackets(self) -> None:
+        """Test removing matching double brackets when they actually match on both ends."""
+        result = StringTokenizer.remove_bookends("[[hello[[", bookend="[[")
+        assert result == "hello"
 
     def test_remove_parentheses(self) -> None:
         """Test removing parentheses from both ends."""
+        # Since (hello) doesn't end with (, nothing is removed
         result = StringTokenizer.remove_bookends("(hello)", bookend="(")
         assert result == "(hello)"
 
@@ -235,11 +273,13 @@ class TestStringTokenizerRemoveBookends:
 
     def test_remove_with_multiple_character_bookend(self) -> None:
         """Test removing multi-character bookend."""
+        # Since [[hello]] doesn't end with [[, nothing is removed
         result = StringTokenizer.remove_bookends("[[hello]]", bookend="[[")
         assert result == "[[hello]]"
 
     def test_remove_with_complex_bookend(self) -> None:
         """Test removing complex bookend pattern."""
+        # Since STARThelloEND doesn't end with START, nothing is removed
         result = StringTokenizer.remove_bookends("STARThelloEND", bookend="START")
         assert result == "STARThelloEND"
 
@@ -259,6 +299,7 @@ class TestStringTokenizerEdgeCases:
 
     def test_remove_bookends_with_unicode(self) -> None:
         """Test removing bookends with Unicode content."""
+        # Since «αβγ» doesn't end with «, nothing is removed
         result = StringTokenizer.remove_bookends("«αβγ»", bookend="«")
         assert result == "«αβγ»"
 
