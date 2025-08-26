@@ -1,19 +1,20 @@
 """
 Tests for the text_file_helper module.
 
-Tests all public methods of the TextFileHelper class including
-line counting, file previewing, reading, and streaming operations.
+Tests all public methods including file reading, streaming, and line counting.
 """
 
+import os
+import platform
 from pathlib import Path
 
 import pytest
 
 from splurge_tools.exceptions import (
-    SplurgeParameterError,
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
-    SplurgeFileEncodingError
+    SplurgeFileEncodingError,
+    SplurgeParameterError
 )
 from splurge_tools.text_file_helper import TextFileHelper
 
@@ -559,7 +560,6 @@ class TestTextFileHelperEdgeCases:
 
     def test_read_file_with_permission_error(self, tmp_path: Path) -> None:
         """Test reading file with permission error."""
-        import platform
         
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":
@@ -569,7 +569,6 @@ class TestTextFileHelperEdgeCases:
         test_file.write_text("content")
         
         # Make file unreadable
-        import os
         os.chmod(test_file, 0o000)
         
         try:

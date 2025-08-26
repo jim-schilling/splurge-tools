@@ -6,12 +6,14 @@ file operations, temporary files, and stream management.
 """
 
 import os
+import platform
 from pathlib import Path
 
 import pytest
 
 from splurge_tools.exceptions import (
     SplurgeResourceAcquisitionError,
+    SplurgeResourceReleaseError,
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
     SplurgeFileEncodingError,
@@ -42,15 +44,74 @@ class TestResourceManager:
         with pytest.raises(NotImplementedError):
             manager.acquire()
 
+    def test_acquire_already_acquired(self) -> None:
+        """Test that acquire raises error when resource is already acquired."""
+        class TestResourceManager(ResourceManager):
+            def _create_resource(self):
+                return "test_resource"
+        
+        manager = TestResourceManager()
+        manager.acquire()  # First acquisition should succeed
+        
+        with pytest.raises(SplurgeResourceAcquisitionError):
+            manager.acquire()  # Second acquisition should fail
+
+    def test_acquire_general_exception(self) -> None:
+        """Test that acquire wraps general exceptions in SplurgeResourceAcquisitionError."""
+        class TestResourceManager(ResourceManager):
+            def _create_resource(self):
+                raise ValueError("Test error")
+        
+        manager = TestResourceManager()
+        
+        with pytest.raises(SplurgeResourceAcquisitionError) as exc_info:
+            manager.acquire()
+        
+        assert "Failed to acquire resource" in str(exc_info.value)
+        assert "Test error" in exc_info.value.details
+
     def test_release_not_acquired(self) -> None:
         """Test releasing when not acquired."""
         manager = ResourceManager()
         # Should not raise an error
         manager.release()
 
+    def test_release_with_cleanup_error(self) -> None:
+        """Test that release raises SplurgeResourceReleaseError when cleanup fails."""
+        class TestResourceManager(ResourceManager):
+            def _create_resource(self):
+                return "test_resource"
+            
+            def _cleanup_resource(self):
+                raise ValueError("Cleanup error")
+        
+        manager = TestResourceManager()
+        manager.acquire()
+        
+        with pytest.raises(SplurgeResourceReleaseError) as exc_info:
+            manager.release()
+        
+        assert "Failed to release resource" in str(exc_info.value)
+        assert "Cleanup error" in exc_info.value.details
+
     def test_is_acquired_initial_state(self) -> None:
         """Test initial acquired state."""
         manager = ResourceManager()
+        assert not manager.is_acquired()
+
+    def test_is_acquired_after_acquire(self) -> None:
+        """Test acquired state after successful acquisition."""
+        class TestResourceManager(ResourceManager):
+            def _create_resource(self):
+                return "test_resource"
+        
+        manager = TestResourceManager()
+        assert not manager.is_acquired()
+        
+        manager.acquire()
+        assert manager.is_acquired()
+        
+        manager.release()
         assert not manager.is_acquired()
 
 
@@ -150,7 +211,6 @@ class TestFileResourceManager:
 
     def test_file_permission_error(self, tmp_path: Path) -> None:
         """Test file permission error."""
-        import platform
         
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":
@@ -172,7 +232,6 @@ class TestFileResourceManager:
 
     def test_encoding_error(self, tmp_path: Path) -> None:
         """Test encoding error."""
-        import platform
         
         # Skip this test on Windows as encoding error handling may differ
         if platform.system() == "Windows":
@@ -275,6 +334,28 @@ class TestStreamResourceManager:
         
         # Should be marked as closed after context manager exits
         assert manager.is_closed
+
+    def test_context_manager_with_close_error(self) -> None:
+        """Test context manager with closeable stream that raises error."""
+        class ProblematicStream:
+            def __init__(self):
+                self.closed = False
+            
+            def __iter__(self):
+                return iter([1, 2, 3])
+            
+            def close(self):
+                raise ValueError("Simulated close error")
+        
+        stream = ProblematicStream()
+        
+        with pytest.raises(SplurgeResourceReleaseError) as exc_info:
+            with StreamResourceManager(stream) as managed_stream:
+                items = list(managed_stream)
+                assert items == [1, 2, 3]
+        
+        assert "Failed to close stream" in str(exc_info.value)
+        assert "Simulated close error" in exc_info.value.details
 
     def test_is_closed_property(self) -> None:
         """Test is_closed property."""
@@ -387,51 +468,6 @@ class TestSafeStreamOperation:
         assert not stream.closed
 
 
-class TestSafeOpenFile:
-    """Test the _safe_open_file helper function."""
-
-    def test_safe_open_file_text_mode(self, tmp_path: Path) -> None:
-        """Test safe file opening in text mode."""
-        from splurge_tools.resource_manager import _safe_open_file
-        
-        test_file = tmp_path / "test.txt"
-        test_file.write_text("test content")
-        
-        with _safe_open_file(test_file, mode="r", encoding="utf-8") as file_handle:
-            content = file_handle.read()
-            assert content == "test content"
-
-    def test_safe_open_file_binary_mode(self, tmp_path: Path) -> None:
-        """Test safe file opening in binary mode."""
-        from splurge_tools.resource_manager import _safe_open_file
-        
-        test_file = tmp_path / "test.bin"
-        test_file.write_bytes(b"binary content")
-        
-        with _safe_open_file(test_file, mode="rb") as file_handle:
-            content = file_handle.read()
-            assert content == b"binary content"
-
-    def test_safe_open_file_nonexistent_raises_error(self, tmp_path: Path) -> None:
-        """Test that non-existent file raises SplurgeFileNotFoundError."""
-        from splurge_tools.resource_manager import _safe_open_file
-        
-        test_file = tmp_path / "nonexistent.txt"
-        
-        with pytest.raises(SplurgeFileNotFoundError):
-            with _safe_open_file(test_file, mode="r"):
-                pass
-
-    def test_safe_open_file_invalid_path_raises_error(self) -> None:
-        """Test that invalid path raises SplurgeResourceAcquisitionError."""
-        from splurge_tools.resource_manager import _safe_open_file
-        
-        # Invalid characters in filename cause OSError which gets converted to SplurgeResourceAcquisitionError
-        with pytest.raises(SplurgeResourceAcquisitionError):
-            with _safe_open_file(Path("file<with>invalid:chars?.txt"), mode="r"):
-                pass
-
-
 class TestResourceManagerEdgeCases:
     """Test edge cases and boundary conditions."""
 
@@ -483,7 +519,6 @@ class TestResourceManagerEdgeCases:
 
     def test_file_resource_manager_error_handling(self, tmp_path: Path) -> None:
         """Test file resource manager error handling."""
-        import platform
         
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":

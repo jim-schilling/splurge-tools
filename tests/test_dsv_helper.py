@@ -1,10 +1,11 @@
 """
 Tests for the dsv_helper module.
 
-Tests all public methods of the DsvHelper class including
-parsing, file operations, and streaming functionality.
+Tests all public methods including parsing, file operations, and streaming.
 """
 
+import os
+import platform
 from pathlib import Path
 
 import pytest
@@ -500,17 +501,16 @@ class TestDsvHelperEdgeCases:
             DsvHelper.parse_file(test_file, delimiter=",")
 
     def test_parse_file_with_permission_error(self, tmp_path: Path) -> None:
-        """Test parsing file with permission error."""
-        # Skip this test on Windows as permission handling differs
-        import platform
-        if platform.system() == "Windows":
-            pytest.skip("Permission error test not reliable on Windows")
+        """Test parse_file with permission error."""
         
-        test_file = tmp_path / "permission_error.csv"
-        test_file.write_text("a,b,c")
+        # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
+        if platform.system() == "Windows":
+            pytest.skip("File permission test not reliable on Windows")
+        
+        test_file = tmp_path / "permission_test.csv"
+        test_file.write_text("a,b,c\n1,2,3")
         
         # Make file unreadable
-        import os
         os.chmod(test_file, 0o000)
         
         try:
@@ -519,3 +519,72 @@ class TestDsvHelperEdgeCases:
         finally:
             # Restore permissions
             os.chmod(test_file, 0o644)
+
+    def test_profile_columns(self, tmp_path: Path) -> None:
+        """Test profile_columns method."""
+        # Create test data with different data types
+        test_data = [
+            ["name", "age", "salary", "active", "date"],
+            ["John", "25", "50000", "true", "2023-01-01"],
+            ["Jane", "30", "60000", "false", "2023-02-01"],
+            ["Bob", "35", "70000", "true", "2023-03-01"]
+        ]
+        
+        # Test with default parameters
+        profile = DsvHelper.profile_columns(test_data)
+        
+        assert len(profile) == 5
+        assert profile[0]["name"] == "name"
+        assert profile[0]["datatype"] == "STRING"
+        assert profile[1]["name"] == "age"
+        assert profile[1]["datatype"] == "INTEGER"  # Age is detected as integer
+        assert profile[2]["name"] == "salary"
+        assert profile[2]["datatype"] == "INTEGER"  # Salary is detected as integer
+        assert profile[3]["name"] == "active"
+        assert profile[3]["datatype"] == "BOOLEAN"  # Boolean is detected as boolean
+        assert profile[4]["name"] == "date"
+        assert profile[4]["datatype"] == "DATE"  # Date is detected as date
+        
+        # Test with numeric data
+        numeric_data = [
+            ["id", "value", "flag"],
+            ["1", "10.5", "true"],
+            ["2", "20.7", "false"],
+            ["3", "30.2", "true"]
+        ]
+        
+        profile = DsvHelper.profile_columns(numeric_data)
+        assert len(profile) == 3
+        assert profile[0]["name"] == "id"
+        assert profile[0]["datatype"] == "INTEGER"  # ID is detected as integer
+        assert profile[1]["name"] == "value"
+        assert profile[1]["datatype"] == "FLOAT"  # Value is detected as float
+        assert profile[2]["name"] == "flag"
+        assert profile[2]["datatype"] == "BOOLEAN"  # Flag is detected as boolean
+        
+        # Test with custom header rows
+        multi_header_data = [
+            ["Header 1", "Header 2", "Header 3"],
+            ["Subheader 1", "Subheader 2", "Subheader 3"],
+            ["a", "b", "c"],
+            ["1", "2", "3"]
+        ]
+        
+        profile = DsvHelper.profile_columns(multi_header_data, header_rows=2)
+        assert len(profile) == 3
+        assert profile[0]["name"] == "Header 1_Subheader 1"  # Combined header names
+        assert profile[1]["name"] == "Header 2_Subheader 2"
+        assert profile[2]["name"] == "Header 3_Subheader 3"
+        
+        # Test with skip_empty_rows=False
+        data_with_empty = [
+            ["col1", "col2"],
+            ["a", "b"],
+            ["", ""],  # Empty row
+            ["c", "d"]
+        ]
+        
+        profile = DsvHelper.profile_columns(data_with_empty, skip_empty_rows=False)
+        assert len(profile) == 2
+        assert profile[0]["name"] == "col1"
+        assert profile[1]["name"] == "col2"

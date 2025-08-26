@@ -1,5 +1,7 @@
 """
-Tests for factory pattern with protocol compliance.
+Tests for factory protocols.
+
+Tests that factory functions return objects that implement the correct protocols.
 """
 
 import os
@@ -16,6 +18,9 @@ from splurge_tools.protocols import (
     TypeInferenceProtocol
 )
 from splurge_tools.type_helper import TypeInference, DataType
+from splurge_tools.data_validator import DataValidator
+from splurge_tools.data_transformer import DataTransformer
+from splurge_tools.resource_manager import safe_file_operation
 
 
 class TestFactoryProtocols(unittest.TestCase):
@@ -62,7 +67,6 @@ class TestFactoryProtocols(unittest.TestCase):
     
     def test_component_factory_validator(self):
         """Test that ComponentFactory.create_validator returns DataValidatorProtocol compliant objects."""
-        from splurge_tools.data_validator import DataValidator
         validator = DataValidator()
         
         # Verify it implements the protocol
@@ -83,7 +87,6 @@ class TestFactoryProtocols(unittest.TestCase):
         # Create a data model first
         data = [["name", "age"], ["John", "25"]]
         data_model = create_in_memory_model(data)
-        from splurge_tools.data_transformer import DataTransformer
         transformer = DataTransformer(data_model)
         
         # Verify it implements the protocol
@@ -125,7 +128,6 @@ class TestFactoryProtocols(unittest.TestCase):
             temp_file_path = f.name
         
         try:
-            from splurge_tools.resource_manager import safe_file_operation
             with safe_file_operation(temp_file_path) as fh:
                 self.assertIsNotNone(fh)
             

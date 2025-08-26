@@ -1,17 +1,18 @@
 """
-Complex scenarios and edge case tests for StreamingTabularDataModel.
+Complex tests for StreamingTabularDataModel.
 
-Copyright (c) 2025, Jim Schilling
-
-This module is licensed under the MIT License.
+Tests advanced functionality including dynamic column expansion, large datasets,
+and edge cases.
 """
 
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
+from pathlib import Path
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
+from splurge_tools.tabular_utils import process_headers
 
 
 class TestStreamingTabularDataModelComplex(unittest.TestCase):
@@ -419,7 +420,6 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
     def test_streaming_model_process_headers_edge_cases(self) -> None:
         """Test process_headers with various edge cases."""
         # Test with empty data via shared utility
-        from splurge_tools.tabular_utils import process_headers
         result = process_headers([], header_rows=0)
         self.assertEqual(result, ([], []))
         
