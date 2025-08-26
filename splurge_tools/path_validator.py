@@ -14,7 +14,6 @@ This module is licensed under the MIT License.
 import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from splurge_tools.exceptions import (
     SplurgePathValidationError,
@@ -39,8 +38,8 @@ class PathValidator:
     # Private constants for path validation
     _PATH_TRAVERSAL_PATTERNS = [
         r'\.\.',  # Directory traversal
-        r'//+',   # Multiple forward slashes
-        r'\\{3,}',  # Three or more consecutive backslashes (not normal Windows paths)
+        r'//+',   # Multiple forward slashes (including //)
+        r'\\{2,}',  # Two or more consecutive backslashes (not normal Windows paths)
         r'~',     # Home directory expansion
     ]
     
@@ -52,7 +51,7 @@ class PathValidator:
         '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
     ]
     
-    _MAX_PATH_LENGTH = _MAX_PATH_LENGTH
+    MAX_PATH_LENGTH = _MAX_PATH_LENGTH
     
     @classmethod
     def validate_path(
@@ -81,20 +80,23 @@ class PathValidator:
             
         Raises:
             SplurgePathValidationError: If path validation fails
-            FileNotFoundError: If file doesn't exist when required
-            FilePermissionError: If file is not readable when required
+            SplurgeFileNotFoundError: If file doesn't exist when required
+            SplurgeFilePermissionError: If file is not readable when required
         """
         # Convert to Path object
         path = Path(file_path) if isinstance(file_path, str) else file_path
         
+        # Get the original string for validation (before Path normalization)
+        path_str = str(file_path) if isinstance(file_path, str) else str(path)
+        
         # Check for dangerous characters
-        cls._check_dangerous_characters(str(path))
+        cls._check_dangerous_characters(path_str)
         
         # Check for path traversal patterns
-        cls._check_path_traversal(str(path))
+        cls._check_path_traversal(path_str)
         
         # Check path length
-        cls._check_path_length(str(path))
+        cls._check_path_length(path_str)
         
         # Handle relative paths
         if not path.is_absolute() and not allow_relative:
@@ -159,6 +161,22 @@ class PathValidator:
         return resolved_path
     
     @classmethod
+    def _is_valid_windows_drive_pattern(cls, path_str: str) -> bool:
+        """
+        Check if a path string contains a valid Windows drive letter pattern.
+        
+        Args:
+            path_str: Path string to validate
+            
+        Returns:
+            True if the path contains a valid Windows drive letter pattern,
+            False otherwise
+        """
+        # Must be C: at the end of the string, or C:\ (or C:/) followed by path
+        return (re.match(r'^[A-Za-z]:$', path_str) or 
+                re.match(r'^[A-Za-z]:[\\/]', path_str))
+
+    @classmethod
     def _check_dangerous_characters(cls, path_str: str) -> None:
         """Check for dangerous characters in path string."""
         # Check for dangerous characters, but allow colons in Windows drive letters
@@ -171,11 +189,10 @@ class PathValidator:
         
         # Special handling for colons - only allow them in Windows drive letters (e.g., C:)
         if ':' in path_str:
-            # Check if it's a valid Windows drive letter pattern
-            if not re.match(r'^[A-Za-z]:', path_str) and not re.match(r'^[A-Za-z]:\\', path_str):
+            if not cls._is_valid_windows_drive_pattern(path_str):
                 raise SplurgePathValidationError(
                     "Path contains colon in invalid position",
-                    details="Colons are only allowed in Windows drive letters (e.g., C:)"
+                    details="Colons are only allowed in Windows drive letters (e.g., C: or C:\\)"
                 )
     
     @classmethod
@@ -191,10 +208,10 @@ class PathValidator:
     @classmethod
     def _check_path_length(cls, path_str: str) -> None:
         """Check if path length is within acceptable limits."""
-        if len(path_str) > cls._MAX_PATH_LENGTH:
+        if len(path_str) > cls.MAX_PATH_LENGTH:
             raise SplurgePathValidationError(
                 f"Path is too long: {len(path_str)} characters",
-                details=f"Maximum allowed length is {cls._MAX_PATH_LENGTH} characters"
+                details=f"Maximum allowed length is {cls.MAX_PATH_LENGTH} characters"
             )
     
     @classmethod
