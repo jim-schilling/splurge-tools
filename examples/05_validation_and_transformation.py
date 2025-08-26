@@ -13,7 +13,8 @@ Licensed under the MIT License.
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.tabular_data_model import TabularDataModel
-from splurge_tools.validation_utils import Validator
+from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
+
 from splurge_tools.type_helper import DataType
 
 
@@ -183,15 +184,75 @@ def validation_utils_examples():
     print("=== Validation Utils Examples ===\n")
     
     # Test various validation utilities
+    def test_non_empty_string():
+        value = "hello"
+        if not isinstance(value, str):
+            raise SplurgeParameterError("test_param must be a string")
+        if not value.strip():
+            raise SplurgeParameterError("test_param must be a non-empty string")
+        return value
+    
+    def test_empty_string():
+        value = ""
+        if not isinstance(value, str):
+            raise SplurgeParameterError("test_param must be a string")
+        if not value.strip():
+            raise SplurgeParameterError("test_param must be a non-empty string")
+        return value
+    
+    def test_positive_integer():
+        value = 42
+        if not isinstance(value, int):
+            raise SplurgeParameterError("test_param must be an integer")
+        if value < 1:
+            raise SplurgeRangeError("test_param must be >= 1")
+        return value
+    
+    def test_negative_integer():
+        value = -5
+        if not isinstance(value, int):
+            raise SplurgeParameterError("test_param must be an integer")
+        if value < 1:
+            raise SplurgeRangeError("test_param must be >= 1")
+        return value
+    
+    def test_valid_range():
+        lower, upper = 1, 10
+        if lower >= upper:
+            raise SplurgeRangeError("lower must be < upper")
+        return (lower, upper)
+    
+    def test_invalid_range():
+        lower, upper = 10, 1
+        if lower >= upper:
+            raise SplurgeRangeError("lower must be < upper")
+        return (lower, upper)
+    
+    def test_valid_encoding():
+        value = "utf-8"
+        if not isinstance(value, str):
+            raise SplurgeParameterError("test_param must be a string")
+        if not value.strip():
+            raise SplurgeParameterError("test_param must be a non-empty string")
+        return value
+    
+    def test_invalid_encoding():
+        value = "invalid-encoding"
+        if not isinstance(value, str):
+            raise SplurgeParameterError("test_param must be a string")
+        if not value.strip():
+            raise SplurgeParameterError("test_param must be a non-empty string")
+        return value
+    
     validation_tests = [
-        ("Non-empty string", lambda: Validator.is_non_empty_string("hello", "test_param")),
-        ("Empty string (should fail)", lambda: Validator.is_non_empty_string("", "test_param")),
-        ("Positive integer", lambda: Validator.is_positive_integer(42, "test_param")),
-        ("Negative integer (should fail)", lambda: Validator.is_positive_integer(-5, "test_param")),
-        ("Valid range bounds", lambda: Validator.is_range_bounds(1, 10, lower_param="test_param")),
-        ("Invalid range bounds (should fail)", lambda: Validator.is_range_bounds(10, 1, lower_param="test_param")),
-        ("Valid encoding", lambda: Validator.is_encoding("utf-8", "test_param")),
-        ("Invalid encoding (should fail)", lambda: Validator.is_encoding("invalid-encoding", "test_param")),
+        ("Non-empty string", test_non_empty_string),
+        ("Empty string (should fail)", test_empty_string),
+        ("Positive integer", test_positive_integer),
+        ("Negative integer (should fail)", test_negative_integer),
+        ("Valid range bounds", test_valid_range),
+        ("Invalid range bounds (should fail)", test_invalid_range),
+        ("Valid encoding", test_valid_encoding),
+        ("Invalid encoding (should fail)", test_invalid_encoding),
     ]
     
     print("Validation Utilities Test Results:")

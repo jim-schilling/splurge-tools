@@ -227,6 +227,8 @@ python -m build --sdist
 
 ## Changelog
 
+### [2025.5.0] - 2025-08-26
+
 ### [2025.4.3] - 2025-08-25
 
 #### Added
@@ -485,14 +487,7 @@ python -m build --sdist
   - `batch_validate_rows()`: Iterator for validating and filtering tabular data rows with column count constraints
   - `create_error_context()`: Utility for creating detailed error context information for debugging
 
-- **Validation Utilities Module**: Added new `validation_utils.py` module providing centralized `Validator` class with consistent error handling:
-  - `Validator.is_non_empty_string()`: String validation with whitespace handling options
-  - `Validator.is_positive_integer()`: Integer validation with range constraints and bounds checking
-  - `Validator.is_valid_range()`: Numeric range validation with inclusive/exclusive bounds
-  - `Validator.is_valid_path()`: Path validation with existence checking and permission validation
-  - `Validator.is_valid_encoding()`: Text encoding validation with fallback options
-  - `Validator.is_iterable_of_type()`: Generic iterable validation with element type checking
-  - All validator methods follow consistent `is_*` naming convention and return validated values or raise specific exceptions
+- **Inline Validation**: Replaced centralized Validator class with inline guardrails throughout the codebase for improved simplicity and maintainability
 
 #### Changed
 - **Type Annotation Modernization**: Updated type annotations across multiple modules to use modern Python union syntax (`|`) instead of `Optional` and `Union` imports:
@@ -508,7 +503,6 @@ python -m build --sdist
 #### Testing
 - **Comprehensive Test Coverage**: Added extensive test suites for new modules:
   - `tests/test_common_utils.py`: Complete test coverage for common utility functions (96% coverage)
-  - `tests/test_validation_utils.py`: Comprehensive validation utility testing (94% coverage)
   - Enhanced existing test files to use new utility functions where appropriate
 - **Maintained Package Coverage**: All existing functionality preserved with improved test organization
 

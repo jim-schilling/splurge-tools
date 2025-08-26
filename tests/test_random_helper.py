@@ -39,7 +39,7 @@ class TestRandomHelper(unittest.TestCase):
         self.assertEqual(len(RandomHelper.BASE58_ALPHA), 49)  # Excludes O, I, l from alphabet (52-3=49)
         self.assertEqual(len(RandomHelper.BASE58_DIGITS), 9)  # Excludes 0 from digits (1-9 = 9)
         self.assertEqual(len(RandomHelper.BASE58_CHARS), 58)  # 49 + 9 = 58
-        self.assertEqual(RandomHelper.BASE58_CHARS, RandomHelper.BASE58_ALPHA + RandomHelper.BASE58_DIGITS)
+        self.assertEqual(RandomHelper.BASE58_CHARS, RandomHelper.BASE58_DIGITS + RandomHelper.BASE58_ALPHA)
         
         # Test SYMBOLS constant
         expected_symbols = "!@#$%^&*()_+-=[]{};:,.<>?`~"

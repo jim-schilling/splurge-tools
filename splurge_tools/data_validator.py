@@ -14,7 +14,6 @@ import re
 from typing import Any, Callable, Dict, List
 
 from splurge_tools.protocols import DataValidatorProtocol
-from splurge_tools.validation_utils import Validator
 
 
 class DataValidator(DataValidatorProtocol):

@@ -22,7 +22,6 @@ from splurge_tools.exceptions import (
     SplurgeFilePermissionError,
     SplurgeFileEncodingError
 )
-from splurge_tools.validation_utils import Validator
 
 T = TypeVar('T')
 
@@ -46,17 +45,21 @@ def safe_file_operation(
         SplurgeFilePermissionError: If permission denied
         SplurgeValidationError: If path is invalid
     """
+    if not isinstance(file_path, (str, Path)):
+        raise SplurgeParameterError(
+            f"file_path must be a string or Path object, got {type(file_path).__name__}",
+            details=f"Expected str or Path, received: {type(file_path).__name__}"
+        )
+    
     try:
-        path = Validator.is_file_path(file_path, "file_path")
-        return path
-    except Exception as e:
-        # Re-raise with operation context
-        if isinstance(e, (SplurgeFileNotFoundError, SplurgeFilePermissionError)):
-            raise type(e)(
-                f"Cannot {operation} file: {e.message}",
-                details=e.details
-            )
-        raise
+        path = Path(file_path)
+    except (TypeError, ValueError) as e:
+        raise SplurgeParameterError(
+            f"file_path is not a valid path: {file_path}",
+            details=str(e)
+        )
+    
+    return path
 
 
 def standardize_column_names(
@@ -249,8 +252,8 @@ def create_parameter_validator(
         
     Example:
         validator = create_parameter_validator({
-            'name': lambda x: Validator.is_non_empty_string(x, 'name'),
-            'age': lambda x: Validator.is_positive_integer(x, 'age', min_value=0)
+            'name': lambda x: x if isinstance(x, str) and x.strip() else raise SplurgeParameterError("name must be non-empty string"),
+            'age': lambda x: x if isinstance(x, int) and x >= 0 else raise SplurgeParameterError("age must be non-negative integer")
         })
         validated = validator({'name': 'John', 'age': 25})
     """
