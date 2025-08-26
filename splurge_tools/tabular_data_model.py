@@ -8,15 +8,13 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import re
-import warnings
 from typing import Generator, Iterator, Any
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
 
 from splurge_tools.tabular_utils import process_headers as _process_headers, normalize_rows as _normalize_rows
-from splurge_tools.common_utils import validate_data_structure, safe_dict_access, safe_index_access
+from splurge_tools.common_utils import validate_data_structure, safe_dict_access
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
 
 
@@ -361,7 +359,6 @@ class _TypedView:
         return self._model.column_index(name)
 
     def __iter__(self) -> Iterator[list[object]]:
-        from splurge_tools.type_helper import String
 
         for row in self._model:
             yield [self._convert(value, self._inferred_type(i)) for i, value in enumerate(row)]

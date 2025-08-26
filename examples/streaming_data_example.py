@@ -108,7 +108,7 @@ def process_large_dataset_streaming(
         if total_rows % _PROGRESS_INTERVAL == 0:
             print(f"Processed {total_rows} rows...")
     
-    print(f"\nProcessing complete!")
+    print("\nProcessing complete!")
     print(f"Total rows processed: {total_rows}")
     print(f"Average salary: ${total_salary / total_rows:,.2f}")
     print(f"Department distribution: {department_counts}")
@@ -159,7 +159,7 @@ def process_large_dataset_traditional(
         dept = row['Department']
         department_counts[dept] = department_counts.get(dept, 0) + 1
     
-    print(f"\nProcessing complete!")
+    print("\nProcessing complete!")
     print(f"Total rows processed: {model.row_count}")
     print(f"Average salary: ${total_salary / model.row_count:,.2f}")
     print(f"Department distribution: {department_counts}")
@@ -225,7 +225,7 @@ def demonstrate_column_operations() -> None:
         print(f"\nColumn 'Name' index: {model.column_index('Name')}")
         print("Note: StreamingTabularDataModel doesn't support column_values()")
         print("or column_type() as it doesn't keep all data in memory.")
-        print(f"\nFirst few rows:")
+        print("\nFirst few rows:")
         row_count = 0
         for row in model.iter_rows():
             print(f"Row {row_count}: {row}")
@@ -305,10 +305,11 @@ def demonstrate_error_handling() -> None:
             except ValueError:
                 print(f"  Warning: Invalid salary in row {total_rows}: {row['Salary']}")
             try:
-                age = int(row['Age'])
+                # age = int(row['Age'])  # Unused variable
+                pass
             except ValueError:
                 print(f"  Warning: Invalid age in row {total_rows}: {row['Age']}")
-        print(f"\nProcessing complete!")
+        print("\nProcessing complete!")
         print(f"Total rows processed: {total_rows}")
         print(f"Valid salaries: {valid_salaries}")
         if valid_salaries > 0:

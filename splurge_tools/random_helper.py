@@ -141,7 +141,7 @@ class RandomHelper:
         """
         if lower >= upper:
             raise SplurgeRangeError(
-                f"lower must be < upper",
+                "lower must be < upper",
                 details=f"Got lower={lower}, upper={upper}"
             )
         
@@ -183,7 +183,7 @@ class RandomHelper:
         """
         if lower >= upper:
             raise SplurgeRangeError(
-                f"lower must be < upper",
+                "lower must be < upper",
                 details=f"Got lower={lower}, upper={upper}"
             )
         
@@ -248,7 +248,7 @@ class RandomHelper:
         
         if not allowable_chars:
             raise SplurgeParameterError(
-                f"allowable_chars must be a non-empty string",
+                "allowable_chars must be a non-empty string",
                 details="Empty strings are not allowed"
             )
 
@@ -306,7 +306,7 @@ class RandomHelper:
         
         if lower >= upper:
             raise SplurgeRangeError(
-                f"lower must be < upper",
+                "lower must be < upper",
                 details=f"Got lower={lower}, upper={upper}"
             )
 
@@ -486,7 +486,7 @@ class RandomHelper:
         min_required = 2 if not use_symbols else 3  # alpha + digit + optional symbol
         
         if size < min_required:
-            message = f"Size too small to guarantee character diversity"
+            message = "Size too small to guarantee character diversity"
             details = f"Need at least {min_required} characters to include alpha, digit"
             if use_symbols:
                 details += ", and symbol"

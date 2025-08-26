@@ -17,10 +17,7 @@ from collections.abc import Iterable
 
 from splurge_tools.exceptions import (
     SplurgeValidationError,
-    SplurgeParameterError,
-    SplurgeFileNotFoundError,
-    SplurgeFilePermissionError,
-    SplurgeFileEncodingError
+    SplurgeParameterError
 )
 
 T = TypeVar('T')
@@ -298,7 +295,7 @@ def batch_validate_rows(
         if not isinstance(row, list):
             raise SplurgeValidationError(
                 f"Row {row_idx} must be a list, got {type(row).__name__}",
-                details=f"Each row must be a list of strings"
+                details="Each row must be a list of strings"
             )
         
         # Ensure all cells are strings

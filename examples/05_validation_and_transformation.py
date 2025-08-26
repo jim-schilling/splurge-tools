@@ -15,7 +15,6 @@ from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
 
-from splurge_tools.type_helper import DataType
 
 
 def create_sample_data():
@@ -326,7 +325,7 @@ def advanced_transformation_examples(sales_data):
         def add_tax(value):
             try:
                 return str(int(value) * 1.08)  # 8% tax
-            except:
+            except (ValueError, TypeError):
                 return value
         
         transformed = transformer.transform_column(

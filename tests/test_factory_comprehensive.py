@@ -7,13 +7,10 @@ Tests all factory functions with various input types and configurations.
 import os
 import tempfile
 import unittest
-from typing import Iterator
 from pathlib import Path
 
 from splurge_tools.factory import create_in_memory_model, create_streaming_model
 from splurge_tools.protocols import TabularDataProtocol, StreamingTabularDataProtocol
-from splurge_tools.exceptions import SplurgeValidationError
-from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.resource_manager import safe_file_operation

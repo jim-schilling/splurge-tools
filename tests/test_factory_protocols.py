@@ -7,7 +7,6 @@ Tests that factory functions return objects that implement the correct protocols
 import os
 import tempfile
 import unittest
-from typing import Iterator
 
 from splurge_tools.factory import create_in_memory_model, create_streaming_model
 from splurge_tools.protocols import (

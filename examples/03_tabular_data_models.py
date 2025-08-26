@@ -14,7 +14,6 @@ from pathlib import Path
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 from splurge_tools.dsv_helper import DsvHelper
-from splurge_tools.type_helper import DataType
 
 
 def create_sample_datasets():
@@ -108,7 +107,7 @@ def multi_header_examples(multi_header_data):
     
     # Show how headers were merged
     print("Header processing details:")
-    print(f"  Header rows: 2")
+    print("  Header rows: 2")
     print(f"  Raw header data: {multi_header_data[:2]}")
     print(f"  Merged column names: {model.column_names}")
     print()
@@ -129,7 +128,7 @@ def typed_tabular_model_examples(employee_data):
         header_rows=1
     ).to_typed()
     
-    print(f"Typed model created successfully!")
+    print("Typed model created successfully!")
     print(f"Dimensions: {typed_model.row_count} rows × {typed_model.column_count} columns")
     print()
     

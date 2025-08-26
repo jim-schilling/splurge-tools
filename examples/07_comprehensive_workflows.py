@@ -17,12 +17,9 @@ from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 from splurge_tools.text_normalizer import TextNormalizer
 from splurge_tools.case_helper import CaseHelper
-from splurge_tools.string_tokenizer import StringTokenizer
-from splurge_tools.text_file_helper import TextFileHelper
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.random_helper import RandomHelper
-from splurge_tools.type_helper import DataType, String
 # from splurge_tools.factory import ComponentFactory, DataModelFactory
 
 
@@ -119,7 +116,7 @@ def workflow_1_data_cleaning_and_validation(files):
     print("Step 4: Type inference and validation")
     type_info = {}
     for col_name in model.column_names:
-        col_values = model.column_values(col_name)
+        # col_values = model.column_values(col_name)  # Unused variable
         col_type = model.column_type(col_name)
         type_info[col_name] = col_type
         print(f"  {col_name}: {col_type.name}")
@@ -209,7 +206,7 @@ def workflow_2_streaming_data_analysis(files):
         try:
             # Extract values (assuming row is a list)
             if len(row) >= 7:
-                product = row[1]
+                # product = row[1]  # Unused variable
                 category = row[2]
                 price = float(row[3])
                 quantity = int(row[4])
@@ -337,7 +334,7 @@ def workflow_3_data_transformation_pipeline():
                 revenue = float(revenue_str)
                 # Assume 30% profit margin
                 return str(round(revenue * 0.30, 2))
-            except:
+            except (ValueError, TypeError):
                 return "0"
         
         transformed = transformer.transform_column(
@@ -519,9 +516,9 @@ def workflow_4_comprehensive_etl_pipeline(files):
     print()
     print("ETL Pipeline Summary:")
     print(f"  • Extracted data from {len(employee_data)} + {len(dept_data)-1} source records")
-    print(f"  • Cleaned and normalized all text fields")
+    print("  • Cleaned and normalized all text fields")
     print(f"  • Validated and filtered to {len(valid_employees)} valid records")
-    print(f"  • Enriched data with department information")
+    print("  • Enriched data with department information")
     print(f"  • Generated analytics for {len(dept_stats)} departments")
     print(f"  • Final output: {final_model.row_count} enriched records")
     

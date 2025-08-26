@@ -8,7 +8,6 @@ and edge cases.
 import os
 import tempfile
 import unittest
-from pathlib import Path
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel

@@ -3,7 +3,6 @@ Comprehensive unit tests for DataValidator class to improve coverage.
 """
 
 import unittest
-from typing import Any, Dict, List
 
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.protocols import DataValidatorProtocol
@@ -315,9 +314,14 @@ class TestDataValidatorComprehensive(unittest.TestCase):
     def test_get_field_validators(self):
         """Test get_field_validators method."""
         # Add validators to a field
-        validator1 = lambda x: isinstance(x, str)
-        validator2 = lambda x: len(x) > 0
-        validator3 = lambda x: x.isalpha()
+        def validator1(x):
+            return isinstance(x, str)
+        
+        def validator2(x):
+            return len(x) > 0
+        
+        def validator3(x):
+            return x.isalpha()
         
         self.validator.add_validator("name", validator1)
         self.validator.add_validator("name", validator2)
