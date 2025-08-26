@@ -172,6 +172,14 @@ class TestPathValidatorValidatePath:
             
             result = PathValidator.validate_path("C:/test/file.txt")
             assert result == Path("C:/test/file.txt")
+            
+    def test_validate_windows_drive_relative_path(self) -> None:
+        """Test validating Windows drive-relative path."""
+        with patch('pathlib.Path.resolve') as mock_resolve:
+            mock_resolve.return_value = Path("C:/current/dir/file.txt")
+            
+            result = PathValidator.validate_path("C:file.txt")
+            assert result == Path("C:/current/dir/file.txt")
 
     def test_validate_invalid_colon_usage_raises_error(self) -> None:
         """Test that invalid colon usage raises error."""
@@ -179,7 +187,6 @@ class TestPathValidatorValidatePath:
             "file:name.txt",
             ":file.txt",
             "file.txt:",
-            "C:file.txt",  # Missing slash
             "file:C.txt"
         ]
         
@@ -340,7 +347,7 @@ class TestPathValidatorIsSafePath:
             "file:name.txt",
             ":file.txt",
             "file.txt:",
-            "C:file.txt"
+            # "C:file.txt"  # Drive-relative path is valid on Windows; removed from invalid paths
         ]
         
         for path in invalid_paths:

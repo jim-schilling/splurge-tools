@@ -172,9 +172,13 @@ class PathValidator:
             True if the path contains a valid Windows drive letter pattern,
             False otherwise
         """
-        # Must be C: at the end of the string, or C:\ (or C:/) followed by path
+        # Valid patterns:
+        # - C: (drive letter only)
+        # - C:\ or C:/ (drive letter with slash - absolute path)
+        # - C:file.txt (drive letter with filename - drive-relative path)
         return (re.match(r'^[A-Za-z]:$', path_str) or 
-                re.match(r'^[A-Za-z]:[\\/]', path_str))
+                re.match(r'^[A-Za-z]:[\\/]', path_str) or
+                re.match(r'^[A-Za-z]:[^\\/:]*$', path_str))
 
     @classmethod
     def _check_dangerous_characters(cls, path_str: str) -> None:
