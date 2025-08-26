@@ -302,6 +302,12 @@ class TestStringTokenizerEdgeCases:
         # Since «αβγ» doesn't end with «, nothing is removed
         result = StringTokenizer.remove_bookends("«αβγ»", bookend="«")
         assert result == "«αβγ»"
+        
+    def test_remove_bookends_with_matching_unicode(self) -> None:
+        """Test removing matching Unicode bookends from both ends."""
+        # String starts and ends with «, so both should be removed
+        result = StringTokenizer.remove_bookends("«αβγ«", bookend="«")
+        assert result == "αβγ"
 
     def test_parse_with_newlines(self) -> None:
         """Test parsing with newlines in content."""
