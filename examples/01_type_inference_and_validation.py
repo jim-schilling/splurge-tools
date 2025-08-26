@@ -9,7 +9,6 @@ Copyright (c) 2025 Jim Schilling
 Licensed under the MIT License.
 """
 
-from datetime import date, datetime, time
 from splurge_tools.type_helper import String, DataType, profile_values
 
 
@@ -162,7 +161,7 @@ def advanced_type_scenarios():
                 String.to_date(value)
             elif inferred_type == DataType.TIME:
                 String.to_time(value)
-        except:
+        except (ValueError, TypeError):
             can_convert = False
         
         print(f"{str(value).ljust(20)}{inferred_type.name.ljust(15)}{can_convert}")

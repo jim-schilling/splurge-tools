@@ -11,16 +11,13 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import os
-import tempfile
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, TextIO, BinaryIO, Any, IO
+from typing import Iterator, Any, IO
 
 from splurge_tools.exceptions import (
     SplurgeResourceAcquisitionError,
     SplurgeResourceReleaseError,
-    SplurgeFileOperationError,
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
     SplurgeFileEncodingError
@@ -28,12 +25,82 @@ from splurge_tools.exceptions import (
 from splurge_tools.path_validator import PathValidator
  
 
-
 # Module-level constants for resource management
-_DEFAULT_BUFFERING = -1  # Default buffering for file operations
-_DEFAULT_ENCODING = "utf-8"  # Default text encoding
-_DEFAULT_MODE = "r"  # Default file mode for reading
-_DEFAULT_TEMP_MODE = "w+b"  # Default mode for temporary files
+DEFAULT_BUFFERING = -1  # Default buffering for file operations
+DEFAULT_ENCODING = "utf-8"  # Default text encoding
+DEFAULT_MODE = "r"  # Default file mode for reading
+
+
+def _safe_open_file(
+    file_path: Path,
+    *,
+    mode: str,
+    encoding: str | None = None,
+    errors: str | None = None,
+    newline: str | None = None,
+    buffering: int = DEFAULT_BUFFERING
+) -> IO[Any]:
+    """
+    Safely open a file with proper error handling.
+    
+    This function provides centralized file opening with consistent error handling
+    that converts standard file operation exceptions to custom exceptions.
+    
+    Args:
+        file_path: Path to the file
+        mode: File open mode
+        encoding: Text encoding (for text mode)
+        errors: Error handling for encoding
+        newline: Newline handling
+        buffering: Buffer size
+        
+    Returns:
+        File handle
+        
+    Raises:
+        SplurgeFileNotFoundError: If file is not found
+        SplurgeFilePermissionError: If permission is denied
+        SplurgeFileEncodingError: If encoding error occurs
+        SplurgeResourceAcquisitionError: If other file operation fails
+    """
+    try:
+        if 'b' in mode:
+            # Binary mode
+            return open(
+                file_path,
+                mode=mode,
+                buffering=buffering
+            )
+        else:
+            # Text mode
+            return open(
+                file_path,
+                mode=mode,
+                encoding=encoding,
+                errors=errors,
+                newline=newline,
+                buffering=buffering
+            )
+    except FileNotFoundError as e:
+        raise SplurgeFileNotFoundError(
+            f"File not found: {file_path}",
+            details=str(e)
+        )
+    except PermissionError as e:
+        raise SplurgeFilePermissionError(
+            f"Permission denied: {file_path}",
+            details=str(e)
+        )
+    except UnicodeDecodeError as e:
+        raise SplurgeFileEncodingError(
+            f"Encoding error reading file: {file_path}",
+            details=str(e)
+        )
+    except OSError as e:
+        raise SplurgeResourceAcquisitionError(
+            f"Failed to open file: {file_path}",
+            details=str(e)
+        )
 
 
 class ResourceManager:
@@ -57,6 +124,7 @@ class ResourceManager:
             The acquired resource
             
         Raises:
+            NotImplementedError: If _create_resource is not implemented by subclass
             SplurgeResourceAcquisitionError: If resource cannot be acquired
         """
         if self._is_acquired_flag:
@@ -69,6 +137,9 @@ class ResourceManager:
             self._resource = self._create_resource()
             self._is_acquired_flag = True
             return self._resource
+        except NotImplementedError:
+            # Re-raise NotImplementedError without wrapping it
+            raise
         except Exception as e:
             raise SplurgeResourceAcquisitionError(
                 "Failed to acquire resource",
@@ -142,11 +213,11 @@ class FileResourceManager:
         self,
         file_path: str | Path,
         *,
-        mode: str = _DEFAULT_MODE,
-        encoding: str | None = _DEFAULT_ENCODING,
+        mode: str = DEFAULT_MODE,
+        encoding: str | None = DEFAULT_ENCODING,
         errors: str | None = None,
         newline: str | None = None,
-        buffering: int = _DEFAULT_BUFFERING
+        buffering: int = DEFAULT_BUFFERING
     ) -> None:
         """
         Initialize FileResourceManager.
@@ -163,7 +234,7 @@ class FileResourceManager:
             SplurgePathValidationError: If file path is invalid
             SplurgeResourceAcquisitionError: If file cannot be opened
         """
-        self.file_path = PathValidator.validate_path(
+        self._file_path = PathValidator.validate_path(
             file_path,
             must_exist=(mode in ['r', 'rb']),
             must_be_file=True,
@@ -184,47 +255,20 @@ class FileResourceManager:
             File handle
             
         Raises:
-            SplurgeResourceAcquisitionError: If file cannot be opened
+            SplurgeFileNotFoundError: If file is not found
+            SplurgeFilePermissionError: If permission is denied
+            SplurgeFileEncodingError: If encoding error occurs
+            SplurgeResourceAcquisitionError: If other file operation fails
         """
-        try:
-            if 'b' in self.mode:
-                # Binary mode
-                self._file_handle = open(
-                    self.file_path,
-                    mode=self.mode,
-                    buffering=self.buffering
-                )
-            else:
-                # Text mode
-                self._file_handle = open(
-                    self.file_path,
-                    mode=self.mode,
-                    encoding=self.encoding,
-                    errors=self.errors,
-                    newline=self.newline,
-                    buffering=self.buffering
-                )
-            return self._file_handle
-        except FileNotFoundError as e:
-            raise SplurgeFileNotFoundError(
-                f"File not found: {self.file_path}",
-                details=str(e)
-            )
-        except PermissionError as e:
-            raise SplurgeFilePermissionError(
-                f"Permission denied: {self.file_path}",
-                details=str(e)
-            )
-        except UnicodeDecodeError as e:
-            raise SplurgeFileEncodingError(
-                f"Encoding error reading file: {self.file_path}",
-                details=str(e)
-            )
-        except OSError as e:
-            raise SplurgeResourceAcquisitionError(
-                f"Failed to open file: {self.file_path}",
-                details=str(e)
-            )
+        self._file_handle = _safe_open_file(
+            self.file_path,
+            mode=self.mode,
+            encoding=self.encoding,
+            errors=self.errors,
+            newline=self.newline,
+            buffering=self.buffering
+        )
+        return self._file_handle
     
     def __exit__(
         self,
@@ -250,104 +294,6 @@ class FileResourceManager:
                 )
             finally:
                 self._file_handle = None
-
-
-class TemporaryFileManager:
-    """
-    Context manager for temporary file operations.
-    
-    This class provides context managers for creating and managing
-    temporary files with automatic cleanup.
-    """
-    
-    def __init__(
-        self,
-        *,
-        suffix: str | None = None,
-        prefix: str | None = None,
-        dir: str | Path | None = None,
-        delete: bool = True,
-        mode: str = _DEFAULT_TEMP_MODE
-    ) -> None:
-        """
-        Initialize TemporaryFileManager.
-        
-        Args:
-            suffix: File suffix
-            prefix: File prefix
-            dir: Directory for temporary file
-            delete: Whether to delete file on cleanup
-            mode: File open mode
-        """
-        self.suffix = suffix
-        self.prefix = prefix
-        self.dir = Path(dir) if dir else None
-        self.delete = delete
-        self.mode = mode
-        self._temp_file: IO[Any] | None = None
-        self._file_path: Path | None = None
-    
-    def __enter__(self) -> IO[Any]:
-        """
-        Create temporary file and return file handle.
-        
-        Returns:
-            Temporary file handle
-            
-        Raises:
-            SplurgeResourceAcquisitionError: If temporary file cannot be created
-        """
-        try:
-            self._temp_file = tempfile.NamedTemporaryFile(
-                suffix=self.suffix,
-                prefix=self.prefix,
-                dir=str(self.dir) if self.dir else None,
-                delete=False,  # We'll handle deletion ourselves
-                mode=self.mode
-            )
-            self._file_path = Path(self._temp_file.name)
-            return self._temp_file
-        except OSError as e:
-            raise SplurgeResourceAcquisitionError(
-                "Failed to create temporary file",
-                details=str(e)
-            )
-    
-    def __exit__(
-        self,
-        exc_type: type | None,
-        exc_val: Exception | None,
-        exc_tb: Any | None
-    ) -> None:
-        """
-        Close and optionally delete the temporary file.
-        
-        Args:
-            exc_type: Exception type if an exception occurred
-            exc_val: Exception value if an exception occurred
-            exc_tb: Exception traceback if an exception occurred
-        """
-        if self._temp_file is not None:
-            try:
-                self._temp_file.close()
-                
-                # Delete file if requested
-                if self.delete and self._file_path and self._file_path.exists():
-                    try:
-                        os.unlink(self._file_path)
-                    except OSError as e:
-                        raise SplurgeResourceReleaseError(
-                            f"Failed to delete temporary file: {self._file_path}",
-                            details=str(e)
-                        )
-            except OSError as e:
-                raise SplurgeResourceReleaseError(
-                    f"Failed to close temporary file: {self._file_path}",
-                    details=str(e)
-                )
-            finally:
-                self._temp_file = None
-                self._file_path = None
     
     @property
     def file_path(self) -> Path | None:
@@ -406,12 +352,14 @@ class StreamResourceManager:
         if self.auto_close and hasattr(self.stream, 'close'):
             try:
                 self.stream.close()
-                self._is_closed = True
             except Exception as e:
                 raise SplurgeResourceReleaseError(
                     "Failed to close stream",
                     details=str(e)
                 )
+        
+        # Mark as closed after context manager exits, regardless of close method
+        self._is_closed = True
     
     @property
     def is_closed(self) -> bool:
@@ -423,11 +371,11 @@ class StreamResourceManager:
 def safe_file_operation(
     file_path: str | Path,
     *,
-    mode: str = _DEFAULT_MODE,
-    encoding: str | None = _DEFAULT_ENCODING,
+    mode: str = DEFAULT_MODE,
+    encoding: str | None = DEFAULT_ENCODING,
     errors: str | None = None,
     newline: str | None = None,
-    buffering: int = _DEFAULT_BUFFERING
+    buffering: int = DEFAULT_BUFFERING
 ) -> Iterator[IO[Any]]:
     """
     Context manager for safe file operations.
@@ -461,43 +409,6 @@ def safe_file_operation(
 
 
 @contextmanager
-def temporary_file(
-    *,
-    suffix: str | None = None,
-    prefix: str | None = None,
-    dir: str | Path | None = None,
-    delete: bool = True,
-    mode: str = _DEFAULT_TEMP_MODE
-) -> Iterator[IO[Any]]:
-    """
-    Context manager for temporary file operations.
-    
-    Args:
-        suffix: File suffix
-        prefix: File prefix
-        dir: Directory for temporary file
-        delete: Whether to delete file on cleanup
-        mode: File open mode
-        
-    Yields:
-        Temporary file handle
-        
-    Raises:
-        SplurgeResourceAcquisitionError: If temporary file cannot be created
-        SplurgeResourceReleaseError: If temporary file cannot be cleaned up
-    """
-    manager = TemporaryFileManager(
-        suffix=suffix,
-        prefix=prefix,
-        dir=dir,
-        delete=delete,
-        mode=mode
-    )
-    with manager as temp_file:
-        yield temp_file
-
-
-@contextmanager
 def safe_stream_operation(
     stream: Iterator[Any],
     *,
@@ -519,66 +430,3 @@ def safe_stream_operation(
     manager = StreamResourceManager(stream, auto_close=auto_close)
     with manager as stream_handle:
         yield stream_handle
-
-
-def _handle_file_error(
-    error: Exception,
-    file_path: Path,
-    operation: str
-) -> None:
-    """
-    Handle file operation errors with consistent error mapping.
-    
-    Args:
-        error: The original exception
-        file_path: Path to the file that caused the error
-        operation: Description of the operation that failed
-        
-    Raises:
-        SplurgeFileNotFoundError: If file not found
-        SplurgeFilePermissionError: If permission denied
-        SplurgeFileEncodingError: If encoding error
-        SplurgeResourceAcquisitionError: For other file errors
-    """
-    if isinstance(error, FileNotFoundError):
-        raise SplurgeFileNotFoundError(
-            f"File not found during {operation}: {file_path}",
-            details=str(error)
-        )
-    elif isinstance(error, PermissionError):
-        raise SplurgeFilePermissionError(
-            f"Permission denied during {operation}: {file_path}",
-            details=str(error)
-        )
-    elif isinstance(error, UnicodeDecodeError):
-        raise SplurgeFileEncodingError(
-            f"Encoding error during {operation}: {file_path}",
-            details=str(error)
-        )
-    else:
-        raise SplurgeResourceAcquisitionError(
-            f"Failed to {operation} file: {file_path}",
-            details=str(error)
-        )
-
-
-def _handle_resource_cleanup_error(
-    error: Exception,
-    resource_name: str,
-    operation: str
-) -> None:
-    """
-    Handle resource cleanup errors with consistent error mapping.
-    
-    Args:
-        error: The original exception
-        resource_name: Name or path of the resource
-        operation: Description of the cleanup operation that failed
-        
-    Raises:
-        SplurgeResourceReleaseError: For resource cleanup errors
-    """
-    raise SplurgeResourceReleaseError(
-        f"Failed to {operation} {resource_name}",
-        details=str(error)
-    )

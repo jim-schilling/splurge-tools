@@ -1,17 +1,17 @@
 """
-Complex scenarios and edge case tests for StreamingTabularDataModel.
+Complex tests for StreamingTabularDataModel.
 
-Copyright (c) 2025, Jim Schilling
-
-This module is licensed under the MIT License.
+Tests advanced functionality including dynamic column expansion, large datasets,
+and edge cases.
 """
 
-import unittest
-import tempfile
 import os
+import tempfile
+import unittest
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
+from splurge_tools.tabular_utils import process_headers
 
 
 class TestStreamingTabularDataModelComplex(unittest.TestCase):
@@ -29,7 +29,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -69,7 +69,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model with small buffer
             model = StreamingTabularDataModel(
@@ -112,7 +112,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -129,7 +129,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
             self.assertEqual(rows[1], ["Jane", "30", "Los Angeles"])
 
             # Create new model for dictionary iteration (since iterator is exhausted)
-            stream2 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream2 = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             model2 = StreamingTabularDataModel(
                 stream2,
                 header_rows=1,
@@ -144,7 +144,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
             self.assertEqual(dict_rows[1], {"Name": "Jane", "Age": "30", "City": "Los Angeles"})
 
             # Create new model for tuple iteration
-            stream3 = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream3 = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             model3 = StreamingTabularDataModel(
                 stream3,
                 header_rows=1,
@@ -185,7 +185,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model with skip_empty_rows=True
             model = StreamingTabularDataModel(
@@ -223,7 +223,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -276,7 +276,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -316,7 +316,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model with small buffer (minimum allowed)
             model = StreamingTabularDataModel(
@@ -356,7 +356,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper with minimum chunk size
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -394,7 +394,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -419,7 +419,6 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
     def test_streaming_model_process_headers_edge_cases(self) -> None:
         """Test process_headers with various edge cases."""
         # Test with empty data via shared utility
-        from splurge_tools.tabular_utils import process_headers
         result = process_headers([], header_rows=0)
         self.assertEqual(result, ([], []))
         
@@ -460,7 +459,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -517,7 +516,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -568,7 +567,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model with no headers
             model = StreamingTabularDataModel(
@@ -609,7 +608,7 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(

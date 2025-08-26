@@ -3,7 +3,6 @@ Comprehensive unit tests for DataValidator class to improve coverage.
 """
 
 import unittest
-from typing import Any, Dict, List
 
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.protocols import DataValidatorProtocol
@@ -193,6 +192,161 @@ class TestDataValidatorComprehensive(unittest.TestCase):
         result = self.validator.validate_detailed(data)
         self.assertIsInstance(result, dict)
         self.assertGreater(len(result), 0)  # Has errors
+        
+        # Test with multiple validators for same field to cover missing lines
+        self.validator.add_validator("name", lambda x: x.isalpha())  # Add second validator
+        data = {"name": "John123"}  # Fails second validator
+        result = self.validator.validate_detailed(data)
+        self.assertIsInstance(result, dict)
+        self.assertIn("name", result)
+        self.assertGreater(len(result["name"]), 0)  # Should have error messages
+
+    def test_validate_with_custom_rules(self):
+        """Test validate_with_custom_rules method."""
+        # Add custom validators
+        self.validator.add_custom_validator("email", lambda x: "@" in str(x))
+        self.validator.add_custom_validator("positive", lambda x: float(x) > 0)
+        self.validator.add_custom_validator("length_3", lambda x: len(str(x)) == 3)
+        
+        # Test with valid data
+        data = {"email": "test@example.com", "age": "25", "code": "ABC"}
+        rules = {
+            "email": ["email"],
+            "age": ["positive"],
+            "code": ["length_3"]
+        }
+        result = self.validator.validate_with_custom_rules(data, rules)
+        self.assertTrue(result)
+        self.assertEqual(len(self.validator.get_errors()), 0)
+        
+        # Test with invalid data
+        data = {"email": "invalid_email", "age": "-5", "code": "ABCD"}
+        result = self.validator.validate_with_custom_rules(data, rules)
+        self.assertFalse(result)
+        errors = self.validator.get_errors()
+        self.assertIn("Rule 'email' failed for field 'email'", errors)
+        self.assertIn("Rule 'positive' failed for field 'age'", errors)
+        self.assertIn("Rule 'length_3' failed for field 'code'", errors)
+        
+        # Test with missing required field
+        data = {"email": "test@example.com"}  # Missing age and code
+        result = self.validator.validate_with_custom_rules(data, rules)
+        self.assertFalse(result)
+        errors = self.validator.get_errors()
+        self.assertIn("Field 'age' is required", errors)
+        self.assertIn("Field 'code' is required", errors)
+        
+        # Test with unknown rule
+        data = {"email": "test@example.com"}
+        rules = {"email": ["unknown_rule"]}
+        result = self.validator.validate_with_custom_rules(data, rules)
+        self.assertFalse(result)
+        errors = self.validator.get_errors()
+        self.assertIn("Unknown validation rule: unknown_rule", errors)
+
+    def test_add_field_validators(self):
+        """Test add_field_validators method."""
+        # Add multiple validators at once
+        self.validator.add_field_validators(
+            "name",
+            lambda x: isinstance(x, str),
+            lambda x: len(x) > 0,
+            lambda x: x.isalpha()
+        )
+        
+        # Test with valid data
+        data = {"name": "John"}
+        result = self.validator.validate(data)
+        self.assertTrue(result)
+        
+        # Test with invalid data (fails first validator)
+        data = {"name": 123}
+        result = self.validator.validate(data)
+        self.assertFalse(result)
+        
+        # Test with invalid data (fails second validator)
+        data = {"name": ""}
+        result = self.validator.validate(data)
+        self.assertFalse(result)
+        
+        # Test with invalid data (fails third validator)
+        data = {"name": "John123"}
+        result = self.validator.validate(data)
+        self.assertFalse(result)
+        
+        # Test adding to existing field
+        self.validator.add_field_validators("name", lambda x: len(x) < 10)
+        data = {"name": "VeryLongNameThatExceedsTenCharacters"}
+        result = self.validator.validate(data)
+        self.assertFalse(result)
+
+    def test_remove_field_validators(self):
+        """Test remove_field_validators method."""
+        # Add validators to a field
+        self.validator.add_validator("name", lambda x: isinstance(x, str))
+        self.validator.add_validator("age", lambda x: isinstance(x, int))
+        
+        # Verify validators exist
+        self.assertGreater(len(self.validator.get_field_validators("name")), 0)
+        self.assertGreater(len(self.validator.get_field_validators("age")), 0)
+        
+        # Remove validators for name field
+        self.validator.remove_field_validators("name")
+        
+        # Verify name validators are removed
+        self.assertEqual(len(self.validator.get_field_validators("name")), 0)
+        
+        # Verify age validators still exist
+        self.assertGreater(len(self.validator.get_field_validators("age")), 0)
+        
+        # Test removing non-existent field (should not raise error)
+        self.validator.remove_field_validators("non_existent")
+        
+        # Test validation after removal
+        data = {"name": "John", "age": 25}
+        result = self.validator.validate(data)
+        self.assertTrue(result)  # Should pass because name has no validators
+        
+        data = {"name": "John", "age": "not_a_number"}
+        result = self.validator.validate(data)
+        self.assertFalse(result)  # Should fail because age validator still exists
+
+    def test_get_field_validators(self):
+        """Test get_field_validators method."""
+        # Add validators to a field
+        def validator1(x):
+            return isinstance(x, str)
+        
+        def validator2(x):
+            return len(x) > 0
+        
+        def validator3(x):
+            return x.isalpha()
+        
+        self.validator.add_validator("name", validator1)
+        self.validator.add_validator("name", validator2)
+        self.validator.add_validator("name", validator3)
+        
+        # Get validators for the field
+        validators = self.validator.get_field_validators("name")
+        
+        # Verify we got the right number of validators
+        self.assertEqual(len(validators), 3)
+        
+        # Verify the validators are the same functions
+        self.assertEqual(validators[0], validator1)
+        self.assertEqual(validators[1], validator2)
+        self.assertEqual(validators[2], validator3)
+        
+        # Test that modifying the returned list doesn't affect the original
+        validators.append(lambda x: False)
+        original_validators = self.validator.get_field_validators("name")
+        self.assertEqual(len(original_validators), 3)  # Should still be 3
+        
+        # Test getting validators for non-existent field
+        non_existent_validators = self.validator.get_field_validators("non_existent")
+        self.assertEqual(len(non_existent_validators), 0)
+        self.assertIsInstance(non_existent_validators, list)
 
     def test_static_validator_methods(self):
         """Test static validator methods."""

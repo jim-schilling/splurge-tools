@@ -10,7 +10,7 @@ Copyright (c) 2025 Jim Schilling
 Licensed under the MIT License.
 """
 
-from datetime import date, timedelta
+from datetime import date
 from splurge_tools.random_helper import RandomHelper
 
 

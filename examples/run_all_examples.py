@@ -46,7 +46,7 @@ def run_example(example_file: Path) -> tuple[bool, str, float]:
             
     except subprocess.TimeoutExpired:
         execution_time = time.time() - start_time
-        return False, f"Example timed out after 5 minutes", execution_time
+        return False, "Example timed out after 5 minutes", execution_time
     except Exception as e:
         execution_time = time.time() - start_time
         return False, f"Error running example: {e}", execution_time
@@ -96,7 +96,7 @@ def main():
             print(f"  SUCCESS {filename} completed successfully ({exec_time:.2f}s)")
         else:
             print(f"  FAILED {filename} failed ({exec_time:.2f}s)")
-            print(f"     Error details available in summary report")
+            print("     Error details available in summary report")
         print()
     
     total_time = time.time() - total_start_time

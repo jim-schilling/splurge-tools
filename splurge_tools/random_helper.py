@@ -22,7 +22,7 @@ from secrets import randbits
 from typing import List
 
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeFormatError
-from splurge_tools.validation_utils import Validator
+
 
 class RandomHelper:
     """
@@ -50,7 +50,7 @@ class RandomHelper:
     ALPHANUMERIC_CHARS: str = f"{ALPHA_CHARS}{DIGITS}"
     BASE58_ALPHA: str = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     BASE58_DIGITS: str = "123456789"
-    BASE58_CHARS: str = f"{BASE58_ALPHA}{BASE58_DIGITS}"
+    BASE58_CHARS: str = f"{BASE58_DIGITS}{BASE58_ALPHA}"
     SYMBOLS: str = "!@#$%^&*()_+-=[]{};:,.<>?`~"
 
     @staticmethod
@@ -139,7 +139,11 @@ class RandomHelper:
             >>> random_int_range(1000000, 2000000, secure=True)  # Cryptographically secure
             1789012
         """
-        Validator.is_range_bounds(lower, upper, lower_param="lower", upper_param="upper")
+        if lower >= upper:
+            raise SplurgeRangeError(
+                "lower must be < upper",
+                details=f"Got lower={lower}, upper={upper}"
+            )
         
         if lower < cls.INT64_MIN or upper > cls.INT64_MAX:
             raise SplurgeRangeError(
@@ -177,7 +181,11 @@ class RandomHelper:
             >>> RandomHelper.as_float_range(-1.0, 1.0, secure=True)  # Cryptographically secure
             0.12345
         """
-        Validator.is_range_bounds(lower, upper, lower_param="lower", upper_param="upper")
+        if lower >= upper:
+            raise SplurgeRangeError(
+                "lower must be < upper",
+                details=f"Got lower={lower}, upper={upper}"
+            )
         
         if secure:
             # Use secure random generation
@@ -220,8 +228,29 @@ class RandomHelper:
             >>> random_string(10, RandomHelperConstants.ALPHANUMERIC_CHARS)
             'aB3cD4eF5g'
         """
-        length = Validator.is_positive_integer(length, "length", min_value=1)
-        allowable_chars = Validator.is_non_empty_string(allowable_chars, "allowable_chars")
+        if not isinstance(length, int):
+            raise SplurgeParameterError(
+                f"length must be an integer, got {type(length).__name__}",
+                details=f"Expected integer, received: {repr(length)}"
+            )
+        
+        if length < 1:
+            raise SplurgeRangeError(
+                f"length must be >= 1, got {length}",
+                details=f"Value {length} is below minimum allowed value 1"
+            )
+        
+        if not isinstance(allowable_chars, str):
+            raise SplurgeParameterError(
+                f"allowable_chars must be a string, got {type(allowable_chars).__name__}",
+                details=f"Expected string, received: {repr(allowable_chars)}"
+            )
+        
+        if not allowable_chars:
+            raise SplurgeParameterError(
+                "allowable_chars must be a non-empty string",
+                details="Empty strings are not allowed"
+            )
 
         return "".join(
             [
@@ -263,8 +292,23 @@ class RandomHelper:
             >>> random_variable_string(5, 10, RandomHelperConstants.ALPHANUMERIC_CHARS)
             'aB3cD4eF'
         """
-        lower = Validator.is_non_negative_integer(lower, "lower")
-        Validator.is_range_bounds(lower, upper, lower_param="lower", upper_param="upper")
+        if not isinstance(lower, int):
+            raise SplurgeParameterError(
+                f"lower must be an integer, got {type(lower).__name__}",
+                details=f"Expected integer, received: {repr(lower)}"
+            )
+        
+        if lower < 0:
+            raise SplurgeRangeError(
+                f"lower must be >= 0, got {lower}",
+                details=f"Value {lower} is below minimum allowed value 0"
+            )
+        
+        if lower >= upper:
+            raise SplurgeRangeError(
+                "lower must be < upper",
+                details=f"Got lower={lower}, upper={upper}"
+            )
 
         length: int = cls.as_int_range(lower, upper, secure=secure)
 
@@ -413,28 +457,36 @@ class RandomHelper:
             >>> RandomHelper.as_base58_like(10, symbols="@#$", secure=True)
             'A3@bC4#dE'  # Secure generation with symbols from SYMBOLS constant
         """
-        size = Validator.is_positive_integer(size, "size", min_value=1)
+        if not isinstance(size, int):
+            raise SplurgeParameterError(
+                f"size must be an integer, got {type(size).__name__}",
+                details=f"Expected integer, received: {repr(size)}"
+            )
+        
+        if size < 1:
+            raise SplurgeRangeError(
+                f"size must be >= 1, got {size}",
+                details=f"Value {size} is below minimum allowed value 1"
+            )
         
         # Validate symbols parameter
         if symbols:
             invalid_chars = set(symbols) - set(cls.SYMBOLS)
             if invalid_chars:
-                message, details = Validator.create_helpful_error_message(
-                    "Invalid characters in symbols parameter",
-                    received_value=symbols,
-                    suggestions=[
-                        f"Use only characters from SYMBOLS constant: {cls.SYMBOLS}",
-                        f"Remove invalid characters: {''.join(sorted(invalid_chars))}"
-                    ]
-                )
-                raise SplurgeFormatError(message, details=details)
+                details_parts = []
+                details_parts.append(f"Received value: {repr(symbols)} (type: {type(symbols).__name__})")
+                details_parts.append("Suggestions:")
+                details_parts.append(f"  - Use only characters from SYMBOLS constant: {cls.SYMBOLS}")
+                details_parts.append(f"  - Remove invalid characters: {''.join(sorted(invalid_chars))}")
+                details = "\n".join(details_parts)
+                raise SplurgeFormatError("Invalid characters in symbols parameter", details=details)
         
         # Determine required character types
         use_symbols = symbols and len(symbols) > 0
         min_required = 2 if not use_symbols else 3  # alpha + digit + optional symbol
         
         if size < min_required:
-            message = f"Size too small to guarantee character diversity"
+            message = "Size too small to guarantee character diversity"
             details = f"Need at least {min_required} characters to include alpha, digit"
             if use_symbols:
                 details += ", and symbol"
@@ -646,17 +698,15 @@ class RandomHelper:
             '456-xyz'
         """
         if not mask or (mask.count("#") == 0 and mask.count("@") == 0):
-            message, details = Validator.create_helpful_error_message(
-                "Invalid mask format",
-                received_value=mask,
-                expected_type="string containing # (digit) or @ (letter) placeholders",
-                suggestions=[
-                    "Use # for digit placeholders",
-                    "Use @ for letter placeholders", 
-                    "Example: '###-@@-###' generates '123-AB-456'"
-                ]
-            )
-            raise SplurgeFormatError(message, details=details)
+            details_parts = []
+            details_parts.append(f"Received value: {repr(mask)} (type: {type(mask).__name__})")
+            details_parts.append("Expected: string containing # (digit) or @ (letter) placeholders")
+            details_parts.append("Suggestions:")
+            details_parts.append("  - Use # for digit placeholders")
+            details_parts.append("  - Use @ for letter placeholders")
+            details_parts.append("  - Example: '###-@@-###' generates '123-AB-456'")
+            details = "\n".join(details_parts)
+            raise SplurgeFormatError("Invalid mask format", details=details)
 
         digit_count: int = mask.count("#")
         digits: str = cls.as_numeric(digit_count, secure=secure)
@@ -706,22 +756,52 @@ class RandomHelper:
             >>> RandomHelper.as_sequenced_string(3, 3, start=100, prefix='ID-', suffix='-END')
             ['ID-100-END', 'ID-101-END', 'ID-102-END']
         """
-        count = Validator.is_positive_integer(count, "count", min_value=1)
-        digits = Validator.is_positive_integer(digits, "digits", min_value=1)
-        start = Validator.is_non_negative_integer(start, "start")
+        if not isinstance(count, int):
+            raise SplurgeParameterError(
+                f"count must be an integer, got {type(count).__name__}",
+                details=f"Expected integer, received: {repr(count)}"
+            )
+        
+        if count < 1:
+            raise SplurgeRangeError(
+                f"count must be >= 1, got {count}",
+                details=f"Value {count} is below minimum allowed value 1"
+            )
+        
+        if not isinstance(digits, int):
+            raise SplurgeParameterError(
+                f"digits must be an integer, got {type(digits).__name__}",
+                details=f"Expected integer, received: {repr(digits)}"
+            )
+        
+        if digits < 1:
+            raise SplurgeRangeError(
+                f"digits must be >= 1, got {digits}",
+                details=f"Value {digits} is below minimum allowed value 1"
+            )
+        
+        if not isinstance(start, int):
+            raise SplurgeParameterError(
+                f"start must be an integer, got {type(start).__name__}",
+                details=f"Expected integer, received: {repr(start)}"
+            )
+        
+        if start < 0:
+            raise SplurgeRangeError(
+                f"start must be >= 0, got {start}",
+                details=f"Value {start} is below minimum allowed value 0"
+            )
 
         max_value: int = 10**digits - 1
         if start + count > max_value:
-            message, details = Validator.create_helpful_error_message(
-                "Sequence parameters exceed digit capacity",
-                suggestions=[
-                    f"Increase digits parameter (current: {digits})",
-                    f"Reduce count parameter (current: {count})",
-                    f"Reduce start parameter (current: {start})",
-                    f"Maximum sequence value with {digits} digits: {max_value}"
-                ]
-            )
-            raise SplurgeRangeError(message, details=details)
+            details_parts = []
+            details_parts.append("Suggestions:")
+            details_parts.append(f"  - Increase digits parameter (current: {digits})")
+            details_parts.append(f"  - Reduce count parameter (current: {count})")
+            details_parts.append(f"  - Reduce start parameter (current: {start})")
+            details_parts.append(f"  - Maximum sequence value with {digits} digits: {max_value}")
+            details = "\n".join(details_parts)
+            raise SplurgeRangeError("Sequence parameters exceed digit capacity", details=details)
 
         prefix = prefix if prefix else ""
         suffix = suffix if suffix else ""

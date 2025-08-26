@@ -10,9 +10,9 @@ Licensed under the MIT License.
 """
 
 import tempfile
-import os
 from pathlib import Path
 from splurge_tools.dsv_helper import DsvHelper
+from splurge_tools.type_helper import profile_values
 
 
 def create_sample_data_files():
@@ -107,7 +107,7 @@ def advanced_dsv_parsing_examples(files):
     
     # Parse with different delimiters
     tab_data = "Name\tAge\tCity\nJohn\t30\tNew York\nJane\t25\tLos Angeles"
-    print(f"Tab-delimited data: '{tab_data.replace(chr(9), '\\t')}'")
+    print("Tab-delimited data: '" + tab_data.replace(chr(9), '\\t') + "'")
     
     # Create temporary tab file
     temp_tab_file = files['basic'].parent / "temp_tab.tsv"
@@ -173,10 +173,6 @@ def dsv_profiling_examples(files):
     print(f"Profiling data from: {files['basic']}")
     employee_data = DsvHelper.parse_file(files['basic'], delimiter=",")
     
-    # Create a TabularDataModel for profiling
-    from splurge_tools.tabular_data_model import TabularDataModel
-    model = TabularDataModel(employee_data, header_rows=1)
-    
     # Profile columns using DsvHelper
     # Note: We need to extract the data without headers for profiling
     data_without_headers = employee_data[1:]  # Skip header row
@@ -199,7 +195,6 @@ def dsv_profiling_examples(files):
     print()
     
     # Demonstrate type inference on columns
-    from splurge_tools.type_helper import profile_values
     
     print("Type Inference by Column:")
     print("Column".ljust(15) + "Inferred Type".ljust(15) + "Sample Values")
@@ -224,9 +219,9 @@ def error_handling_examples(files):
     
     # Test various error conditions
     error_scenarios = [
-        ("Empty delimiter", lambda: DsvHelper.parse("a,b,c", "")),
-        ("None delimiter", lambda: DsvHelper.parse("a,b,c", None)),
-        ("Non-existent file", lambda: DsvHelper.parse_file("nonexistent.csv", ",")),
+        ("Empty delimiter", lambda: DsvHelper.parse("a,b,c", delimiter="")),
+        ("None delimiter", lambda: DsvHelper.parse("a,b,c", delimiter=None)),
+        ("Non-existent file", lambda: DsvHelper.parse_file("nonexistent.csv", delimiter=",")),
     ]
     
     for scenario_name, test_func in error_scenarios:

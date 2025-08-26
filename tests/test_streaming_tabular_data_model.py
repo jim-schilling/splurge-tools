@@ -29,7 +29,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -75,7 +75,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -116,7 +116,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
 
             # Create streaming model with small buffer
             model = StreamingTabularDataModel(
@@ -153,7 +153,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -192,7 +192,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(
@@ -231,7 +231,7 @@ class TestStreamingTabularDataModel(unittest.TestCase):
 
         try:
             # Create stream from DsvHelper
-            stream = DsvHelper.parse_stream(temp_file, ",", chunk_size=100)
+            stream = DsvHelper.parse_stream(temp_file, delimiter=",", chunk_size=100)
             
             # Create streaming model
             model = StreamingTabularDataModel(

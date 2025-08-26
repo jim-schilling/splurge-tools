@@ -8,15 +8,13 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import re
-import warnings
 from typing import Generator, Iterator, Any
 
 from splurge_tools.protocols import TabularDataProtocol
 from splurge_tools.type_helper import DataType, profile_values
-from splurge_tools.validation_utils import Validator
+
 from splurge_tools.tabular_utils import process_headers as _process_headers, normalize_rows as _normalize_rows
-from splurge_tools.common_utils import validate_data_structure, safe_dict_access, safe_index_access
+from splurge_tools.common_utils import validate_data_structure, safe_dict_access
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
 
 
@@ -47,7 +45,18 @@ class TabularDataModel(TabularDataProtocol):
             ValueError: If data or header configuration is invalid.
         """
         data = validate_data_structure(data, expected_type=list, param_name="data", allow_empty=False)
-        header_rows = Validator.is_non_negative_integer(header_rows, "header_rows")
+        
+        if not isinstance(header_rows, int):
+            raise SplurgeParameterError(
+                f"header_rows must be an integer, got {type(header_rows).__name__}",
+                details=f"Expected integer, received: {repr(header_rows)}"
+            )
+        
+        if header_rows < 0:
+            raise SplurgeRangeError(
+                f"header_rows must be >= 0, got {header_rows}",
+                details=f"Value {header_rows} is below minimum allowed value 0"
+            )
 
         self._raw_data = data
         self._header_rows = header_rows
@@ -350,7 +359,6 @@ class _TypedView:
         return self._model.column_index(name)
 
     def __iter__(self) -> Iterator[list[object]]:
-        from splurge_tools.type_helper import String
 
         for row in self._model:
             yield [self._convert(value, self._inferred_type(i)) for i, value in enumerate(row)]

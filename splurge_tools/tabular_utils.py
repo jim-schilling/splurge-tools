@@ -8,7 +8,6 @@ by in-memory and streaming tabular data models.
 from __future__ import annotations
 
 import re
-from typing import Iterable, Iterator, List
 
 
 def process_headers(

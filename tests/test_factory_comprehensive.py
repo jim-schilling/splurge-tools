@@ -1,16 +1,19 @@
 """
-Comprehensive unit tests for Factory classes to improve coverage.
+Comprehensive tests for factory functions.
+
+Tests all factory functions with various input types and configurations.
 """
 
 import os
 import tempfile
 import unittest
-from typing import Iterator
 from pathlib import Path
 
 from splurge_tools.factory import create_in_memory_model, create_streaming_model
 from splurge_tools.protocols import TabularDataProtocol, StreamingTabularDataProtocol
-from splurge_tools.exceptions import SplurgeValidationError
+from splurge_tools.data_transformer import DataTransformer
+from splurge_tools.data_validator import DataValidator
+from splurge_tools.resource_manager import safe_file_operation
 
 
 class TestModelConstruction(unittest.TestCase):
@@ -93,7 +96,6 @@ class TestModelConstruction(unittest.TestCase):
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
         type_configs = {"age": "int"}
         
-        from splurge_tools.tabular_data_model import TabularDataModel
         base = create_in_memory_model(data)
         model = base.to_typed(type_configs=type_configs)
         
@@ -194,8 +196,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
 
     def setUp(self):
         data = [["name", "age"], ["John", "25"]]
-        from splurge_tools.data_transformer import DataTransformer
-        from splurge_tools.data_validator import DataValidator
         self.data_model = create_in_memory_model(data)
         self.DataTransformer = DataTransformer
         self.DataValidator = DataValidator
@@ -226,7 +226,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = f.name
         
         try:
-            from splurge_tools.resource_manager import safe_file_operation
             with safe_file_operation(temp_file_path) as fh:
                 self.assertIsNotNone(fh)
             
@@ -243,7 +242,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = Path(f.name)
         
         try:
-            from splurge_tools.resource_manager import safe_file_operation
             with safe_file_operation(temp_file_path) as fh:
                 self.assertIsNotNone(fh)
             
@@ -260,7 +258,6 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
             temp_file_path = f.name
         
         try:
-            from splurge_tools.resource_manager import safe_file_operation
             with safe_file_operation(temp_file_path, mode="r", encoding="utf-8") as fh:
                 self.assertIsNotNone(fh)
             

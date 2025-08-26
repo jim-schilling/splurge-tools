@@ -11,7 +11,6 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-import re
 from typing import Generator, Iterator
 
 from splurge_tools.protocols import StreamingTabularDataProtocol

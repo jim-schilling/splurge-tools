@@ -157,8 +157,8 @@ def string_tokenization_examples():
     
     print("Tokenization Examples:")
     for description, text, delimiter in test_data:
-        tokens = StringTokenizer.parse(text, delimiter)
-        tokens_no_strip = StringTokenizer.parse(text, delimiter, strip=False)
+        tokens = StringTokenizer.parse(text, delimiter=delimiter)
+        tokens_no_strip = StringTokenizer.parse(text, delimiter=delimiter, strip=False)
         
         print(f"  {description}: '{text}'")
         print(f"    Tokens (stripped): {tokens}")
@@ -175,10 +175,10 @@ def string_tokenization_examples():
     ]
     
     for text, bookend in quoted_examples:
-        tokens = StringTokenizer.parse(text, ",")
+        tokens = StringTokenizer.parse(text, delimiter=",")
         tokens_with_bookend = []
         for token in tokens:
-            clean_token = StringTokenizer.remove_bookends(token, bookend)
+            clean_token = StringTokenizer.remove_bookends(token, bookend=bookend)
             tokens_with_bookend.append(clean_token)
         
         print(f"  Text: '{text}'")
@@ -195,9 +195,9 @@ line3,field3,value3"""
     lines = multi_line_text.split('\n')
     parsed_lines = []
     for line in lines:
-        parsed_lines.append(StringTokenizer.parse(line, ","))
+        parsed_lines.append(StringTokenizer.parse(line, delimiter=","))
     
-    print(f"  Multi-line text:")
+    print("  Multi-line text:")
     for i, line in enumerate(lines):
         print(f"    Line {i}: '{line}' -> {parsed_lines[i]}")
     print()
@@ -315,11 +315,11 @@ def comprehensive_text_processing_workflow():
     print("Step 3: Tokenization")
     tokenized_data = []
     for line in normalized_data:
-        tokens = StringTokenizer.parse(line, ",", strip=True)
+        tokens = StringTokenizer.parse(line, delimiter=",", strip=True)
         # Remove bookends if present
         clean_tokens = []
         for token in tokens:
-            clean_token = StringTokenizer.remove_bookends(token, '"', strip=True)
+            clean_token = StringTokenizer.remove_bookends(token, bookend='"', strip=True)
             clean_tokens.append(clean_token)
         tokenized_data.append(clean_tokens)
         print(f"  '{line}' -> {clean_tokens}")
