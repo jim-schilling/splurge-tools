@@ -10,8 +10,10 @@ This module is licensed under the MIT License.
 class Base58Error(Exception):
     """Base class for all base-58 errors."""
 
+
 class Base58TypeError(Base58Error):
     """Raised when a type error occurs."""
+
 
 class Base58ValidationError(Base58Error):
     """Raised when base-58 validation fails."""
@@ -30,12 +32,12 @@ class Base58:
     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     """
 
-    DIGITS = '123456789'
-    ALPHA_UPPER = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-    ALPHA_LOWER = 'abcdefghijkmnopqrstuvwxyz'    
-    ALPHABET = DIGITS + ALPHA_UPPER + ALPHA_LOWER 
-    _BASE = len(ALPHABET)    
-    
+    DIGITS = "123456789"
+    ALPHA_UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    ALPHA_LOWER = "abcdefghijkmnopqrstuvwxyz"
+    ALPHABET = DIGITS + ALPHA_UPPER + ALPHA_LOWER
+    _BASE = len(ALPHABET)
+
     @classmethod
     def encode(cls, data: bytes) -> str:
         """
@@ -52,10 +54,12 @@ class Base58:
             Base58ValidationError: If input data is empty or invalid
         """
         if not isinstance(data, bytes):
-            raise Base58TypeError("Input must be bytes")
-        
+            msg = "Input must be bytes"
+            raise Base58TypeError(msg)
+
         if not data:
-            raise Base58ValidationError("Cannot encode empty data")
+            msg = "Cannot encode empty data"
+            raise Base58ValidationError(msg)
 
         # Convert bytes to integer
         num = int.from_bytes(data, byteorder="big")
@@ -95,13 +99,16 @@ class Base58:
             Base58ValidationError: If input string is empty or contains invalid characters
         """
         if not isinstance(base58_data, str):
-            raise Base58TypeError("Input must be a string")
+            msg = "Input must be a string"
+            raise Base58TypeError(msg)
 
         if not base58_data:
-            raise Base58ValidationError("Cannot decode empty string")
+            msg = "Cannot decode empty string"
+            raise Base58ValidationError(msg)
 
         if not cls.is_valid(base58_data):
-            raise Base58ValidationError("Invalid base-58 string")
+            msg = "Invalid base-58 string"
+            raise Base58ValidationError(msg)
 
         # Count leading '1' characters
         leading_ones = 0
@@ -151,4 +158,4 @@ class Base58:
         try:
             return all(char in cls.ALPHABET for char in base58_data)
         except Exception:
-            return False    
+            return False

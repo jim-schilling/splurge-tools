@@ -15,13 +15,13 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from collections import abc
 import re
 import typing
+from collections import abc
+from collections.abc import Iterable
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, Iterable
-
+from typing import Any
 
 
 class DataType(Enum):
@@ -56,78 +56,77 @@ class DataType(Enum):
 class TypeInference:
     """
     Type inference utility that implements the TypeInferenceProtocol.
-    
+
     This class provides methods for inferring data types and converting values
     to their inferred types.
     """
-    
+
     def can_infer(
         self,
-        value: Any
+        value: Any,
     ) -> bool:
         """
         Check if the value can be inferred as a specific type.
-        
+
         Args:
             value: The value to check
-            
+
         Returns:
             True if the value can be inferred as a specific type, False otherwise
         """
         if not isinstance(value, str):
             return False
-            
+
         inferred_type = String.infer_type(value)
         return inferred_type != DataType.STRING
-    
+
     def infer_type(
         self,
-        value: str
+        value: str,
     ) -> DataType:
         """
         Infer the type of the given value.
-        
+
         Args:
             value: The value to infer the type for
-            
+
         Returns:
             The inferred DataType
         """
         return String.infer_type(value)
-    
+
     def convert_value(
         self,
-        value: Any
+        value: Any,
     ) -> Any:
         """
         Convert the value to its inferred type.
-        
+
         Args:
             value: The value to convert
-            
+
         Returns:
             The converted value in its inferred type
         """
         inferred_type = self.infer_type(value)
-        
+
         if inferred_type == DataType.BOOLEAN:
             return String.to_bool(value)
-        elif inferred_type == DataType.INTEGER:
+        if inferred_type == DataType.INTEGER:
             return String.to_int(value)
-        elif inferred_type == DataType.FLOAT:
+        if inferred_type == DataType.FLOAT:
             return String.to_float(value)
-        elif inferred_type == DataType.DATE:
+        if inferred_type == DataType.DATE:
             return String.to_date(value)
-        elif inferred_type == DataType.TIME:
+        if inferred_type == DataType.TIME:
             return String.to_time(value)
-        elif inferred_type == DataType.DATETIME:
+        if inferred_type == DataType.DATETIME:
             return String.to_datetime(value)
-        elif inferred_type == DataType.NONE:
+        if inferred_type == DataType.NONE:
             return None
-        elif inferred_type == DataType.EMPTY:
+        if inferred_type == DataType.EMPTY:
             return ""
-        else:
-            return value
+        return value
 
 
 class String:
@@ -203,10 +202,10 @@ class String:
     _DATE_YYYY_MM_DD_REGEX = re.compile(r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}$""")
     _DATE_MM_DD_YYYY_REGEX = re.compile(r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}$""")
     _DATETIME_YYYY_MM_DD_REGEX = re.compile(
-        r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+        r"""^\d{4}[-/.]?\d{2}[-/.]?\d{2}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
     )
     _DATETIME_MM_DD_YYYY_REGEX = re.compile(
-        r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$"""
+        r"""^\d{2}[-/.]?\d{2}[-/.]?\d{4}[T]?\d{2}[:]?\d{2}([:]?\d{2}([.]?\d{5})?)?$""",
     )
     _TIME_24HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?$""")
     _TIME_12HOUR_REGEX = re.compile(r"""^(\d{1,2}):(\d{2})(:(\d{2})([.](\d+))?)?\s*(AM|PM|am|pm)$""")
@@ -217,27 +216,27 @@ class String:
         cls,
         value: str | bool | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> str | None:
         """
         Normalize input value for type checking operations.
-        
+
         Args:
             value: Value to normalize
             trim: Whether to trim whitespace
-            
+
         Returns:
             Normalized string value or None
         """
         if value is None:
             return None
-        
+
         if isinstance(value, bool):
             return str(value).lower()
-        
+
         if isinstance(value, str):
             return value.strip() if trim else value
-        
+
         return str(value)
 
     @classmethod
@@ -245,7 +244,7 @@ class String:
         cls,
         value: str | bool | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a boolean.
@@ -266,14 +265,14 @@ class String:
         """
         if value is None:
             return False
-        
+
         if isinstance(value, bool):
             return True
-        
+
         if isinstance(value, str):
             normalized = value.strip().lower() if trim else value.lower()
             return normalized in ["true", "false"]
-        
+
         return False
 
     @classmethod
@@ -281,7 +280,7 @@ class String:
         cls,
         value: Any,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value represents None/null.
@@ -312,7 +311,7 @@ class String:
         cls,
         value: Any,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value is an empty string or contains only whitespace.
@@ -332,10 +331,10 @@ class String:
         """
         if value is None:
             return False
-        
+
         if not isinstance(value, str):
             return False
-        
+
         return not value.strip() if trim else not value
 
     @classmethod
@@ -343,7 +342,7 @@ class String:
         cls,
         value: str | float | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a float.
@@ -369,7 +368,7 @@ class String:
         if isinstance(value, str):
             normalized = value.strip() if trim else value
             return cls._FLOAT_REGEX.match(normalized) is not None
-        
+
         return False
 
     @classmethod
@@ -377,7 +376,7 @@ class String:
         cls,
         value: str | int | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as an integer.
@@ -403,15 +402,15 @@ class String:
         if isinstance(value, str):
             normalized = value.strip() if trim else value
             return cls._INTEGER_REGEX.match(normalized) is not None
-        
+
         return False
 
     @classmethod
     def is_numeric_like(
         cls,
-        value: str | float | int | None,
+        value: str | float | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a number (int or float).
@@ -431,12 +430,12 @@ class String:
         if value is None:
             return False
 
-        if isinstance(value, (int, float)):
+        if isinstance(value, int | float):
             return True
-        
+
         if isinstance(value, str):
             return cls.is_float_like(value, trim=trim) or cls.is_int_like(value, trim=trim)
-        
+
         return False
 
     @classmethod
@@ -444,7 +443,7 @@ class String:
         cls,
         value: str | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value is non-numeric (categorical).
@@ -528,7 +527,7 @@ class String:
         cls,
         value: str | date | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a date.
@@ -595,7 +594,7 @@ class String:
         cls,
         value: str | datetime | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a datetime.
@@ -634,7 +633,7 @@ class String:
         cls,
         value: str | time | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if value can be interpreted as a time.
@@ -679,7 +678,7 @@ class String:
         value: str | bool | None,
         *,
         default: bool | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool | None:
         """
         Convert value to boolean.
@@ -716,7 +715,7 @@ class String:
         value: str | float | None,
         *,
         default: float | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> float | None:
         """
         Convert value to float.
@@ -744,7 +743,7 @@ class String:
         value: str | int | None,
         *,
         default: int | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> int | None:
         """
         Convert value to integer.
@@ -772,7 +771,7 @@ class String:
         value: str | date | None,
         *,
         default: date | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> date | None:
         """
         Convert value to date.
@@ -798,7 +797,7 @@ class String:
 
         if not isinstance(value, str):
             return default
-            
+
         normalized = value.strip() if trim else value
 
         for pattern in cls._DATE_PATTERNS:
@@ -816,7 +815,7 @@ class String:
         value: str | datetime | None,
         *,
         default: datetime | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> datetime | None:
         """
         Convert value to datetime.
@@ -842,13 +841,12 @@ class String:
 
         if not isinstance(value, str):
             return default
-            
+
         normalized = value.strip() if trim else value
 
         for pattern in cls._DATETIME_PATTERNS:
             try:
-                tvalue = datetime.strptime(normalized, pattern)
-                return tvalue
+                return datetime.strptime(normalized, pattern)
             except ValueError:
                 pass
 
@@ -860,7 +858,7 @@ class String:
         value: str | time | None,
         *,
         default: time | None = None,
-        trim: bool = True
+        trim: bool = True,
     ) -> time | None:
         """
         Convert value to time.
@@ -887,7 +885,7 @@ class String:
 
         if not isinstance(value, str):
             return default
-            
+
         normalized = value.strip() if trim else value
 
         for pattern in cls._TIME_PATTERNS:
@@ -904,7 +902,7 @@ class String:
         cls,
         value: str | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> bool:
         """
         Check if string value has leading zero.
@@ -929,9 +927,9 @@ class String:
     @classmethod
     def infer_type(
         cls,
-        value: str | bool | int | float | date | time | datetime | None,
+        value: str | bool | float | date | time | datetime | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> DataType:
         """
         Infer the most appropriate data type for a value.
@@ -953,17 +951,17 @@ class String:
         # Handle non-string types first
         if isinstance(value, bool):
             return DataType.BOOLEAN
-        elif isinstance(value, int):
+        if isinstance(value, int):
             return DataType.INTEGER
-        elif isinstance(value, float):
+        if isinstance(value, float):
             return DataType.FLOAT
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             return DataType.DATETIME
-        elif isinstance(value, time):
+        if isinstance(value, time):
             return DataType.TIME
-        elif isinstance(value, date):
+        if isinstance(value, date):
             return DataType.DATE
-        
+
         # Handle string and None types
         if cls.is_none_like(value, trim=trim):
             return DataType.NONE
@@ -995,9 +993,9 @@ class String:
     @classmethod
     def infer_type_name(
         cls,
-        value: str | bool | int | float | date | time | datetime | None,
+        value: str | bool | float | date | time | datetime | None,
         *,
-        trim: bool = True
+        trim: bool = True,
     ) -> str:
         """
         Infer the most appropriate data type name for a value.
@@ -1023,16 +1021,16 @@ def _determine_type_from_counts(
     types: dict[str, int],
     count: int,
     *,
-    allow_special_cases: bool = True
+    allow_special_cases: bool = True,
 ) -> DataType | None:
     """
     Determine the data type based on type counts.
-    
+
     Args:
         types: Dictionary of type counts
         count: Total number of values processed
         allow_special_cases: Whether to apply special case logic (all-digit strings, etc.)
-    
+
     Returns:
         DataType if a definitive type can be determined, None otherwise
     """
@@ -1067,12 +1065,7 @@ def _determine_type_from_counts(
     if types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.INTEGER
 
-    if (
-        types[DataType.FLOAT.name]
-        + types[DataType.INTEGER.name]
-        + types[DataType.EMPTY.name]
-        == count
-    ):
+    if types[DataType.FLOAT.name] + types[DataType.INTEGER.name] + types[DataType.EMPTY.name] == count:
         return DataType.FLOAT
 
     return None
@@ -1080,11 +1073,12 @@ def _determine_type_from_counts(
 
 _INCREMENTAL_TYPECHECK_THRESHOLD = 10_000
 
+
 def profile_values(
-    values: Iterable[Any], 
-    *, 
+    values: Iterable[Any],
+    *,
     trim: bool = True,
-    use_incremental_typecheck: bool = True
+    use_incremental_typecheck: bool = True,
 ) -> DataType:
     """
     Infer the most appropriate data type for a collection of values.
@@ -1116,18 +1110,19 @@ def profile_values(
         >>> profile_values(['1', '2', '3'], use_incremental_typecheck=False)  # Full analysis
     """
     if not is_iterable_not_string(values):
-        raise ValueError("values must be iterable")
+        msg = "values must be iterable"
+        raise ValueError(msg)
 
     # Convert to list to handle generators and ensure we can iterate multiple times
     values_list: list[Any] = list(values)
-    
+
     if not values_list:
         return DataType.EMPTY
-    
+
     # Only enable incremental type checking for lists larger than the threshold
     if len(values_list) <= _INCREMENTAL_TYPECHECK_THRESHOLD:
         use_incremental_typecheck = False
-    
+
     # Sequential processing with incremental checks
     types = {
         DataType.BOOLEAN.name: 0,
@@ -1143,7 +1138,7 @@ def profile_values(
 
     count = 0
     total_count = len(values_list)
-    
+
     # Check points for early termination (25%, 50%, 75%) - only used if incremental checking is enabled
     check_points = {}
     if use_incremental_typecheck:
@@ -1158,25 +1153,25 @@ def profile_values(
         inferred_type = String.infer_type(value, trim=trim)
         types[inferred_type.name] += 1
         count += 1
-        
+
         # Check for early termination at check points (only if incremental checking is enabled)
         if use_incremental_typecheck and count in check_points:
             # Only do early termination for very clear cases that don't involve
             # the special all-digit string logic or mixed int/float detection
-            
+
             # Early detection of MIXED type: if we have both numeric/temporal types AND string types
             numeric_temporal_count = (
-                types[DataType.INTEGER.name] + 
-                types[DataType.FLOAT.name] + 
-                types[DataType.DATE.name] + 
-                types[DataType.DATETIME.name] + 
-                types[DataType.TIME.name]
+                types[DataType.INTEGER.name]
+                + types[DataType.FLOAT.name]
+                + types[DataType.DATE.name]
+                + types[DataType.DATETIME.name]
+                + types[DataType.TIME.name]
             )
             string_count = types[DataType.STRING.name]
-            
+
             if numeric_temporal_count > 0 and string_count > 0:
                 return DataType.MIXED
-            
+
             early_result = _determine_type_from_counts(types, count, allow_special_cases=False)
             if early_result is not None:
                 return early_result
@@ -1188,19 +1183,21 @@ def profile_values(
 
     # Special case: if we have mixed DATE, TIME, DATETIME, INTEGER types,
     # check if all values are all-digit strings and prioritize INTEGER
-    if (types[DataType.DATE.name] + types[DataType.TIME.name] + 
-        types[DataType.DATETIME.name] + types[DataType.INTEGER.name] + 
-        types[DataType.EMPTY.name] == count and
-        (types[DataType.DATE.name] > 0 or types[DataType.TIME.name] > 0 or 
-         types[DataType.DATETIME.name] > 0 or types[DataType.EMPTY.name] > 0)):
-        
+    if types[DataType.DATE.name] + types[DataType.TIME.name] + types[DataType.DATETIME.name] + types[
+        DataType.INTEGER.name
+    ] + types[DataType.EMPTY.name] == count and (
+        types[DataType.DATE.name] > 0
+        or types[DataType.TIME.name] > 0
+        or types[DataType.DATETIME.name] > 0
+        or types[DataType.EMPTY.name] > 0
+    ):
         # Second pass: check if all non-empty values are all-digit strings (with optional +/- signs)
         all_digit_values = True
         for value in values_list:
             if not String.is_empty_like(value, trim=trim) and not String.is_int_like(value, trim=trim):
                 all_digit_values = False
                 break
-        
+
         if all_digit_values:
             return DataType.INTEGER
 
@@ -1225,15 +1222,9 @@ def is_list_like(value: Any) -> bool:
     if isinstance(value, list):
         return True
 
-    if (
-        hasattr(value, "__iter__")
-        and hasattr(value, "append")
-        and hasattr(value, "remove")
-        and hasattr(value, "index")
-    ):
-        return True
-
-    return False
+    return bool(
+        hasattr(value, "__iter__") and hasattr(value, "append") and hasattr(value, "remove") and hasattr(value, "index"),
+    )
 
 
 def is_dict_like(value: Any) -> bool:
@@ -1254,10 +1245,7 @@ def is_dict_like(value: Any) -> bool:
     if isinstance(value, dict):
         return True
 
-    if hasattr(value, "keys") and hasattr(value, "get") and hasattr(value, "values"):
-        return True
-
-    return False
+    return bool(hasattr(value, "keys") and hasattr(value, "get") and hasattr(value, "values"))
 
 
 def is_iterable(value: Any) -> bool:
@@ -1276,18 +1264,15 @@ def is_iterable(value: Any) -> bool:
         >>> is_iterable('abc')             # True
         >>> is_iterable(123)               # False
     """
-    if isinstance(value, (abc.Iterable, typing.Iterable)):
+    if isinstance(value, abc.Iterable | typing.Iterable):
         return True
 
-    if (
+    return bool(
         hasattr(value, "__iter__")
         and hasattr(value, "__getitem__")
         and hasattr(value, "__len__")
-        and hasattr(value, "__next__")
-    ):
-        return True
-
-    return False
+        and hasattr(value, "__next__"),
+    )
 
 
 def is_iterable_not_string(value: Any) -> bool:
@@ -1306,10 +1291,7 @@ def is_iterable_not_string(value: Any) -> bool:
         >>> is_iterable_not_string('abc')      # False
         >>> is_iterable_not_string(123)        # False
     """
-    if not isinstance(value, str) and is_iterable(value):
-        return True
-
-    return False
+    return bool(not isinstance(value, str) and is_iterable(value))
 
 
 def is_empty(value: Any) -> bool:
@@ -1333,11 +1315,11 @@ def is_empty(value: Any) -> bool:
     """
     if value is None:
         return True
-    
+
     if isinstance(value, str):
         return not value.strip()
-    
-    if hasattr(value, '__len__'):
+
+    if hasattr(value, "__len__"):
         return len(value) == 0
-    
+
     return False

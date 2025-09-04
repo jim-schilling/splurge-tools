@@ -11,7 +11,8 @@ This module is licensed under the MIT License.
 """
 
 from collections import defaultdict
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 from splurge_tools.protocols import DataTransformerProtocol, TabularDataProtocol
 from splurge_tools.tabular_data_model import TabularDataModel
@@ -22,14 +23,14 @@ class DataTransformer(DataTransformerProtocol):
     Utility for transforming tabular data models.
 
     Supports pivot, melt, group-by, and column transformation operations.
-    
+
     This class implements the DataTransformerProtocol interface, providing
     a consistent interface for data transformation operations.
     """
 
     def __init__(
         self,
-        data_model: TabularDataProtocol
+        data_model: TabularDataProtocol,
     ) -> None:
         """
         Initialize the DataTransformer.
@@ -41,17 +42,17 @@ class DataTransformer(DataTransformerProtocol):
 
     def transform(
         self,
-        data: TabularDataProtocol
+        data: TabularDataProtocol,
     ) -> TabularDataProtocol:
         """
         Transform the given data.
-        
+
         This is a general transformation method that applies default transformations.
         For specific transformations, use the dedicated methods like pivot(), melt(), etc.
-        
+
         Args:
             data: The data to transform
-            
+
         Returns:
             Transformed data model
         """
@@ -61,32 +62,32 @@ class DataTransformer(DataTransformerProtocol):
 
     def can_transform(
         self,
-        data: TabularDataProtocol
+        data: TabularDataProtocol,
     ) -> bool:
         """
         Check if the data can be transformed.
-        
+
         Args:
             data: The data to check
-            
+
         Returns:
             True if the data can be transformed, False otherwise
         """
         # Basic check: ensure data has the required interface
         return (
-            hasattr(data, 'column_names') and
-            hasattr(data, 'row_count') and
-            hasattr(data, 'column_count') and
-            hasattr(data, 'iter_rows')
+            hasattr(data, "column_names")
+            and hasattr(data, "row_count")
+            and hasattr(data, "column_count")
+            and hasattr(data, "iter_rows")
         )
 
     def pivot(
         self,
-        index_cols: List[str],
+        index_cols: list[str],
         columns_col: str,
         values_col: str,
         *,
-        agg_func: Callable[[List[Any]], Any] | None = None
+        agg_func: Callable[[list[Any]], Any] | None = None,
     ) -> TabularDataModel:
         """
         Pivot the data model to create a cross-tabulation.
@@ -103,9 +104,10 @@ class DataTransformer(DataTransformerProtocol):
         Raises:
             ValueError: If columns are invalid or duplicates exist without agg_func.
         """
-        for col in index_cols + [columns_col, values_col]:
+        for col in [*index_cols, columns_col, values_col]:
             if col not in self._model.column_names:
-                raise ValueError(f"Column {col} not found in data model")
+                msg = f"Column {col} not found in data model"
+                raise ValueError(msg)
 
         grouped_data: defaultdict[Any, list[Any]] = defaultdict(list)
         duplicate_keys: set[Any] = set()
@@ -120,13 +122,16 @@ class DataTransformer(DataTransformerProtocol):
 
         if duplicate_keys and not agg_func:
             duplicate_examples = list(duplicate_keys)[:3]
-            raise ValueError(
+            msg = (
                 f"Duplicate values found for index keys: {duplicate_examples}. "
                 "Please provide an aggregation function to handle duplicates."
             )
+            raise ValueError(
+                msg,
+            )
 
         unique_columns = sorted(
-            {col for group in grouped_data.values() for col, _ in group}
+            {col for group in grouped_data.values() for col, _ in group},
         )
         header = index_cols + list(unique_columns)
 
@@ -135,22 +140,20 @@ class DataTransformer(DataTransformerProtocol):
             row_data = list(index_key)
             value_dict = dict(group)
             if agg_func is not None:
-                value_dict = {
-                    k: agg_func([v for c, v in group if c == k]) for k in unique_columns
-                }
+                value_dict = {k: agg_func([v for c, v in group if c == k]) for k in unique_columns}
             for col in unique_columns:
                 row_data.append(str(value_dict.get(col, "")))
             new_data.append(row_data)
 
-        return TabularDataModel([header] + new_data)
+        return TabularDataModel([header, *new_data])
 
     def melt(
         self,
-        id_vars: List[str],
-        value_vars: List[str],
+        id_vars: list[str],
+        value_vars: list[str],
         *,
         var_name: str = "variable",
-        value_name: str = "value"
+        value_name: str = "value",
     ) -> TabularDataModel:
         """
         Unpivot columns into rows (wide to long format).
@@ -169,19 +172,19 @@ class DataTransformer(DataTransformerProtocol):
         """
         for col in id_vars + value_vars:
             if col not in self._model.column_names:
-                raise ValueError(f"Column {col} not found in data model")
+                msg = f"Column {col} not found in data model"
+                raise ValueError(msg)
 
-        header = id_vars + [var_name, value_name]
+        header = [*id_vars, var_name, value_name]
         new_data: list[list[Any]] = [
-            [*(row[col] for col in id_vars), var, row[var]]
-            for row in self._model.iter_rows() for var in value_vars
+            [*(row[col] for col in id_vars), var, row[var]] for row in self._model.iter_rows() for var in value_vars
         ]
-        return TabularDataModel([header] + new_data)
+        return TabularDataModel([header, *new_data])
 
     def group_by(
         self,
-        group_cols: List[str],
-        agg_dict: Dict[str, Callable[[List[Any]], Any]]
+        group_cols: list[str],
+        agg_dict: dict[str, Callable[[list[Any]], Any]],
     ) -> TabularDataModel:
         """
         Group data by columns and aggregate.
@@ -198,25 +201,26 @@ class DataTransformer(DataTransformerProtocol):
         """
         for col in group_cols + list(agg_dict.keys()):
             if col not in self._model.column_names:
-                raise ValueError(f"Column {col} not found in data model")
+                msg = f"Column {col} not found in data model"
+                raise ValueError(msg)
 
         grouped_data: defaultdict[Any, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
         for row in self._model.iter_rows():
             group_key = tuple(row[col] for col in group_cols)
-            for col in agg_dict.keys():
+            for col in agg_dict:
                 grouped_data[group_key][col].append(row[col])
 
         header = group_cols + list(agg_dict.keys())
         new_data: list[list[Any]] = [
-            list(group_key) + [str(agg_dict[col](agg_values[col])) for col in agg_dict.keys()]
+            list(group_key) + [str(agg_dict[col](agg_values[col])) for col in agg_dict]
             for group_key, agg_values in grouped_data.items()
         ]
-        return TabularDataModel([header] + new_data)
+        return TabularDataModel([header, *new_data])
 
     def transform_column(
         self,
         column: str,
-        transform_func: Callable[[Any], Any]
+        transform_func: Callable[[Any], Any],
     ) -> TabularDataModel:
         """
         Transform a column using a function.
@@ -232,10 +236,11 @@ class DataTransformer(DataTransformerProtocol):
             ValueError: If column is invalid.
         """
         if column not in self._model.column_names:
-            raise ValueError(f"Column {column} not found in data model")
+            msg = f"Column {column} not found in data model"
+            raise ValueError(msg)
 
         new_data: list[list[Any]] = [
             [str(transform_func(row[column])) if col == column else row[col] for col in self._model.column_names]
             for row in self._model.iter_rows()
         ]
-        return TabularDataModel([self._model.column_names] + new_data)
+        return TabularDataModel([self._model.column_names, *new_data])

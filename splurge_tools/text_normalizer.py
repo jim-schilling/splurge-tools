@@ -10,11 +10,12 @@ This module is licensed under the MIT License.
 
 import re
 import unicodedata
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from splurge_tools.case_helper import CaseHelper
-from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
 from splurge_tools.common_utils import safe_string_operation
+from splurge_tools.decorators import handle_empty_value, handle_empty_value_classmethod
 
 
 class TextNormalizer:
@@ -44,7 +45,7 @@ class TextNormalizer:
     @staticmethod
     @handle_empty_value
     def remove_accents(
-        value: str
+        value: str,
     ) -> str:
         """
         Remove accents from text.
@@ -59,11 +60,7 @@ class TextNormalizer:
             "café" -> "cafe"
             "résumé" -> "resume"
         """
-        return "".join(
-            c
-            for c in unicodedata.normalize("NFKD", value)
-            if not unicodedata.combining(c)
-        )
+        return "".join(c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c))
 
     @classmethod
     @handle_empty_value_classmethod
@@ -71,7 +68,7 @@ class TextNormalizer:
         cls,
         value: str,
         *,
-        preserve_newlines: bool = False
+        preserve_newlines: bool = False,
     ) -> str:
         """
         Normalize whitespace in text.
@@ -102,7 +99,7 @@ class TextNormalizer:
     def remove_special_chars(
         value: str,
         *,
-        keep_chars: str = ""
+        keep_chars: str = "",
     ) -> str:
         """
         Remove special characters from text.
@@ -126,7 +123,7 @@ class TextNormalizer:
     def normalize_line_endings(
         value: str,
         *,
-        line_ending: str = "\n"
+        line_ending: str = "\n",
     ) -> str:
         """
         Normalize line endings in text.
@@ -149,7 +146,7 @@ class TextNormalizer:
         cls,
         value: str,
         *,
-        replacement: str = ""
+        replacement: str = "",
     ) -> str:
         """
         Convert text to ASCII, replacing non-ASCII characters.
@@ -166,15 +163,13 @@ class TextNormalizer:
             "résumé" -> "resume"
         """
         value = cls.remove_accents(value)
-        return (
-            value.encode("ascii", "replace").decode("ascii").replace("?", replacement)
-        )
+        return value.encode("ascii", "replace").decode("ascii").replace("?", replacement)
 
     @classmethod
     @handle_empty_value_classmethod
     def remove_control_chars(
         cls,
-        value: str
+        value: str,
     ) -> str:
         """
         Remove control characters from text.
@@ -195,7 +190,7 @@ class TextNormalizer:
     def normalize_quotes(
         value: str,
         *,
-        quote_char: str = '"'
+        quote_char: str = '"',
     ) -> str:
         """
         Normalize quote characters in text.
@@ -222,7 +217,7 @@ class TextNormalizer:
     def normalize_dashes(
         value: str,
         *,
-        dash_char: str = "-"
+        dash_char: str = "-",
     ) -> str:
         """
         Normalize dash characters in text.
@@ -243,7 +238,7 @@ class TextNormalizer:
     @staticmethod
     @handle_empty_value
     def normalize_spaces(
-        value: str
+        value: str,
     ) -> str:
         """
         Normalize space characters in text.
@@ -264,7 +259,7 @@ class TextNormalizer:
     def normalize_case(
         value: str,
         *,
-        case: str = "lower"
+        case: str = "lower",
     ) -> str:
         """
         Normalize text case.
@@ -296,7 +291,7 @@ class TextNormalizer:
     def remove_duplicate_chars(
         value: str,
         *,
-        chars: str = " -."
+        chars: str = " -.",
     ) -> str:
         """
         Remove embedded duplicate characters from text.
@@ -324,37 +319,38 @@ class TextNormalizer:
         cls,
         value: str | None,
         operation: str,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> str:
         """
         Safely apply a normalization operation with consistent error handling.
-        
+
         Args:
             value: String value to normalize
             operation: Name of the normalization operation to apply
             **kwargs: Additional arguments for the operation
-            
+
         Returns:
             Normalized string value
-            
+
         Raises:
             ValueError: If operation is not recognized
         """
         operations = {
-            'remove_accents': cls.remove_accents,
-            'normalize_whitespace': lambda v: cls.normalize_whitespace(v, **kwargs),
-            'remove_special_chars': lambda v: cls.remove_special_chars(v, **kwargs),
-            'normalize_line_endings': lambda v: cls.normalize_line_endings(v, **kwargs),
-            'to_ascii': lambda v: cls.to_ascii(v, **kwargs),
-            'remove_control_chars': cls.remove_control_chars,
-            'normalize_quotes': lambda v: cls.normalize_quotes(v, **kwargs),
-            'normalize_dashes': lambda v: cls.normalize_dashes(v, **kwargs),
-            'normalize_spaces': cls.normalize_spaces,
-            'normalize_case': lambda v: cls.normalize_case(v, **kwargs),
-            'remove_duplicate_chars': lambda v: cls.remove_duplicate_chars(v, **kwargs),
+            "remove_accents": cls.remove_accents,
+            "normalize_whitespace": lambda v: cls.normalize_whitespace(v, **kwargs),
+            "remove_special_chars": lambda v: cls.remove_special_chars(v, **kwargs),
+            "normalize_line_endings": lambda v: cls.normalize_line_endings(v, **kwargs),
+            "to_ascii": lambda v: cls.to_ascii(v, **kwargs),
+            "remove_control_chars": cls.remove_control_chars,
+            "normalize_quotes": lambda v: cls.normalize_quotes(v, **kwargs),
+            "normalize_dashes": lambda v: cls.normalize_dashes(v, **kwargs),
+            "normalize_spaces": cls.normalize_spaces,
+            "normalize_case": lambda v: cls.normalize_case(v, **kwargs),
+            "remove_duplicate_chars": lambda v: cls.remove_duplicate_chars(v, **kwargs),
         }
-        
+
         if operation not in operations:
-            raise ValueError(f"Unknown normalization operation: {operation}")
-        
+            msg = f"Unknown normalization operation: {operation}"
+            raise ValueError(msg)
+
         return safe_string_operation(value, operations[operation])
