@@ -5,7 +5,6 @@ Comprehensive unit tests for the common_utils module.
 """
 
 import tempfile
-import unittest
 from pathlib import Path
 
 import pytest
@@ -77,7 +76,7 @@ class TestSafeFileOperation:
         assert result == temp_file
 
 
-class TestEnsureMinimumColumns(unittest.TestCase):
+class TestEnsureMinimumColumns:
     """Test cases for ensure_minimum_columns function."""
 
     def test_row_already_sufficient(self):
@@ -127,7 +126,7 @@ class TestEnsureMinimumColumns(unittest.TestCase):
         assert result == ["a", "b", "", ""]
 
 
-class TestSafeIndexAccess(unittest.TestCase):
+class TestSafeIndexAccess:
     """Test cases for safe_index_access function."""
 
     def test_valid_index_access(self):
@@ -208,7 +207,7 @@ class TestSafeIndexAccess(unittest.TestCase):
         assert result == {"key": "value"}
 
 
-class TestSafeDictAccess(unittest.TestCase):
+class TestSafeDictAccess:
     """Test cases for safe_dict_access function."""
 
     def test_valid_key_access(self):
@@ -290,7 +289,7 @@ class TestSafeDictAccess(unittest.TestCase):
         assert safe_dict_access(data, "none") is None
 
 
-class TestValidateDataStructure(unittest.TestCase):
+class TestValidateDataStructure:
     """Test cases for validate_data_structure function."""
 
     def test_valid_data_structures(self):
@@ -366,7 +365,7 @@ class TestValidateDataStructure(unittest.TestCase):
         assert "username must be str" in str(cm.value)
 
 
-class TestCreateParameterValidator(unittest.TestCase):
+class TestCreateParameterValidator:
     """Test cases for create_parameter_validator function."""
 
     def test_basic_validation(self):
@@ -475,7 +474,7 @@ class TestCreateParameterValidator(unittest.TestCase):
         assert result == expected
 
 
-class TestBatchValidateRows(unittest.TestCase):
+class TestBatchValidateRows:
     """Test cases for batch_validate_rows function."""
 
     def test_basic_row_validation(self):
@@ -625,7 +624,7 @@ class TestBatchValidateRows(unittest.TestCase):
         assert result == expected
 
 
-class TestCreateErrorContext(unittest.TestCase):
+class TestCreateErrorContext:
     """Test cases for create_error_context function."""
 
     def test_basic_operation_context(self):
@@ -711,7 +710,7 @@ class TestCreateErrorContext(unittest.TestCase):
         assert parts[4] == "Info: info"
 
 
-class TestNormalizeString(unittest.TestCase):
+class TestNormalizeString:
     """Test cases for normalize_string function."""
 
     def test_basic_normalization(self):
@@ -793,7 +792,7 @@ class TestNormalizeString(unittest.TestCase):
         assert result == ""
 
 
-class TestIsEmptyOrNone(unittest.TestCase):
+class TestIsEmptyOrNone:
     """Test cases for is_empty_or_none function."""
 
     def test_none_values(self):
@@ -849,7 +848,7 @@ class TestIsEmptyOrNone(unittest.TestCase):
         assert not is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a", trim=False)
 
 
-class TestSafeStringOperation(unittest.TestCase):
+class TestSafeStringOperation:
     """Test cases for safe_string_operation function."""
 
     def test_basic_operations(self):
@@ -942,7 +941,7 @@ class TestSafeStringOperation(unittest.TestCase):
         assert result == ""
 
 
-class TestValidateStringParameters(unittest.TestCase):
+class TestValidateStringParameters:
     """Test cases for validate_string_parameters function."""
 
     def test_valid_strings(self):
@@ -1058,7 +1057,3 @@ class TestValidateStringParameters(unittest.TestCase):
         # Test with exact length match
         result = validate_string_parameters("hello", "test_param", min_length=5, max_length=5)
         assert result == "hello"
-
-
-if __name__ == "__main__":
-    unittest.main()
