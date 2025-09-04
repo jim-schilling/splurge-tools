@@ -754,8 +754,7 @@ def test_validation_exception_path(monkeypatch):
     # Create a custom class that raises an exception during membership testing
     class BadAlphabet:
         def __contains__(self, item):
-            msg = "Test exception"
-            raise RuntimeError(msg)
+            raise RuntimeError("Test exception")
 
     # Use monkeypatching to safely test the exception path
     monkeypatch.setattr(Base58, "ALPHABET", BadAlphabet())

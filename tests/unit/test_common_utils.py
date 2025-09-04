@@ -380,14 +380,12 @@ class TestCreateParameterValidator(unittest.TestCase):
 
         def validate_name(value):
             if not isinstance(value, str) or not value.strip():
-                msg = "Name must be non-empty string"
-                raise ValueError(msg)
+                raise ValueError("Name must be non-empty string")
             return value.strip()
 
         def validate_age(value):
             if not isinstance(value, int) or value < 0:
-                msg = "Age must be non-negative integer"
-                raise ValueError(msg)
+                raise ValueError("Age must be non-negative integer")
             return value
 
         validator = create_parameter_validator(
@@ -429,8 +427,7 @@ class TestCreateParameterValidator(unittest.TestCase):
         """Test that validation errors propagate correctly."""
 
         def failing_validator(value):
-            msg = "Validation failed"
-            raise ValueError(msg)
+            raise ValueError("Validation failed")
 
         validator = create_parameter_validator(
             {
@@ -454,15 +451,13 @@ class TestCreateParameterValidator(unittest.TestCase):
 
         def validate_email(value):
             if "@" not in str(value):
-                msg = "Invalid email format"
-                raise ValueError(msg)
+                raise ValueError("Invalid email format")
             return str(value).lower()
 
         def validate_score(value):
             score = float(value)
             if not 0 <= score <= 100:
-                msg = "Score must be between 0 and 100"
-                raise ValueError(msg)
+                raise ValueError("Score must be between 0 and 100")
             return score
 
         validator = create_parameter_validator(
@@ -930,8 +925,7 @@ class TestSafeStringOperation(unittest.TestCase):
         """Test operation error handling."""
 
         def failing_operation(s):
-            msg = "Operation failed"
-            raise ValueError(msg)
+            raise ValueError("Operation failed")
 
         # Test that operation errors are propagated
         with pytest.raises(ValueError):

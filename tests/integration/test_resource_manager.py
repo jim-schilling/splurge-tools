@@ -62,8 +62,7 @@ class TestResourceManager:
 
         class TestResourceManager(ResourceManager):
             def _create_resource(self):
-                msg = "Test error"
-                raise ValueError(msg)
+                raise ValueError("Test error")
 
         manager = TestResourceManager()
 
@@ -87,8 +86,7 @@ class TestResourceManager:
                 return "test_resource"
 
             def _cleanup_resource(self):
-                msg = "Cleanup error"
-                raise ValueError(msg)
+                raise ValueError("Cleanup error")
 
         manager = TestResourceManager()
         manager.acquire()
@@ -354,8 +352,7 @@ class TestStreamResourceManager:
                 return iter([1, 2, 3])
 
             def close(self):
-                msg = "Simulated close error"
-                raise ValueError(msg)
+                raise ValueError("Simulated close error")
 
         stream = ProblematicStream()
 
