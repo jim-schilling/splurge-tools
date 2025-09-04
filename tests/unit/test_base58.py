@@ -89,7 +89,7 @@ def test_encode_very_large_data():
 
 def test_encode_unicode_bytes():
     """Test encoding unicode bytes."""
-    data = "Hello🚀World".encode()
+    data = "Hello🚀World".encode("utf-8")
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
 

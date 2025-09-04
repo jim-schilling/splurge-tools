@@ -202,8 +202,9 @@ class TestFileResourceManager:
         """Test that non-existent file raises error in read mode."""
         test_file = tmp_path / "nonexistent.txt"
 
-        with pytest.raises(SplurgeFileNotFoundError), FileResourceManager(test_file, mode="r"):
-            pass
+        with pytest.raises(SplurgeFileNotFoundError):
+            with FileResourceManager(test_file, mode="r"):
+                pass
 
     def test_nonexistent_file_write_mode_succeeds(self, tmp_path: Path) -> None:
         """Test that non-existent file succeeds in write mode."""
@@ -228,8 +229,9 @@ class TestFileResourceManager:
         os.chmod(test_file, 0o000)
 
         try:
-            with pytest.raises(SplurgeFilePermissionError), FileResourceManager(test_file, mode="r"):
-                pass
+            with pytest.raises(SplurgeFilePermissionError):
+                with FileResourceManager(test_file, mode="r"):
+                    pass
         finally:
             # Restore permissions
             os.chmod(test_file, 0o644)
@@ -245,8 +247,9 @@ class TestFileResourceManager:
         # Write binary data that's not valid UTF-8
         test_file.write_bytes(b"valid text\n\xff\xfe\nmore text")
 
-        with pytest.raises(SplurgeFileEncodingError), FileResourceManager(test_file, mode="r"):
-            pass
+        with pytest.raises(SplurgeFileEncodingError):
+            with FileResourceManager(test_file, mode="r"):
+                pass
 
     def test_invalid_path_raises_error(self) -> None:
         """Test that invalid path raises error."""
@@ -422,8 +425,9 @@ class TestSafeFileOperation:
         """Test that non-existent file raises error."""
         test_file = tmp_path / "nonexistent.txt"
 
-        with pytest.raises(SplurgeFileNotFoundError), safe_file_operation(test_file, mode="r"):
-            pass
+        with pytest.raises(SplurgeFileNotFoundError):
+            with safe_file_operation(test_file, mode="r"):
+                pass
 
 
 class TestSafeStreamOperation:
@@ -540,8 +544,9 @@ class TestResourceManagerEdgeCases:
         os.chmod(test_file, 0o000)
 
         try:
-            with pytest.raises(SplurgeFilePermissionError), FileResourceManager(test_file, mode="r"):
-                pass
+            with pytest.raises(SplurgeFilePermissionError):
+                with FileResourceManager(test_file, mode="r"):
+                    pass
         finally:
             # Restore permissions
             os.chmod(test_file, 0o644)
