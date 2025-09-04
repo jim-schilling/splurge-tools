@@ -8,13 +8,13 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
+from collections.abc import Iterator
 from os import PathLike
-from typing import Iterator
 
-from splurge_tools.string_tokenizer import StringTokenizer
-from splurge_tools.text_file_helper import TextFileHelper
 from splurge_tools.exceptions import SplurgeParameterError
+from splurge_tools.string_tokenizer import StringTokenizer
 from splurge_tools.tabular_data_model import TabularDataModel
+from splurge_tools.text_file_helper import TextFileHelper
 
 
 class DsvHelper:
@@ -40,7 +40,7 @@ class DsvHelper:
         delimiter: str,
         strip: bool = DEFAULT_STRIP,
         bookend: str | None = None,
-        bookend_strip: bool = DEFAULT_BOOKEND_STRIP
+        bookend_strip: bool = DEFAULT_BOOKEND_STRIP,
     ) -> list[str]:
         """
         Parse a string into a list of strings.
@@ -65,15 +65,13 @@ class DsvHelper:
             ['a', 'b', 'c']
         """
         if delimiter is None or delimiter == "":
-            raise SplurgeParameterError("delimiter cannot be empty or None")
+            msg = "delimiter cannot be empty or None"
+            raise SplurgeParameterError(msg)
 
         tokens: list[str] = StringTokenizer.parse(content, delimiter=delimiter, strip=strip)
 
         if bookend:
-            tokens = [
-                StringTokenizer.remove_bookends(token, bookend=bookend, strip=bookend_strip)
-                for token in tokens
-            ]
+            tokens = [StringTokenizer.remove_bookends(token, bookend=bookend, strip=bookend_strip) for token in tokens]
 
         return tokens
 
@@ -85,7 +83,7 @@ class DsvHelper:
         delimiter: str,
         strip: bool = DEFAULT_STRIP,
         bookend: str | None = None,
-        bookend_strip: bool = DEFAULT_BOOKEND_STRIP
+        bookend_strip: bool = DEFAULT_BOOKEND_STRIP,
     ) -> list[list[str]]:
         """
         Parse a list of strings into a list of lists of strings.
@@ -109,10 +107,12 @@ class DsvHelper:
             [['a', 'b', 'c'], ['d', 'e', 'f']]
         """
         if not isinstance(content, list):
-            raise SplurgeParameterError("content must be a list")
-        
+            msg = "content must be a list"
+            raise SplurgeParameterError(msg)
+
         if not all(isinstance(item, str) for item in content):
-            raise SplurgeParameterError("content must be a list of strings")
+            msg = "content must be a list of strings"
+            raise SplurgeParameterError(msg)
 
         return [
             cls.parse(item, delimiter=delimiter, strip=strip, bookend=bookend, bookend_strip=bookend_strip)
@@ -130,7 +130,7 @@ class DsvHelper:
         bookend_strip: bool = DEFAULT_BOOKEND_STRIP,
         encoding: str = DEFAULT_ENCODING,
         skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS,
-        skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS
+        skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS,
     ) -> list[list[str]]:
         """
         Parse a file into a list of lists of strings.
@@ -162,7 +162,7 @@ class DsvHelper:
             file_path,
             encoding=encoding,
             skip_header_rows=skip_header_rows,
-            skip_footer_rows=skip_footer_rows
+            skip_footer_rows=skip_footer_rows,
         )
 
         return cls.parses(
@@ -170,7 +170,7 @@ class DsvHelper:
             delimiter=delimiter,
             strip=strip,
             bookend=bookend,
-            bookend_strip=bookend_strip
+            bookend_strip=bookend_strip,
         )
 
     @classmethod
@@ -181,18 +181,18 @@ class DsvHelper:
         delimiter: str,
         strip: bool = DEFAULT_STRIP,
         bookend: str | None = None,
-        bookend_strip: bool = DEFAULT_BOOKEND_STRIP
+        bookend_strip: bool = DEFAULT_BOOKEND_STRIP,
     ) -> list[list[str]]:
         """
         Process a chunk of lines from the stream.
-        
+
         Args:
             chunk: List of lines to process
             delimiter: Delimiter to use for parsing
             strip: Whether to strip whitespace
             bookend: Bookend character for text fields
             bookend_strip: Whether to strip whitespace from bookends
-            
+
         Returns:
             list[list[str]]: Parsed rows
         """
@@ -201,7 +201,7 @@ class DsvHelper:
             delimiter=delimiter,
             strip=strip,
             bookend=bookend,
-            bookend_strip=bookend_strip
+            bookend_strip=bookend_strip,
         )
 
     @classmethod
@@ -216,7 +216,7 @@ class DsvHelper:
         encoding: str = DEFAULT_ENCODING,
         skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS,
         skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS,
-        chunk_size: int = DEFAULT_CHUNK_SIZE
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
     ) -> Iterator[list[list[str]]]:
         """
         Stream-parse a DSV file in chunks of lines.
@@ -242,7 +242,8 @@ class DsvHelper:
             SplurgeFileEncodingError: If the file cannot be decoded with the specified encoding.
         """
         if delimiter is None or delimiter == "":
-            raise SplurgeParameterError("delimiter cannot be empty or None")
+            msg = "delimiter cannot be empty or None"
+            raise SplurgeParameterError(msg)
 
         chunk_size = max(chunk_size, cls.DEFAULT_MIN_CHUNK_SIZE)
         skip_header_rows = max(skip_header_rows, cls.DEFAULT_SKIP_HEADER_ROWS)
@@ -254,15 +255,15 @@ class DsvHelper:
             encoding=encoding,
             skip_header_rows=skip_header_rows,
             skip_footer_rows=skip_footer_rows,
-            chunk_size=chunk_size
+            chunk_size=chunk_size,
         ):
             yield cls._process_stream_chunk(
                 chunk,
                 delimiter=delimiter,
                 strip=strip,
                 bookend=bookend,
-                bookend_strip=bookend_strip
-            )   
+                bookend_strip=bookend_strip,
+            )
 
     @classmethod
     def profile_columns(
@@ -270,7 +271,7 @@ class DsvHelper:
         data: list[list[str]],
         *,
         header_rows: int = 1,
-        skip_empty_rows: bool = True
+        skip_empty_rows: bool = True,
     ) -> list[dict[str, str]]:
         """
         Generate a simple data profile from parsed DSV data.
@@ -287,7 +288,7 @@ class DsvHelper:
         model = TabularDataModel(
             data,
             header_rows=header_rows,
-            skip_empty_rows=skip_empty_rows
+            skip_empty_rows=skip_empty_rows,
         )
 
         profile: list[dict[str, str]] = []

@@ -10,6 +10,7 @@ import threading
 import time
 
 import pytest
+
 from splurge_tools.base58 import Base58, Base58TypeError, Base58ValidationError
 
 
@@ -20,7 +21,7 @@ def test_encode_simple_string():
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
     assert len(encoded) > 0
-    
+
     # Verify round-trip
     decoded = Base58.decode(encoded)
     assert decoded == data
@@ -31,7 +32,7 @@ def test_encode_single_byte():
     data = b"A"
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
@@ -41,7 +42,7 @@ def test_encode_zero_bytes():
     data = b"\x00"
     encoded = Base58.encode(data)
     assert encoded == "1"
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
@@ -51,7 +52,7 @@ def test_encode_all_zero_bytes():
     data = b"\x00\x00\x00"
     encoded = Base58.encode(data)
     assert encoded == "111"
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
@@ -61,37 +62,37 @@ def test_encode_mixed_zero_and_data():
     data = b"\x00\x00\x01\x02"
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
 
 def test_encode_large_data():
     """Test encoding large data."""
-    data = b"x" * 500  
+    data = b"x" * 500
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
 
 def test_encode_very_large_data():
     """Test encoding very large data."""
-    data = b"x" * 2000  
+    data = b"x" * 2000
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
 
 def test_encode_unicode_bytes():
     """Test encoding unicode bytes."""
-    data = "Hello🚀World".encode('utf-8')
+    data = "Hello🚀World".encode()
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
-    
+
     decoded = Base58.decode(encoded)
     assert decoded == data
 
@@ -149,7 +150,7 @@ def test_decode_all_ones():
 
 def test_decode_very_long_string():
     """Test decoding a very long string."""
-    length = 500  
+    length = 500
     string = "1" * length
     decoded = Base58.decode(string)
     assert decoded == b"\x00" * length
@@ -181,7 +182,7 @@ def test_decode_malformed_strings():
         "I",  # Invalid character
         "l",  # Invalid character
     ]
-    
+
     for string in invalid_strings:
         with pytest.raises(Base58ValidationError):
             Base58.decode(string)
@@ -202,7 +203,7 @@ def test_round_trip_encoding():
         b"x" * 100,
         b"Unicode: \xf0\x9f\x9a\x80",  # Rocket emoji in UTF-8
     ]
-    
+
     for data in test_data:
         if data:  # Skip empty data as it raises error
             encoded = Base58.encode(data)
@@ -220,7 +221,7 @@ def test_valid_base58_strings():
         "111",
         "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
     ]
-    
+
     for string in valid_strings:
         assert Base58.is_valid(string)
 
@@ -237,7 +238,7 @@ def test_invalid_base58_strings():
         "Hello World",
         "🚀",
     ]
-    
+
     for string in invalid_strings:
         assert not Base58.is_valid(string)
 
@@ -246,7 +247,7 @@ def test_edge_cases():
     """Test edge cases for validation."""
     # Test with None
     assert not Base58.is_valid(None)
-    
+
     # Test with non-string types
     assert not Base58.is_valid(123)
     assert not Base58.is_valid(b"bytes")
@@ -268,7 +269,7 @@ def test_validation_with_non_string_inputs():
         {"dict": "value"},
         (1, 2, 3),
     ]
-    
+
     for input_val in non_string_inputs:
         assert not Base58.is_valid(input_val)
 
@@ -298,7 +299,7 @@ def test_random_binary_data():
         # Generate random data of varying lengths
         length = random.randint(1, 100)
         data = bytes(random.randint(0, 255) for _ in range(length))
-        
+
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
         assert decoded == data
@@ -306,19 +307,20 @@ def test_random_binary_data():
 
 def test_concurrent_encoding_decoding():
     """Test concurrent encoding and decoding operations."""
+
     def encode_decode_worker():
         data = b"Hello World"
         for _ in range(100):
             encoded = Base58.encode(data)
             decoded = Base58.decode(encoded)
             assert decoded == data
-    
+
     threads = []
     for _ in range(5):
         thread = threading.Thread(target=encode_decode_worker)
         threads.append(thread)
         thread.start()
-    
+
     for thread in threads:
         thread.join()
 
@@ -326,8 +328,8 @@ def test_concurrent_encoding_decoding():
 def test_memory_efficiency():
     """Test memory efficiency with large data."""
     # Test with large data to ensure no memory leaks
-    data = b"x" * 2000  
-    for _ in range(50):  
+    data = b"x" * 2000
+    for _ in range(50):
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
         assert decoded == data
@@ -335,17 +337,17 @@ def test_memory_efficiency():
 
 def test_performance_with_large_data():
     """Test performance with large data."""
-    data = b"x" * 1000  
+    data = b"x" * 1000
     start_time = time.time()
-    
-    for _ in range(50):  
+
+    for _ in range(50):
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
         assert decoded == data
-    
+
     end_time = time.time()
     duration = end_time - start_time
-    
+
     # Should complete in reasonable time (less than 5 seconds)
     assert duration < 5.0
 
@@ -360,7 +362,7 @@ def test_encoding_with_none_input():
 def test_encoding_with_string_input():
     """Test encoding with string input (should fail)."""
     with pytest.raises(Base58TypeError):
-        Base58.encode("Hello World")    
+        Base58.encode("Hello World")
 
 
 def test_decoding_with_none_input():
@@ -385,7 +387,7 @@ def test_base58_type_error_encoding():
         (1, 2, 3),  # Tuple
         None,  # None
     ]
-    
+
     for invalid_input in invalid_inputs:
         with pytest.raises(Base58TypeError):
             Base58.encode(invalid_input)
@@ -401,7 +403,7 @@ def test_base58_type_error_decoding():
         (1, 2, 3),  # Tuple
         None,  # None
     ]
-    
+
     for invalid_input in invalid_inputs:
         with pytest.raises(Base58TypeError):
             Base58.decode(invalid_input)
@@ -409,10 +411,11 @@ def test_base58_type_error_decoding():
 
 def test_validation_with_complex_objects():
     """Test validation with complex objects."""
+
     class TestObject:
         def __str__(self):
             return "Hello World"
-    
+
     obj = TestObject()
     assert not Base58.is_valid(obj)
 
@@ -450,7 +453,7 @@ def test_encode_single_byte_edge_cases():
         (b"\xff", "5Q"),  # Maximum byte value
         (b"\x7f", "3C"),  # Middle value
     ]
-    
+
     for data, expected in edge_cases:
         encoded = Base58.encode(data)
         assert encoded == expected
@@ -482,7 +485,7 @@ def test_decode_single_character_edge_cases():
         ("z", b"9"),  # Last character
         ("9", b"\x08"),  # Middle character
     ]
-    
+
     for string, expected in edge_cases:
         decoded = Base58.decode(string)
         assert decoded == expected
@@ -497,7 +500,7 @@ def test_decode_mixed_leading_ones():
         ("1z", b"\x009"),
         ("1112", b"\x00\x00\x00\x01"),
     ]
-    
+
     for string, expected in test_cases:
         decoded = Base58.decode(string)
         assert decoded == expected
@@ -512,7 +515,7 @@ def test_decode_complex_sequences():
         ("xyz", b"\x02\xdf\xa5"),
         ("1a2b3c", b"\x00\x16G\x08\x97"),
     ]
-    
+
     for string, expected in test_cases:
         decoded = Base58.decode(string)
         assert decoded == expected
@@ -529,7 +532,7 @@ def test_encode_decode_round_trip_edge_cases():
         b"\x7f\x80\x81\x82\x83\x84",  # Values around 128
         b"\x00\x7f\xff\x80\x00\xff",  # Mixed pattern
     ]
-    
+
     for data in edge_cases:
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
@@ -541,16 +544,16 @@ def test_validation_edge_cases():
     # Test with single characters
     for char in Base58.ALPHABET:
         assert Base58.is_valid(char)
-    
+
     # Test with empty string
     assert not Base58.is_valid("")
-    
+
     # Test with whitespace (should be invalid)
     assert not Base58.is_valid(" ")
     assert not Base58.is_valid("  ")
     assert not Base58.is_valid("\t")
     assert not Base58.is_valid("\n")
-    
+
     # Test with mixed valid/invalid characters
     assert not Base58.is_valid("1a2b3c0")  # Contains '0' which is invalid
     assert not Base58.is_valid("1a2b3cO")  # Contains 'O' which is invalid
@@ -561,7 +564,7 @@ def test_validation_edge_cases():
 def test_decode_very_small_strings():
     """Test decoding very small strings."""
     # Test single character decoding using round-trip verification
-    for i, char in enumerate(Base58.ALPHABET):
+    for i, _char in enumerate(Base58.ALPHABET):
         # Instead of assuming direct mapping, check round-trip
         encoded = Base58.encode(bytes([i]))
         assert Base58.decode(encoded) == bytes([i])
@@ -575,7 +578,7 @@ def test_encode_decode_boundary_values():
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
         assert decoded == data
-    
+
     # Test with 2 byte values at boundaries
     boundary_2byte = [
         b"\x00\x00",  # Minimum 2-byte value
@@ -583,7 +586,7 @@ def test_encode_decode_boundary_values():
         b"\x01\x00",  # Medium 2-byte value
         b"\xff\xff",  # Maximum 2-byte value
     ]
-    
+
     for data in boundary_2byte:
         encoded = Base58.encode(data)
         decoded = Base58.decode(encoded)
@@ -593,16 +596,16 @@ def test_encode_decode_boundary_values():
 def test_decode_invalid_character_positions():
     """Test decoding with invalid characters in different positions."""
     invalid_chars = ["0", "O", "I", "l"]
-    
+
     for invalid_char in invalid_chars:
         # Test at beginning
         with pytest.raises(Base58ValidationError):
             Base58.decode(invalid_char + "123")
-        
+
         # Test in middle
         with pytest.raises(Base58ValidationError):
             Base58.decode("12" + invalid_char + "34")
-        
+
         # Test at end
         with pytest.raises(Base58ValidationError):
             Base58.decode("123" + invalid_char)
@@ -618,7 +621,7 @@ def test_encode_decode_unicode_handling():
         "Test\u00adString",  # Soft hyphen
         "Test\u2060String",  # Word joiner
     ]
-    
+
     for string in unicode_strings:
         assert not Base58.is_valid(string)
         with pytest.raises(Base58ValidationError):
@@ -633,7 +636,7 @@ def test_encode_decode_special_characters():
         "<>,.?/~`",  # More punctuation
         " \t\n\r",  # Whitespace
     ]
-    
+
     for string in special_chars:
         assert not Base58.is_valid(string)
         with pytest.raises(Base58ValidationError):
@@ -646,7 +649,7 @@ def test_decode_very_long_valid_string():
     long_string = "1" * 1000
     decoded = Base58.decode(long_string)
     assert decoded == b"\x00" * 1000
-    
+
     # Test round-trip with this long string
     encoded = Base58.encode(decoded)
     assert encoded == long_string
@@ -659,7 +662,7 @@ def test_encode_decode_memory_efficiency_edge_cases():
     encoded = Base58.encode(data_with_leading_zeros)
     decoded = Base58.decode(encoded)
     assert decoded == data_with_leading_zeros
-    
+
     # Test with data that has many trailing zeros
     data_with_trailing_zeros = b"\x01" + b"\x00" * 100
     encoded = Base58.encode(data_with_trailing_zeros)
@@ -671,13 +674,13 @@ def test_decode_overflow_protection():
     """Test that decoding doesn't cause integer overflow."""
     # Test with very long strings that could potentially cause overflow
     # This tests the robustness of the integer arithmetic
-    
+
     # Create a string that represents a large number
     large_string = "z" * 100  # All 'z' characters represent large values
     decoded = Base58.decode(large_string)
     assert isinstance(decoded, bytes)
     assert len(decoded) > 0
-    
+
     # Test round-trip
     encoded = Base58.encode(decoded)
     decoded_again = Base58.decode(encoded)
@@ -691,7 +694,7 @@ def test_encode_decode_consistency():
     encoded1 = Base58.encode(data)
     encoded2 = Base58.encode(data)
     assert encoded1 == encoded2
-    
+
     # Test that multiple decodes of the same string produce the same result
     decoded1 = Base58.decode(encoded1)
     decoded2 = Base58.decode(encoded2)
@@ -704,26 +707,26 @@ def test_validation_comprehensive():
     # Test all valid characters individually
     for char in Base58.ALPHABET:
         assert Base58.is_valid(char)
-    
+
     # Test all valid characters together
     assert Base58.is_valid(Base58.ALPHABET)
-    
+
     # Test invalid characters that look similar to valid ones
     similar_invalid = ["0", "O", "I", "l"]
     for char in similar_invalid:
         assert not Base58.is_valid(char)
         assert not Base58.is_valid("1" + char + "2")
-    
+
     # Test with numbers that are not in base58
     for i in range(10):
         if str(i) not in Base58.ALPHABET:
             assert not Base58.is_valid(str(i))
-    
+
     # Test with uppercase letters that are not in base58
     for char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
         if char not in Base58.ALPHABET:
             assert not Base58.is_valid(char)
-    
+
     # Test with lowercase letters that are not in base58
     for char in "abcdefghijklmnopqrstuvwxyz":
         if char not in Base58.ALPHABET:
@@ -735,11 +738,11 @@ def test_validation_edge_case_coverage():
     # Test with very long strings to ensure the all() function works correctly
     long_valid_string = Base58.ALPHABET * 10  # Repeat the alphabet 10 times
     assert Base58.is_valid(long_valid_string)
-    
+
     # Test with strings that have many invalid characters
     long_invalid_string = "0" * 1000  # Many invalid characters
     assert not Base58.is_valid(long_invalid_string)
-    
+
     # Test with mixed valid/invalid characters
     mixed_string = "1a2b3c0OIl" * 100  # Mix of valid and invalid
     assert not Base58.is_valid(mixed_string)
@@ -747,22 +750,24 @@ def test_validation_edge_case_coverage():
 
 def test_validation_exception_path(monkeypatch):
     """Test the exception path in the try-except block for 100% coverage."""
+
     # Create a custom class that raises an exception during membership testing
     class BadAlphabet:
         def __contains__(self, item):
-            raise RuntimeError("Test exception")
-    
+            msg = "Test exception"
+            raise RuntimeError(msg)
+
     # Use monkeypatching to safely test the exception path
-    monkeypatch.setattr(Base58, 'ALPHABET', BadAlphabet())
-    
+    monkeypatch.setattr(Base58, "ALPHABET", BadAlphabet())
+
     # This should trigger the exception and return False
     result = Base58.is_valid("test")
     assert result is False, f"Expected False, got {result}"
-    
+
     # Test with a longer string to ensure the exception is triggered
     result2 = Base58.is_valid("longer_test_string")
     assert result2 is False, f"Expected False, got {result2}"
-    
+
     # Test with empty string to ensure exception path is covered
     result3 = Base58.is_valid("")
     assert result3 is False, f"Expected False, got {result3}"
@@ -772,16 +777,16 @@ def test_decode_num_zero_edge_case():
     """Test the edge case where num == 0 after processing non-leading-ones characters."""
     # This tests the specific case where we have leading ones followed by characters
     # that decode to zero, triggering the "if num == 0:" condition
-    
+
     # Test with "11" - two leading ones, no other characters
     # This should trigger the first return statement
     result1 = Base58.decode("11")
     assert result1 == b"\x00\x00"
-    
+
     # Test with "111" - three leading ones, no other characters
     result2 = Base58.decode("111")
     assert result2 == b"\x00\x00\x00"
-    
+
     # Test with "1111" - four leading ones, no other characters
     result3 = Base58.decode("1111")
-    assert result3 == b"\x00\x00\x00\x00" 
+    assert result3 == b"\x00\x00\x00\x00"

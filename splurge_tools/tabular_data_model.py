@@ -8,20 +8,21 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from typing import Generator, Iterator, Any
+from collections.abc import Generator, Iterator
+from typing import Any
 
-from splurge_tools.protocols import TabularDataProtocol
-from splurge_tools.type_helper import DataType, profile_values
-
-from splurge_tools.tabular_utils import process_headers as _process_headers, normalize_rows as _normalize_rows
-from splurge_tools.common_utils import validate_data_structure, safe_dict_access
+from splurge_tools.common_utils import safe_dict_access, validate_data_structure
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
+from splurge_tools.protocols import TabularDataProtocol
+from splurge_tools.tabular_utils import normalize_rows as _normalize_rows
+from splurge_tools.tabular_utils import process_headers as _process_headers
+from splurge_tools.type_helper import DataType, profile_values
 
 
 class TabularDataModel(TabularDataProtocol):
     """
     Tabular data model for structured data.
-    
+
     This class implements the TabularDataProtocol interface, providing
     a consistent interface for tabular data operations.
     """
@@ -31,7 +32,7 @@ class TabularDataModel(TabularDataProtocol):
         data: list[list[str]],
         *,
         header_rows: int = 1,
-        skip_empty_rows: bool = True
+        skip_empty_rows: bool = True,
     ) -> None:
         """
         Initialize TabularDataModel.
@@ -45,17 +46,19 @@ class TabularDataModel(TabularDataProtocol):
             ValueError: If data or header configuration is invalid.
         """
         data = validate_data_structure(data, expected_type=list, param_name="data", allow_empty=False)
-        
+
         if not isinstance(header_rows, int):
+            msg = f"header_rows must be an integer, got {type(header_rows).__name__}"
             raise SplurgeParameterError(
-                f"header_rows must be an integer, got {type(header_rows).__name__}",
-                details=f"Expected integer, received: {repr(header_rows)}"
+                msg,
+                details=f"Expected integer, received: {header_rows!r}",
             )
-        
+
         if header_rows < 0:
+            msg = f"header_rows must be >= 0, got {header_rows}"
             raise SplurgeRangeError(
-                f"header_rows must be >= 0, got {header_rows}",
-                details=f"Value {header_rows} is below minimum allowed value 0"
+                msg,
+                details=f"Value {header_rows} is below minimum allowed value 0",
             )
 
         self._raw_data = data
@@ -68,14 +71,14 @@ class TabularDataModel(TabularDataProtocol):
         )
         self._header_columns = len(self._header_data[0]) if len(self._header_data) > 0 else 0
         self._columns = len(self._data[0]) if len(self._data) > 0 else 0
-        self._rows = len(self._data) if len(self._data) > 0 else 0
+        self._rows = max(0, len(self._data))
 
         # Process headers using shared utility
         self._header_data, self._column_names = _process_headers(
             self._header_data,
-            header_rows=header_rows
+            header_rows=header_rows,
         )
-        
+
         # Ensure column names match the actual column count
         while len(self._column_names) < self._columns:
             self._column_names.append(f"column_{len(self._column_names)}")
@@ -93,7 +96,7 @@ class TabularDataModel(TabularDataProtocol):
 
     def column_index(
         self,
-        name: str
+        name: str,
     ) -> int:
         """
         Get the column index for a given name.
@@ -125,7 +128,7 @@ class TabularDataModel(TabularDataProtocol):
 
     def column_type(
         self,
-        name: str
+        name: str,
     ) -> DataType:
         """
         Get the inferred data type for a column (cached).
@@ -148,7 +151,7 @@ class TabularDataModel(TabularDataProtocol):
 
     def column_values(
         self,
-        name: str
+        name: str,
     ) -> list[str]:
         """
         Get all values for a column.
@@ -169,7 +172,7 @@ class TabularDataModel(TabularDataProtocol):
     def cell_value(
         self,
         name: str,
-        row_index: int
+        row_index: int,
     ) -> str:
         """
         Get a cell value by column name and row index.
@@ -186,9 +189,10 @@ class TabularDataModel(TabularDataProtocol):
         """
         safe_dict_access(self._column_index_map, name, item_name="column")
         if row_index < 0 or row_index >= self._rows:
+            msg = f"Row index {row_index} out of range"
             raise SplurgeRangeError(
-                f"Row index {row_index} out of range",
-                details=f"Valid range: 0 to {self._rows - 1}"
+                msg,
+                details=f"Valid range: 0 to {self._rows - 1}",
             )
         col_idx: int = self._column_index_map[name]
         return self._data[row_index][col_idx]
@@ -204,7 +208,7 @@ class TabularDataModel(TabularDataProtocol):
             dict[str, str]: Row as a dictionary.
         """
         for row in self._data:
-            yield dict(zip(self._column_names, row))
+            yield dict(zip(self._column_names, row, strict=False))
 
     def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
         """
@@ -218,7 +222,7 @@ class TabularDataModel(TabularDataProtocol):
 
     def row(
         self,
-        index: int
+        index: int,
     ) -> dict[str, str]:
         """
         Get a row as a dictionary.
@@ -232,14 +236,11 @@ class TabularDataModel(TabularDataProtocol):
         row_data = self._data[index]
         # Ensure row_data is properly padded to match column count
         padded_row = row_data + [""] * (self._columns - len(row_data))
-        return {
-            self._column_names[i]: padded_row[i]
-            for i in range(self._columns)
-        }
+        return {self._column_names[i]: padded_row[i] for i in range(self._columns)}
 
     def row_as_list(
         self,
-        index: int
+        index: int,
     ) -> list[str]:
         """
         Get a row as a list.
@@ -254,7 +255,7 @@ class TabularDataModel(TabularDataProtocol):
 
     def row_as_tuple(
         self,
-        index: int
+        index: int,
     ) -> tuple[str, ...]:
         """
         Get a row as a tuple.
@@ -270,7 +271,7 @@ class TabularDataModel(TabularDataProtocol):
     def to_typed(
         self,
         *,
-        type_configs: dict[DataType, Any] | None = None
+        type_configs: dict[DataType, Any] | None = None,
     ) -> "_TypedView":
         """Return a typed view over this model.
 
@@ -285,7 +286,7 @@ class TabularDataModel(TabularDataProtocol):
     @staticmethod
     def _normalize_data_model(
         rows: list[list[str]],
-        skip_empty_rows: bool = True
+        skip_empty_rows: bool = True,
     ) -> list[list[str]]:
         """
         Normalize the data model (pad rows, optionally skip empty rows).
@@ -310,7 +311,7 @@ class _TypedView:
         self,
         model: TabularDataModel,
         *,
-        type_configs: dict[DataType, Any] | None = None
+        type_configs: dict[DataType, Any] | None = None,
     ) -> None:
         from splurge_tools.type_helper import String  # local import to avoid cycles
 
@@ -359,13 +360,12 @@ class _TypedView:
         return self._model.column_index(name)
 
     def __iter__(self) -> Iterator[list[object]]:
-
         for row in self._model:
             yield [self._convert(value, self._inferred_type(i)) for i, value in enumerate(row)]
 
     def iter_rows(self) -> Generator[dict[str, object], None, None]:
         for row in self:
-            yield dict(zip(self.column_names, row))
+            yield dict(zip(self.column_names, row, strict=False))
 
     def iter_rows_as_tuples(self) -> Generator[tuple[object, ...], None, None]:
         for row in self:
@@ -403,7 +403,8 @@ class _TypedView:
     def row_as_list(self, index: int) -> list[object]:
         """Get a typed row as a list."""
         if index < 0 or index >= self._model.row_count:
-            raise ValueError(f"Row index {index} out of range")
+            msg = f"Row index {index} out of range"
+            raise ValueError(msg)
         raw = self._model.row_as_list(index)
         return [self._convert(val, self._inferred_type(i)) for i, val in enumerate(raw)]
 
@@ -454,8 +455,8 @@ class _TypedView:
         This mirrors the previous behavior in TypedTabularDataModel to avoid
         over-classifying as MIXED when strong signals exist in non-empty values.
         """
-        from splurge_tools.type_helper import profile_values, String
         from splurge_tools.exceptions import SplurgeParameterError
+        from splurge_tools.type_helper import String, profile_values
 
         # Lazy cache on the wrapper to avoid recomputation
         if not hasattr(self, "_typed_column_types"):
@@ -469,9 +470,7 @@ class _TypedView:
         except SplurgeParameterError as e:
             raise ValueError(str(e))
 
-        non_empty_values: list[str] = [
-            v for v in values if not String.is_empty_like(v) and not String.is_none_like(v)
-        ]
+        non_empty_values: list[str] = [v for v in values if not String.is_empty_like(v) and not String.is_none_like(v)]
         if non_empty_values:
             inferred = profile_values(non_empty_values)
             if inferred != DataType.MIXED:

@@ -11,7 +11,8 @@ This module is licensed under the MIT License.
 """
 
 import re
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 from splurge_tools.protocols import DataValidatorProtocol
 
@@ -19,20 +20,20 @@ from splurge_tools.protocols import DataValidatorProtocol
 class DataValidator(DataValidatorProtocol):
     """
     A class for validating data against various rules and constraints.
-    
+
     This class implements the DataValidatorProtocol interface, providing
     a consistent interface for data validation operations.
     """
 
     def __init__(self) -> None:
-        self._validators: Dict[str, List[Callable[[Any], bool]]] = {}
-        self._custom_validators: Dict[str, Callable[[Any], bool]] = {}
-        self._errors: List[str] = []
+        self._validators: dict[str, list[Callable[[Any], bool]]] = {}
+        self._custom_validators: dict[str, Callable[[Any], bool]] = {}
+        self._errors: list[str] = []
 
     def add_validator(
         self,
         field: str,
-        validator: Callable[[Any], bool]
+        validator: Callable[[Any], bool],
     ) -> None:
         """
         Add a validator function for a specific field.
@@ -48,7 +49,7 @@ class DataValidator(DataValidatorProtocol):
     def add_custom_validator(
         self,
         name: str,
-        validator: Callable[[Any], bool]
+        validator: Callable[[Any], bool],
     ) -> None:
         """
         Add a named custom validator that can be reused.
@@ -61,7 +62,7 @@ class DataValidator(DataValidatorProtocol):
 
     def validate(
         self,
-        data: Any
+        data: Any,
     ) -> bool:
         """
         Validate the given data.
@@ -73,31 +74,30 @@ class DataValidator(DataValidatorProtocol):
             True if data is valid, False otherwise
         """
         self.clear_errors()
-        
+
         if isinstance(data, dict):
             return self._validate_dict(data)
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return self._validate_list(data)
-        else:
-            # For non-dict/list data, check if any validators exist
-            if not self._validators:
-                return True  # No validators means everything is valid
-            
-            # Apply validators to the data itself
-            for field, validators in self._validators.items():
-                for validator in validators:
-                    if not validator(data):
-                        self._errors.append(f"Validation failed for {field}")
-                        return False
-            return True
+        # For non-dict/list data, check if any validators exist
+        if not self._validators:
+            return True  # No validators means everything is valid
+
+        # Apply validators to the data itself
+        for field, validators in self._validators.items():
+            for validator in validators:
+                if not validator(data):
+                    self._errors.append(f"Validation failed for {field}")
+                    return False
+        return True
 
     def _validate_dict(
         self,
-        data: Dict[str, Any]
+        data: dict[str, Any],
     ) -> bool:
         """Validate dictionary data."""
         is_valid = True
-        
+
         for field, validators in self._validators.items():
             if field not in data:
                 self._errors.append(f"Field '{field}' is required")
@@ -110,16 +110,16 @@ class DataValidator(DataValidatorProtocol):
                     self._errors.append(f"Validation failed for field '{field}'")
                     is_valid = False
                     break
-        
+
         return is_valid
 
     def _validate_list(
         self,
-        data: List[Any]
+        data: list[Any],
     ) -> bool:
         """Validate list data."""
         is_valid = True
-        
+
         for field, validators in self._validators.items():
             try:
                 index = int(field)
@@ -127,7 +127,7 @@ class DataValidator(DataValidatorProtocol):
                     self._errors.append(f"Index {index} is out of range")
                     is_valid = False
                     continue
-                
+
                 value = data[index]
                 for validator in validators:
                     if not validator(value):
@@ -137,13 +137,13 @@ class DataValidator(DataValidatorProtocol):
             except ValueError:
                 # Field is not a valid index, skip
                 continue
-        
+
         return is_valid
 
-    def get_errors(self) -> List[str]:
+    def get_errors(self) -> list[str]:
         """
         Get list of validation errors.
-        
+
         Returns:
             List of error messages from the last validation
         """
@@ -155,8 +155,8 @@ class DataValidator(DataValidatorProtocol):
 
     def validate_detailed(
         self,
-        data: Dict[str, Any]
-    ) -> Dict[str, List[str]]:
+        data: dict[str, Any],
+    ) -> dict[str, list[str]]:
         """
         Validate all fields in the data dictionary and return detailed errors.
 
@@ -166,7 +166,7 @@ class DataValidator(DataValidatorProtocol):
         Returns:
             Dictionary mapping field names to lists of error messages
         """
-        errors: Dict[str, List[str]] = {}
+        errors: dict[str, list[str]] = {}
 
         for field, validators in self._validators.items():
             if field not in data:
@@ -184,26 +184,26 @@ class DataValidator(DataValidatorProtocol):
 
     def validate_with_custom_rules(
         self,
-        data: Dict[str, Any],
-        rules: Dict[str, List[str]]
+        data: dict[str, Any],
+        rules: dict[str, list[str]],
     ) -> bool:
         """
         Validate data using predefined validation rules.
-        
+
         Args:
             data: Dictionary of field names and values to validate
             rules: Dictionary mapping field names to lists of rule names
-            
+
         Returns:
             True if all validations pass, False otherwise
         """
         self.clear_errors()
-        
+
         for field, rule_names in rules.items():
             if field not in data:
                 self._errors.append(f"Field '{field}' is required")
                 continue
-                
+
             value = data[field]
             for rule_name in rule_names:
                 if rule_name in self._custom_validators:
@@ -211,17 +211,17 @@ class DataValidator(DataValidatorProtocol):
                         self._errors.append(f"Rule '{rule_name}' failed for field '{field}'")
                 else:
                     self._errors.append(f"Unknown validation rule: {rule_name}")
-        
+
         return len(self._errors) == 0
 
     def add_field_validators(
         self,
         field: str,
-        *validators: Callable[[Any], bool]
+        *validators: Callable[[Any], bool],
     ) -> None:
         """
         Add multiple validators for a field at once.
-        
+
         Args:
             field: The field name to validate
             *validators: Variable number of validator functions
@@ -232,11 +232,11 @@ class DataValidator(DataValidatorProtocol):
 
     def remove_field_validators(
         self,
-        field: str
+        field: str,
     ) -> None:
         """
         Remove all validators for a specific field.
-        
+
         Args:
             field: The field name to remove validators for
         """
@@ -245,14 +245,14 @@ class DataValidator(DataValidatorProtocol):
 
     def get_field_validators(
         self,
-        field: str
-    ) -> List[Callable[[Any], bool]]:
+        field: str,
+    ) -> list[Callable[[Any], bool]]:
         """
         Get all validators for a specific field.
-        
+
         Args:
             field: The field name to get validators for
-            
+
         Returns:
             List of validator functions for the field
         """
@@ -265,21 +265,21 @@ class DataValidator(DataValidatorProtocol):
 
     @staticmethod
     def min_length(
-        length: int
+        length: int,
     ) -> Callable[[Any], bool]:
         """Validator that checks if a string has minimum length."""
         return lambda x: len(str(x)) >= length
 
     @staticmethod
     def max_length(
-        length: int
+        length: int,
     ) -> Callable[[Any], bool]:
         """Validator that checks if a string has maximum length."""
         return lambda x: len(str(x)) <= length
 
     @staticmethod
     def pattern(
-        regex: str
+        regex: str,
     ) -> Callable[[Any], bool]:
         """Validator that checks if a string matches a regex pattern."""
         pattern = re.compile(regex)
@@ -287,10 +287,8 @@ class DataValidator(DataValidatorProtocol):
 
     @staticmethod
     def numeric_range(
-        min_val: int | float,
-        max_val: int | float
+        min_val: float,
+        max_val: float,
     ) -> Callable[[Any], bool]:
         """Validator that checks if a number is within a range."""
         return lambda x: min_val <= float(x) <= max_val
-
-

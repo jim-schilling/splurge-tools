@@ -10,13 +10,13 @@ from pathlib import Path
 
 import pytest
 
+from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.exceptions import (
-    SplurgeParameterError,
+    SplurgeFileEncodingError,
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
-    SplurgeFileEncodingError
+    SplurgeParameterError,
 )
-from splurge_tools.dsv_helper import DsvHelper
 
 
 class TestDsvHelperParse:
@@ -157,7 +157,7 @@ class TestDsvHelperParses:
         result_pipe = DsvHelper.parses(content, delimiter="|")
         result_semicolon = DsvHelper.parses(content, delimiter=";")
         result_tab = DsvHelper.parses(content, delimiter="\t")
-        
+
         assert result_pipe == [["a", "b", "c"], ["d;e;f"], ["g\th\ti"]]
         assert result_semicolon == [["a|b|c"], ["d", "e", "f"], ["g\th\ti"]]
         assert result_tab == [["a|b|c"], ["d;e;f"], ["g", "h", "i"]]
@@ -190,7 +190,7 @@ class TestDsvHelperParseFile:
         """Test parsing basic CSV file."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c\nd,e,f\ng,h,i")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",")
         expected = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         assert result == expected
@@ -199,7 +199,7 @@ class TestDsvHelperParseFile:
         """Test parsing TSV file."""
         test_file = tmp_path / "test.tsv"
         test_file.write_text("a\tb\tc\nd\te\tf")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter="\t")
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
@@ -208,7 +208,7 @@ class TestDsvHelperParseFile:
         """Test parsing file with quoted values."""
         test_file = tmp_path / "test.csv"
         test_file.write_text('"a","b","c"\n"d","e","f"')
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", bookend='"')
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
@@ -217,7 +217,7 @@ class TestDsvHelperParseFile:
         """Test parsing file with header skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("header1,header2,header3\na,b,c\nd,e,f")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", skip_header_rows=1)
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
@@ -226,7 +226,7 @@ class TestDsvHelperParseFile:
         """Test parsing file with footer skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c\nd,e,f\nfooter1,footer2,footer3")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", skip_footer_rows=1)
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
@@ -235,7 +235,7 @@ class TestDsvHelperParseFile:
         """Test parsing file with both header and footer skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("header1,header2,header3\na,b,c\nd,e,f\nfooter1,footer2,footer3")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", skip_header_rows=1, skip_footer_rows=1)
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
@@ -244,7 +244,7 @@ class TestDsvHelperParseFile:
         """Test parsing file without stripping."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a , b , c\nd , e , f")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", strip=False)
         expected = [["a ", " b ", " c"], ["d ", " e ", " f"]]
         assert result == expected
@@ -253,9 +253,9 @@ class TestDsvHelperParseFile:
         """Test parsing file with different encoding."""
         test_file = tmp_path / "test.csv"
         content = "a,b,c\nd,e,f"
-        test_file.write_text(content, encoding='utf-16')
-        
-        result = DsvHelper.parse_file(test_file, delimiter=",", encoding='utf-16')
+        test_file.write_text(content, encoding="utf-16")
+
+        result = DsvHelper.parse_file(test_file, delimiter=",", encoding="utf-16")
         expected = [["a", "b", "c"], ["d", "e", "f"]]
         assert result == expected
 
@@ -263,7 +263,7 @@ class TestDsvHelperParseFile:
         """Test parsing empty file."""
         test_file = tmp_path / "empty.csv"
         test_file.write_text("")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",")
         assert result == []
 
@@ -271,7 +271,7 @@ class TestDsvHelperParseFile:
         """Test parsing single line file."""
         test_file = tmp_path / "single.csv"
         test_file.write_text("a,b,c")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",")
         expected = [["a", "b", "c"]]
         assert result == expected
@@ -279,7 +279,7 @@ class TestDsvHelperParseFile:
     def test_parse_file_nonexistent_raises_error(self, tmp_path: Path) -> None:
         """Test that parsing non-existent file raises error."""
         test_file = tmp_path / "nonexistent.csv"
-        
+
         with pytest.raises(SplurgeFileNotFoundError):
             DsvHelper.parse_file(test_file, delimiter=",")
 
@@ -287,7 +287,7 @@ class TestDsvHelperParseFile:
         """Test that empty delimiter raises error."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c")
-        
+
         with pytest.raises(SplurgeParameterError, match="delimiter cannot be empty or None"):
             DsvHelper.parse_file(test_file, delimiter="")
 
@@ -299,7 +299,7 @@ class TestDsvHelperParseStream:
         """Test streaming basic CSV file."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c\nd,e,f\ng,h,i")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -308,7 +308,7 @@ class TestDsvHelperParseStream:
         """Test streaming TSV file."""
         test_file = tmp_path / "test.tsv"
         test_file.write_text("a\tb\tc\nd\te\tf\ng\th\ti")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter="\t", chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -317,7 +317,7 @@ class TestDsvHelperParseStream:
         """Test streaming file with quoted values."""
         test_file = tmp_path / "test.csv"
         test_file.write_text('"a","b","c"\n"d","e","f"\n"g","h","i"')
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", bookend='"', chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -326,7 +326,7 @@ class TestDsvHelperParseStream:
         """Test streaming file with header skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("header1,header2,header3\na,b,c\nd,e,f\ng,h,i")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", skip_header_rows=1, chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -335,7 +335,7 @@ class TestDsvHelperParseStream:
         """Test streaming file with footer skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c\nd,e,f\ng,h,i\nfooter1,footer2,footer3")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", skip_footer_rows=1, chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -344,8 +344,10 @@ class TestDsvHelperParseStream:
         """Test streaming file with both header and footer skip."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("header1,header2,header3\na,b,c\nd,e,f\nfooter1,footer2,footer3")
-        
-        chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", skip_header_rows=1, skip_footer_rows=1, chunk_size=2))
+
+        chunks = list(
+            DsvHelper.parse_stream(test_file, delimiter=",", skip_header_rows=1, skip_footer_rows=1, chunk_size=2),
+        )
         expected = [[["a", "b", "c"], ["d", "e", "f"]]]
         assert chunks == expected
 
@@ -353,7 +355,7 @@ class TestDsvHelperParseStream:
         """Test streaming file without stripping."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a , b , c\nd , e , f")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", strip=False, chunk_size=2))
         expected = [[["a ", " b ", " c"], ["d ", " e ", " f"]]]
         assert chunks == expected
@@ -362,9 +364,9 @@ class TestDsvHelperParseStream:
         """Test streaming file with different encoding."""
         test_file = tmp_path / "test.csv"
         content = "a,b,c\nd,e,f"
-        test_file.write_text(content, encoding='utf-16')
-        
-        chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", encoding='utf-16', chunk_size=2))
+        test_file.write_text(content, encoding="utf-16")
+
+        chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", encoding="utf-16", chunk_size=2))
         expected = [[["a", "b", "c"], ["d", "e", "f"]]]
         assert chunks == expected
 
@@ -372,7 +374,7 @@ class TestDsvHelperParseStream:
         """Test streaming empty file."""
         test_file = tmp_path / "empty.csv"
         test_file.write_text("")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=2))
         assert chunks == []
 
@@ -380,7 +382,7 @@ class TestDsvHelperParseStream:
         """Test streaming single line file."""
         test_file = tmp_path / "single.csv"
         test_file.write_text("a,b,c")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=2))
         expected = [[["a", "b", "c"]]]
         assert chunks == expected
@@ -389,7 +391,7 @@ class TestDsvHelperParseStream:
         """Test streaming with small chunk size."""
         test_file = tmp_path / "small.csv"
         test_file.write_text("a,b,c\nd,e,f\ng,h,i")
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=100))
         expected = [[["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]]
         assert chunks == expected
@@ -399,7 +401,7 @@ class TestDsvHelperParseStream:
         test_file = tmp_path / "min_chunk.csv"
         lines = [f"a{i},b{i},c{i}" for i in range(1, 21)]
         test_file.write_text("\n".join(lines))
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=50))
         # Should use minimum chunk size (100)
         assert len(chunks) == 1
@@ -408,7 +410,7 @@ class TestDsvHelperParseStream:
     def test_parse_stream_nonexistent_file_raises_error(self, tmp_path: Path) -> None:
         """Test that streaming non-existent file raises error."""
         test_file = tmp_path / "nonexistent.csv"
-        
+
         with pytest.raises(SplurgeFileNotFoundError):
             list(DsvHelper.parse_stream(test_file, delimiter=","))
 
@@ -416,7 +418,7 @@ class TestDsvHelperParseStream:
         """Test that empty delimiter raises error."""
         test_file = tmp_path / "test.csv"
         test_file.write_text("a,b,c")
-        
+
         with pytest.raises(SplurgeParameterError, match="delimiter cannot be empty or None"):
             list(DsvHelper.parse_stream(test_file, delimiter=""))
 
@@ -447,8 +449,8 @@ class TestDsvHelperEdgeCases:
     def test_parse_file_with_unicode_content(self, tmp_path: Path) -> None:
         """Test parsing file with Unicode content."""
         test_file = tmp_path / "unicode.csv"
-        test_file.write_text("α,β,γ\nδε,ζη,θι", encoding='utf-8')
-        
+        test_file.write_text("α,β,γ\nδε,ζη,θι", encoding="utf-8")
+
         result = DsvHelper.parse_file(test_file, delimiter=",")
         expected = [["α", "β", "γ"], ["δε", "ζη", "θι"]]
         assert result == expected
@@ -457,7 +459,7 @@ class TestDsvHelperEdgeCases:
         """Test parsing file with mixed line endings."""
         test_file = tmp_path / "mixed.csv"
         test_file.write_text("a,b,c\r\nd,e,f\ng,h,i\r")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", strip=False)
         expected = [["a", "b", "c"], [""], ["d", "e", "f"], ["g", "h", "i"]]
         assert result == expected
@@ -466,7 +468,7 @@ class TestDsvHelperEdgeCases:
         """Test parsing file with trailing newlines."""
         test_file = tmp_path / "trailing.csv"
         test_file.write_text("a,b,c\n\n\n")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", strip=False)
         expected = [["a", "b", "c"], [""], [""]]
         assert result == expected
@@ -475,7 +477,7 @@ class TestDsvHelperEdgeCases:
         """Test parsing file with only newlines."""
         test_file = tmp_path / "newlines.csv"
         test_file.write_text("\n\n\n")
-        
+
         result = DsvHelper.parse_file(test_file, delimiter=",", strip=False)
         expected = [[""], [""], [""]]
         assert result == expected
@@ -485,7 +487,7 @@ class TestDsvHelperEdgeCases:
         test_file = tmp_path / "large.csv"
         lines = [f"a{i},b{i},c{i}" for i in range(1, 1001)]
         test_file.write_text("\n".join(lines))
-        
+
         chunks = list(DsvHelper.parse_stream(test_file, delimiter=",", chunk_size=100))
         assert len(chunks) == 10
         assert all(len(chunk) == 100 for chunk in chunks[:-1])
@@ -496,23 +498,23 @@ class TestDsvHelperEdgeCases:
         test_file = tmp_path / "encoding_error.csv"
         # Write binary data that's not valid UTF-8
         test_file.write_bytes(b"a,b,c\n\xff\xfe\nd,e,f")
-        
+
         with pytest.raises(SplurgeFileEncodingError):
             DsvHelper.parse_file(test_file, delimiter=",")
 
     def test_parse_file_with_permission_error(self, tmp_path: Path) -> None:
         """Test parse_file with permission error."""
-        
+
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":
             pytest.skip("File permission test not reliable on Windows")
-        
+
         test_file = tmp_path / "permission_test.csv"
         test_file.write_text("a,b,c\n1,2,3")
-        
+
         # Make file unreadable
         os.chmod(test_file, 0o000)
-        
+
         try:
             with pytest.raises(SplurgeFilePermissionError):
                 DsvHelper.parse_file(test_file, delimiter=",")
@@ -527,12 +529,12 @@ class TestDsvHelperEdgeCases:
             ["name", "age", "salary", "active", "date"],
             ["John", "25", "50000", "true", "2023-01-01"],
             ["Jane", "30", "60000", "false", "2023-02-01"],
-            ["Bob", "35", "70000", "true", "2023-03-01"]
+            ["Bob", "35", "70000", "true", "2023-03-01"],
         ]
-        
+
         # Test with default parameters
         profile = DsvHelper.profile_columns(test_data)
-        
+
         assert len(profile) == 5
         assert profile[0]["name"] == "name"
         assert profile[0]["datatype"] == "STRING"
@@ -544,15 +546,15 @@ class TestDsvHelperEdgeCases:
         assert profile[3]["datatype"] == "BOOLEAN"  # Boolean is detected as boolean
         assert profile[4]["name"] == "date"
         assert profile[4]["datatype"] == "DATE"  # Date is detected as date
-        
+
         # Test with numeric data
         numeric_data = [
             ["id", "value", "flag"],
             ["1", "10.5", "true"],
             ["2", "20.7", "false"],
-            ["3", "30.2", "true"]
+            ["3", "30.2", "true"],
         ]
-        
+
         profile = DsvHelper.profile_columns(numeric_data)
         assert len(profile) == 3
         assert profile[0]["name"] == "id"
@@ -561,29 +563,29 @@ class TestDsvHelperEdgeCases:
         assert profile[1]["datatype"] == "FLOAT"  # Value is detected as float
         assert profile[2]["name"] == "flag"
         assert profile[2]["datatype"] == "BOOLEAN"  # Flag is detected as boolean
-        
+
         # Test with custom header rows
         multi_header_data = [
             ["Header 1", "Header 2", "Header 3"],
             ["Subheader 1", "Subheader 2", "Subheader 3"],
             ["a", "b", "c"],
-            ["1", "2", "3"]
+            ["1", "2", "3"],
         ]
-        
+
         profile = DsvHelper.profile_columns(multi_header_data, header_rows=2)
         assert len(profile) == 3
         assert profile[0]["name"] == "Header 1_Subheader 1"  # Combined header names
         assert profile[1]["name"] == "Header 2_Subheader 2"
         assert profile[2]["name"] == "Header 3_Subheader 3"
-        
+
         # Test with skip_empty_rows=False
         data_with_empty = [
             ["col1", "col2"],
             ["a", "b"],
             ["", ""],  # Empty row
-            ["c", "d"]
+            ["c", "d"],
         ]
-        
+
         profile = DsvHelper.profile_columns(data_with_empty, skip_empty_rows=False)
         assert len(profile) == 2
         assert profile[0]["name"] == "col1"

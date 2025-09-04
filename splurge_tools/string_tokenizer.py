@@ -30,8 +30,8 @@ class StringTokenizer:
     def parse(
         content: str | None,
         *,
-        delimiter: str,        
-        strip: bool = DEFAULT_STRIP
+        delimiter: str,
+        strip: bool = DEFAULT_STRIP,
     ) -> list[str]:
         """
         Split a string into tokens based on a delimiter.
@@ -57,7 +57,8 @@ class StringTokenizer:
             return []
 
         if delimiter is None or delimiter == "":
-            raise SplurgeParameterError("delimiter cannot be empty or None")
+            msg = "delimiter cannot be empty or None"
+            raise SplurgeParameterError(msg)
 
         if strip and not content.strip():
             return []
@@ -73,7 +74,7 @@ class StringTokenizer:
         content: list[str],
         *,
         delimiter: str,
-        strip: bool = DEFAULT_STRIP
+        strip: bool = DEFAULT_STRIP,
     ) -> list[list[str]]:
         """
         Process multiple strings into lists of tokens.
@@ -94,7 +95,8 @@ class StringTokenizer:
             [['a', 'b'], ['c', 'd']]
         """
         if delimiter is None or delimiter == "":
-            raise SplurgeParameterError("delimiter cannot be empty or None")
+            msg = "delimiter cannot be empty or None"
+            raise SplurgeParameterError(msg)
 
         return [cls.parse(text, delimiter=delimiter, strip=strip) for text in content]
 
@@ -103,7 +105,7 @@ class StringTokenizer:
         content: str,
         *,
         bookend: str,
-        strip: bool = DEFAULT_STRIP
+        strip: bool = DEFAULT_STRIP,
     ) -> str:
         """
         Remove matching characters from both ends of a string.
@@ -124,13 +126,10 @@ class StringTokenizer:
             'hello'
         """
         if bookend is None or bookend == "":
-            raise SplurgeParameterError("bookend cannot be empty or None")
+            msg = "bookend cannot be empty or None"
+            raise SplurgeParameterError(msg)
 
         value: str = content.strip() if strip else content
-        if (
-            value.startswith(bookend)
-            and value.endswith(bookend)
-            and len(value) > 2 * len(bookend) - 1
-        ):
+        if value.startswith(bookend) and value.endswith(bookend) and len(value) > 2 * len(bookend) - 1:
             return value[len(bookend) : -len(bookend)]
         return value

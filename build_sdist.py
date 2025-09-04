@@ -5,9 +5,9 @@ Build script for splurge-tools source distributions only.
 This script ensures only source distributions are built, not wheels.
 """
 
+import shutil
 import subprocess
 import sys
-import shutil
 from pathlib import Path
 
 
@@ -17,44 +17,34 @@ def clean_build_artifacts():
     for artifact in artifacts:
         if Path(artifact).exists():
             shutil.rmtree(artifact)
-            print(f"Cleaned {artifact}")
 
 
 def build_sdist():
     """Build source distribution only."""
-    print("Building source distribution...")
-    result = subprocess.run([sys.executable, "-m", "build", "--sdist"], 
-                          capture_output=True, text=True)
-    
+    result = subprocess.run([sys.executable, "-m", "build", "--sdist"], check=False, capture_output=True, text=True)
+
     if result.returncode == 0:
-        print("✅ Source distribution built successfully!")
         # List the created files
         dist_dir = Path("dist")
         if dist_dir.exists():
-            for file in dist_dir.glob("*.tar.gz"):
-                print(f"📦 Created: {file}")
+            for _file in dist_dir.glob("*.tar.gz"):
+                pass
     else:
-        print("❌ Build failed!")
-        print("STDOUT:", result.stdout)
-        print("STDERR:", result.stderr)
         return False
-    
+
     return True
 
 
 def main():
     """Main build process."""
-    print("🚀 Building splurge-tools source distribution...")
-    
+
     # Clean previous builds
     clean_build_artifacts()
-    
+
     # Build sdist
     if build_sdist():
-        print("\n🎉 Build completed successfully!")
-        print("📁 Source distribution is in the 'dist' directory")
+        pass
     else:
-        print("\n💥 Build failed!")
         sys.exit(1)
 
 

@@ -13,7 +13,7 @@ import re
 def process_headers(
     header_data: list[list[str]],
     *,
-    header_rows: int
+    header_rows: int,
 ) -> tuple[list[list[str]], list[str]]:
     """Process header rows and return processed header data and column names.
 
@@ -57,7 +57,7 @@ def process_headers(
 def normalize_rows(
     rows: list[list[str]],
     *,
-    skip_empty_rows: bool
+    skip_empty_rows: bool,
 ) -> list[list[str]]:
     """Normalize rows to equal length and optionally drop empty rows."""
     if not rows:
@@ -84,5 +84,3 @@ def should_skip_row(row: list[str]) -> bool:
 def auto_column_names(count: int) -> list[str]:
     """Generate default column names column_0..column_{count-1}."""
     return [f"column_{i}" for i in range(count)]
-
-

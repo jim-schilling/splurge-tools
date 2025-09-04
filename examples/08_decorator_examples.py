@@ -8,25 +8,25 @@ This example shows how to use:
 """
 
 from splurge_tools.decorators import (
+    deprecated_method,
+    handle_empty_value,
     handle_empty_value_classmethod,
     handle_empty_value_instancemethod,
-    handle_empty_value,
-    deprecated_method
 )
 
 
 class StringProcessor:
     """Example class demonstrating different decorator usage patterns."""
-    
+
     def __init__(self, prefix: str = "processed_"):
         self.prefix = prefix
-    
+
     @classmethod
     @handle_empty_value_classmethod
     def class_process_string(cls, value: str) -> str:
         """Class method that processes strings."""
         return f"class:{value.upper()}"
-    
+
     @handle_empty_value_instancemethod
     def instance_process_string(self, value: str) -> str:
         """Instance method that processes strings."""
@@ -47,37 +47,15 @@ def deprecated_process_string(value: str) -> str:
 
 def demonstrate_decorators():
     """Demonstrate all three decorator types."""
-    print("=== Handle Empty Value Decorator Examples ===\n")
-    
+
     # Test class method
-    print("1. Class Method Decorator:")
-    print(f"   Normal input: {StringProcessor.class_process_string('hello')}")
-    print(f"   None input: {repr(StringProcessor.class_process_string(None))}")
-    print(f"   Empty input: {repr(StringProcessor.class_process_string(''))}")
-    print()
-    
+
     # Test instance method
-    processor = StringProcessor("custom_")
-    print("2. Instance Method Decorator:")
-    print(f"   Normal input: {processor.instance_process_string('world')}")
-    print(f"   None input: {repr(processor.instance_process_string(None))}")
-    print(f"   Empty input: {repr(processor.instance_process_string(''))}")
-    print()
-    
+    StringProcessor("custom_")
+
     # Test standalone function
-    print("3. Standalone Function Decorator:")
-    print(f"   Normal input: {standalone_process_string('python')}")
-    print(f"   None input: {repr(standalone_process_string(None))}")
-    print(f"   Empty input: {repr(standalone_process_string(''))}")
-    print()
-    
+
     # Test deprecated method
-    print("4. Deprecated Method Decorator:")
-    print(f"   Normal input: {deprecated_process_string('legacy')}")
-    print("   (Note: This will show a deprecation warning)")
-    print()
-    
-    print("All decorators handle None and empty strings gracefully!")
 
 
 if __name__ == "__main__":

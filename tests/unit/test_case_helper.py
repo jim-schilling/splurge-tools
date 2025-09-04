@@ -17,7 +17,7 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_train(input_str), expected)
+                assert CaseHelper.to_train(input_str) == expected
 
     def test_to_sentence(self):
         """Test sentence case conversion."""
@@ -30,7 +30,7 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_sentence(input_str), expected)
+                assert CaseHelper.to_sentence(input_str) == expected
 
     def test_to_camel(self):
         """Test camel case conversion."""
@@ -43,7 +43,7 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_camel(input_str), expected)
+                assert CaseHelper.to_camel(input_str) == expected
 
     def test_to_snake(self):
         """Test snake case conversion."""
@@ -56,7 +56,7 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_snake(input_str), expected)
+                assert CaseHelper.to_snake(input_str) == expected
 
     def test_to_kebab(self):
         """Test kebab case conversion."""
@@ -69,7 +69,7 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_kebab(input_str), expected)
+                assert CaseHelper.to_kebab(input_str) == expected
 
     def test_to_pascal(self):
         """Test pascal case conversion."""
@@ -82,29 +82,29 @@ class TestCaseHelper(unittest.TestCase):
         ]
         for input_str, expected in test_cases:
             with self.subTest(input_str=input_str):
-                self.assertEqual(CaseHelper.to_pascal(input_str), expected)
+                assert CaseHelper.to_pascal(input_str) == expected
 
     def test_handle_empty_values(self):
         """Test that empty values are handled correctly by the decorator."""
         # Test None values
-        self.assertEqual(CaseHelper.to_train(None), "")
-        self.assertEqual(CaseHelper.to_sentence(None), "")
-        self.assertEqual(CaseHelper.to_camel(None), "")
-        self.assertEqual(CaseHelper.to_snake(None), "")
-        self.assertEqual(CaseHelper.to_kebab(None), "")
-        self.assertEqual(CaseHelper.to_pascal(None), "")
-        
+        assert CaseHelper.to_train(None) == ""
+        assert CaseHelper.to_sentence(None) == ""
+        assert CaseHelper.to_camel(None) == ""
+        assert CaseHelper.to_snake(None) == ""
+        assert CaseHelper.to_kebab(None) == ""
+        assert CaseHelper.to_pascal(None) == ""
+
         # Test empty strings
-        self.assertEqual(CaseHelper.to_train(""), "")
-        self.assertEqual(CaseHelper.to_sentence(""), "")
-        self.assertEqual(CaseHelper.to_camel(""), "")
-        self.assertEqual(CaseHelper.to_snake(""), "")
-        self.assertEqual(CaseHelper.to_kebab(""), "")
-        self.assertEqual(CaseHelper.to_pascal(""), "")
-        
+        assert CaseHelper.to_train("") == ""
+        assert CaseHelper.to_sentence("") == ""
+        assert CaseHelper.to_camel("") == ""
+        assert CaseHelper.to_snake("") == ""
+        assert CaseHelper.to_kebab("") == ""
+        assert CaseHelper.to_pascal("") == ""
+
         # Test whitespace-only strings (should not be considered empty)
-        self.assertEqual(CaseHelper.to_train("   "), "---")
-        self.assertEqual(CaseHelper.to_sentence("   "), "   ")
+        assert CaseHelper.to_train("   ") == "---"
+        assert CaseHelper.to_sentence("   ") == "   "
 
 
 if __name__ == "__main__":

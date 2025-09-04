@@ -12,19 +12,19 @@ from pathlib import Path
 import pytest
 
 from splurge_tools.exceptions import (
-    SplurgeResourceAcquisitionError,
-    SplurgeResourceReleaseError,
+    SplurgeFileEncodingError,
     SplurgeFileNotFoundError,
     SplurgeFilePermissionError,
-    SplurgeFileEncodingError,
-    SplurgePathValidationError
+    SplurgePathValidationError,
+    SplurgeResourceAcquisitionError,
+    SplurgeResourceReleaseError,
 )
 from splurge_tools.resource_manager import (
-    ResourceManager,
     FileResourceManager,
+    ResourceManager,
     StreamResourceManager,
     safe_file_operation,
-    safe_stream_operation
+    safe_stream_operation,
 )
 
 
@@ -40,33 +40,36 @@ class TestResourceManager:
     def test_acquire_not_implemented(self) -> None:
         """Test that acquire raises NotImplementedError when _create_resource is not implemented."""
         manager = ResourceManager()
-        
+
         with pytest.raises(NotImplementedError):
             manager.acquire()
 
     def test_acquire_already_acquired(self) -> None:
         """Test that acquire raises error when resource is already acquired."""
+
         class TestResourceManager(ResourceManager):
             def _create_resource(self):
                 return "test_resource"
-        
+
         manager = TestResourceManager()
         manager.acquire()  # First acquisition should succeed
-        
+
         with pytest.raises(SplurgeResourceAcquisitionError):
             manager.acquire()  # Second acquisition should fail
 
     def test_acquire_general_exception(self) -> None:
         """Test that acquire wraps general exceptions in SplurgeResourceAcquisitionError."""
+
         class TestResourceManager(ResourceManager):
             def _create_resource(self):
-                raise ValueError("Test error")
-        
+                msg = "Test error"
+                raise ValueError(msg)
+
         manager = TestResourceManager()
-        
+
         with pytest.raises(SplurgeResourceAcquisitionError) as exc_info:
             manager.acquire()
-        
+
         assert "Failed to acquire resource" in str(exc_info.value)
         assert "Test error" in exc_info.value.details
 
@@ -78,19 +81,21 @@ class TestResourceManager:
 
     def test_release_with_cleanup_error(self) -> None:
         """Test that release raises SplurgeResourceReleaseError when cleanup fails."""
+
         class TestResourceManager(ResourceManager):
             def _create_resource(self):
                 return "test_resource"
-            
+
             def _cleanup_resource(self):
-                raise ValueError("Cleanup error")
-        
+                msg = "Cleanup error"
+                raise ValueError(msg)
+
         manager = TestResourceManager()
         manager.acquire()
-        
+
         with pytest.raises(SplurgeResourceReleaseError) as exc_info:
             manager.release()
-        
+
         assert "Failed to release resource" in str(exc_info.value)
         assert "Cleanup error" in exc_info.value.details
 
@@ -101,16 +106,17 @@ class TestResourceManager:
 
     def test_is_acquired_after_acquire(self) -> None:
         """Test acquired state after successful acquisition."""
+
         class TestResourceManager(ResourceManager):
             def _create_resource(self):
                 return "test_resource"
-        
+
         manager = TestResourceManager()
         assert not manager.is_acquired()
-        
+
         manager.acquire()
         assert manager.is_acquired()
-        
+
         manager.release()
         assert not manager.is_acquired()
 
@@ -122,7 +128,7 @@ class TestFileResourceManager:
         """Test initialization with string path."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("content")
-        
+
         manager = FileResourceManager(str(test_file))
         assert manager.file_path == test_file
         assert manager.mode == "r"
@@ -132,7 +138,7 @@ class TestFileResourceManager:
         """Test initialization with Path object."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("content")
-        
+
         manager = FileResourceManager(test_file)
         assert manager.file_path == test_file
 
@@ -140,14 +146,14 @@ class TestFileResourceManager:
         """Test initialization with custom parameters."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("content")
-        
+
         manager = FileResourceManager(
             test_file,
             mode="w",
             encoding="utf-16",
             errors="ignore",
             newline="\r\n",
-            buffering=1024
+            buffering=1024,
         )
         assert manager.mode == "w"
         assert manager.encoding == "utf-16"
@@ -159,7 +165,7 @@ class TestFileResourceManager:
         """Test context manager with text mode."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("test content")
-        
+
         with FileResourceManager(test_file, mode="r") as file_handle:
             content = file_handle.read()
             assert content == "test content"
@@ -168,7 +174,7 @@ class TestFileResourceManager:
         """Test context manager with binary mode."""
         test_file = tmp_path / "test.bin"
         test_file.write_bytes(b"binary content")
-        
+
         with FileResourceManager(test_file, mode="rb") as file_handle:
             content = file_handle.read()
             assert content == b"binary content"
@@ -176,74 +182,71 @@ class TestFileResourceManager:
     def test_context_manager_write_mode(self, tmp_path: Path) -> None:
         """Test context manager with write mode."""
         test_file = tmp_path / "write_test.txt"
-        
+
         with FileResourceManager(test_file, mode="w") as file_handle:
             file_handle.write("written content")
-        
+
         assert test_file.read_text() == "written content"
 
     def test_context_manager_append_mode(self, tmp_path: Path) -> None:
         """Test context manager with append mode."""
         test_file = tmp_path / "append_test.txt"
         test_file.write_text("original content")
-        
+
         with FileResourceManager(test_file, mode="a") as file_handle:
             file_handle.write(" appended content")
-        
+
         assert test_file.read_text() == "original content appended content"
 
     def test_nonexistent_file_read_mode_raises_error(self, tmp_path: Path) -> None:
         """Test that non-existent file raises error in read mode."""
         test_file = tmp_path / "nonexistent.txt"
-        
-        with pytest.raises(SplurgeFileNotFoundError):
-            with FileResourceManager(test_file, mode="r"):
-                pass
+
+        with pytest.raises(SplurgeFileNotFoundError), FileResourceManager(test_file, mode="r"):
+            pass
 
     def test_nonexistent_file_write_mode_succeeds(self, tmp_path: Path) -> None:
         """Test that non-existent file succeeds in write mode."""
         test_file = tmp_path / "new_file.txt"
-        
+
         with FileResourceManager(test_file, mode="w") as file_handle:
             file_handle.write("new content")
-        
+
         assert test_file.read_text() == "new content"
 
     def test_file_permission_error(self, tmp_path: Path) -> None:
         """Test file permission error."""
-        
+
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":
             pytest.skip("File permission test not reliable on Windows")
-        
+
         test_file = tmp_path / "permission_test.txt"
         test_file.write_text("content")
 
         # Make file unreadable
         os.chmod(test_file, 0o000)
-        
+
         try:
-            with pytest.raises(SplurgeFilePermissionError):
-                with FileResourceManager(test_file, mode="r"):
-                    pass
+            with pytest.raises(SplurgeFilePermissionError), FileResourceManager(test_file, mode="r"):
+                pass
         finally:
             # Restore permissions
             os.chmod(test_file, 0o644)
 
     def test_encoding_error(self, tmp_path: Path) -> None:
         """Test encoding error."""
-        
+
         # Skip this test on Windows as encoding error handling may differ
         if platform.system() == "Windows":
             pytest.skip("Encoding error test not reliable on Windows")
-        
+
         test_file = tmp_path / "encoding_test.txt"
         # Write binary data that's not valid UTF-8
         test_file.write_bytes(b"valid text\n\xff\xfe\nmore text")
-        
-        with pytest.raises(SplurgeFileEncodingError):
-            with FileResourceManager(test_file, mode="r"):
-                pass
+
+        with pytest.raises(SplurgeFileEncodingError), FileResourceManager(test_file, mode="r"):
+            pass
 
     def test_invalid_path_raises_error(self) -> None:
         """Test that invalid path raises error."""
@@ -254,7 +257,7 @@ class TestFileResourceManager:
         """Test that directory path raises error."""
         test_dir = tmp_path / "testdir"
         test_dir.mkdir()
-        
+
         with pytest.raises(SplurgePathValidationError):
             FileResourceManager(test_dir, mode="r")
 
@@ -286,40 +289,42 @@ class TestStreamResourceManager:
 
     def test_context_manager_with_closeable_stream(self) -> None:
         """Test context manager with closeable stream."""
+
         class CloseableStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
                 self.closed = True
-        
+
         stream = CloseableStream()
         with StreamResourceManager(stream) as managed_stream:
             items = list(managed_stream)
             assert items == [1, 2, 3]
-        
+
         assert stream.closed
 
     def test_context_manager_without_auto_close(self) -> None:
         """Test context manager without auto close."""
+
         class CloseableStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
                 self.closed = True
-        
+
         stream = CloseableStream()
         with StreamResourceManager(stream, auto_close=False) as managed_stream:
             items = list(managed_stream)
             assert items == [1, 2, 3]
-        
+
         assert not stream.closed
 
     def test_context_manager_with_non_closeable_stream(self) -> None:
@@ -327,55 +332,58 @@ class TestStreamResourceManager:
         stream = iter([1, 2, 3])
         manager = StreamResourceManager(stream)
         assert not manager.is_closed
-        
+
         with manager as managed_stream:
             items = list(managed_stream)
             assert items == [1, 2, 3]
-        
+
         # Should be marked as closed after context manager exits
         assert manager.is_closed
 
     def test_context_manager_with_close_error(self) -> None:
         """Test context manager with closeable stream that raises error."""
+
         class ProblematicStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
-                raise ValueError("Simulated close error")
-        
+                msg = "Simulated close error"
+                raise ValueError(msg)
+
         stream = ProblematicStream()
-        
+
         with pytest.raises(SplurgeResourceReleaseError) as exc_info:
             with StreamResourceManager(stream) as managed_stream:
                 items = list(managed_stream)
                 assert items == [1, 2, 3]
-        
+
         assert "Failed to close stream" in str(exc_info.value)
         assert "Simulated close error" in exc_info.value.details
 
     def test_is_closed_property(self) -> None:
         """Test is_closed property."""
+
         class CloseableStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
                 self.closed = True
-        
+
         stream = CloseableStream()
         manager = StreamResourceManager(stream)
         assert not manager.is_closed
-        
+
         with manager:
             pass
-        
+
         assert manager.is_closed
 
 
@@ -386,7 +394,7 @@ class TestSafeFileOperation:
         """Test safe file operation for reading."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("test content")
-        
+
         with safe_file_operation(test_file, mode="r") as file_handle:
             content = file_handle.read()
             assert content == "test content"
@@ -394,29 +402,28 @@ class TestSafeFileOperation:
     def test_safe_file_operation_write(self, tmp_path: Path) -> None:
         """Test safe file operation for writing."""
         test_file = tmp_path / "write_test.txt"
-        
+
         with safe_file_operation(test_file, mode="w") as file_handle:
             file_handle.write("written content")
-        
+
         assert test_file.read_text() == "written content"
 
     def test_safe_file_operation_with_encoding(self, tmp_path: Path) -> None:
         """Test safe file operation with custom encoding."""
         test_file = tmp_path / "utf16_test.txt"
         content = "test content"
-        test_file.write_text(content, encoding='utf-16')
-        
-        with safe_file_operation(test_file, mode="r", encoding='utf-16') as file_handle:
+        test_file.write_text(content, encoding="utf-16")
+
+        with safe_file_operation(test_file, mode="r", encoding="utf-16") as file_handle:
             read_content = file_handle.read()
             assert read_content == content
 
     def test_safe_file_operation_nonexistent_file_raises_error(self, tmp_path: Path) -> None:
         """Test that non-existent file raises error."""
         test_file = tmp_path / "nonexistent.txt"
-        
-        with pytest.raises(SplurgeFileNotFoundError):
-            with safe_file_operation(test_file, mode="r"):
-                pass
+
+        with pytest.raises(SplurgeFileNotFoundError), safe_file_operation(test_file, mode="r"):
+            pass
 
 
 class TestSafeStreamOperation:
@@ -431,40 +438,42 @@ class TestSafeStreamOperation:
 
     def test_safe_stream_operation_with_closeable_stream(self) -> None:
         """Test safe stream operation with closeable stream."""
+
         class CloseableStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
                 self.closed = True
-        
+
         stream = CloseableStream()
         with safe_stream_operation(stream) as managed_stream:
             items = list(managed_stream)
             assert items == [1, 2, 3]
-        
+
         assert stream.closed
 
     def test_safe_stream_operation_without_auto_close(self) -> None:
         """Test safe stream operation without auto close."""
+
         class CloseableStream:
             def __init__(self):
                 self.closed = False
-            
+
             def __iter__(self):
                 return iter([1, 2, 3])
-            
+
             def close(self):
                 self.closed = True
-        
+
         stream = CloseableStream()
         with safe_stream_operation(stream, auto_close=False) as managed_stream:
             items = list(managed_stream)
             assert items == [1, 2, 3]
-        
+
         assert not stream.closed
 
 
@@ -475,7 +484,7 @@ class TestResourceManagerEdgeCases:
         """Test file resource manager with Unicode path."""
         unicode_file = tmp_path / "αβγ.txt"
         unicode_file.write_text("unicode content")
-        
+
         with FileResourceManager(unicode_file) as file_handle:
             content = file_handle.read()
             assert content == "unicode content"
@@ -484,7 +493,7 @@ class TestResourceManagerEdgeCases:
         """Test file resource manager with spaces in path."""
         spaced_file = tmp_path / "file with spaces.txt"
         spaced_file.write_text("content with spaces")
-        
+
         with FileResourceManager(spaced_file) as file_handle:
             content = file_handle.read()
             assert content == "content with spaces"
@@ -509,7 +518,7 @@ class TestResourceManagerEdgeCases:
         """Test file resource manager with concurrent access."""
         test_file = tmp_path / "concurrent.txt"
         test_file.write_text("original content")
-        
+
         # This should work without issues
         with FileResourceManager(test_file, mode="r") as file1:
             with FileResourceManager(test_file, mode="r") as file2:
@@ -519,21 +528,20 @@ class TestResourceManagerEdgeCases:
 
     def test_file_resource_manager_error_handling(self, tmp_path: Path) -> None:
         """Test file resource manager error handling."""
-        
+
         # Skip this test on Windows as chmod(0o000) doesn't make files unreadable
         if platform.system() == "Windows":
             pytest.skip("File permission test not reliable on Windows")
-        
+
         test_file = tmp_path / "error_test.txt"
         test_file.write_text("content")
-        
+
         # Make file unreadable
         os.chmod(test_file, 0o000)
-        
+
         try:
-            with pytest.raises(SplurgeFilePermissionError):
-                with FileResourceManager(test_file, mode="r"):
-                    pass
+            with pytest.raises(SplurgeFilePermissionError), FileResourceManager(test_file, mode="r"):
+                pass
         finally:
             # Restore permissions
             os.chmod(test_file, 0o644)

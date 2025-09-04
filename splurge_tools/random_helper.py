@@ -19,9 +19,8 @@ import string
 import sys
 from datetime import date, datetime, timedelta
 from secrets import randbits
-from typing import List
 
-from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeFormatError
+from splurge_tools.exceptions import SplurgeFormatError, SplurgeParameterError, SplurgeRangeError
 
 
 class RandomHelper:
@@ -57,7 +56,7 @@ class RandomHelper:
     def as_bytes(
         size: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> bytes:
         """
         Generate random bytes of specified size.
@@ -86,7 +85,7 @@ class RandomHelper:
         cls,
         size: int = 8,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> int:
         """
         Generate a random 64-bit integer.
@@ -105,10 +104,7 @@ class RandomHelper:
             >>> RandomHelper.as_int(secure=True)  # Cryptographically secure
             9876543210987654321
         """
-        return (
-            int.from_bytes(cls.as_bytes(size, secure=secure), sys.byteorder)
-            & cls.INT64_MAX
-        )
+        return int.from_bytes(cls.as_bytes(size, secure=secure), sys.byteorder) & cls.INT64_MAX
 
     @classmethod
     def as_int_range(
@@ -116,7 +112,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> int:
         """
         Generate a random 64-bit integer within a specified range.
@@ -140,15 +136,17 @@ class RandomHelper:
             1789012
         """
         if lower >= upper:
+            msg = "lower must be < upper"
             raise SplurgeRangeError(
-                "lower must be < upper",
-                details=f"Got lower={lower}, upper={upper}"
+                msg,
+                details=f"Got lower={lower}, upper={upper}",
             )
-        
+
         if lower < cls.INT64_MIN or upper > cls.INT64_MAX:
+            msg = f"Range {lower} to {upper} exceeds 64-bit integer bounds"
             raise SplurgeRangeError(
-                f"Range {lower} to {upper} exceeds 64-bit integer bounds",
-                details=f"Valid range: {cls.INT64_MIN} to {cls.INT64_MAX}"
+                msg,
+                details=f"Valid range: {cls.INT64_MIN} to {cls.INT64_MAX}",
             )
         return int(cls.as_int(secure=secure) % (upper - lower + 1)) + lower
 
@@ -158,7 +156,7 @@ class RandomHelper:
         lower: float,
         upper: float,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> float:
         """
         Generate a random float within a specified range.
@@ -182,22 +180,22 @@ class RandomHelper:
             0.12345
         """
         if lower >= upper:
+            msg = "lower must be < upper"
             raise SplurgeRangeError(
-                "lower must be < upper",
-                details=f"Got lower={lower}, upper={upper}"
+                msg,
+                details=f"Got lower={lower}, upper={upper}",
             )
-        
+
         if secure:
             # Use secure random generation
             range_size = upper - lower
             # Generate secure random bytes and convert to float in range [0, 1)
             random_bytes = cls.as_bytes(8, secure=True)
-            random_int = int.from_bytes(random_bytes, 'big')
+            random_int = int.from_bytes(random_bytes, "big")
             # Convert to float in range [0, 1)
             random_fraction = random_int / (2**64)
             return lower + (random_fraction * range_size)
-        else:
-            return random.uniform(lower, upper)
+        return random.uniform(lower, upper)
 
     @classmethod
     def as_string(
@@ -205,7 +203,7 @@ class RandomHelper:
         length: int,
         allowable_chars: str,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random string of specified length using given characters.
@@ -229,36 +227,35 @@ class RandomHelper:
             'aB3cD4eF5g'
         """
         if not isinstance(length, int):
+            msg = f"length must be an integer, got {type(length).__name__}"
             raise SplurgeParameterError(
-                f"length must be an integer, got {type(length).__name__}",
-                details=f"Expected integer, received: {repr(length)}"
+                msg,
+                details=f"Expected integer, received: {length!r}",
             )
-        
+
         if length < 1:
+            msg = f"length must be >= 1, got {length}"
             raise SplurgeRangeError(
-                f"length must be >= 1, got {length}",
-                details=f"Value {length} is below minimum allowed value 1"
+                msg,
+                details=f"Value {length} is below minimum allowed value 1",
             )
-        
+
         if not isinstance(allowable_chars, str):
+            msg = f"allowable_chars must be a string, got {type(allowable_chars).__name__}"
             raise SplurgeParameterError(
-                f"allowable_chars must be a string, got {type(allowable_chars).__name__}",
-                details=f"Expected string, received: {repr(allowable_chars)}"
+                msg,
+                details=f"Expected string, received: {allowable_chars!r}",
             )
-        
+
         if not allowable_chars:
+            msg = "allowable_chars must be a non-empty string"
             raise SplurgeParameterError(
-                "allowable_chars must be a non-empty string",
-                details="Empty strings are not allowed"
+                msg,
+                details="Empty strings are not allowed",
             )
 
         return "".join(
-            [
-                allowable_chars[
-                    cls.as_int_range(0, len(allowable_chars) - 1, secure=secure)
-                ]
-                for _ in range(0, length)
-            ]
+            [allowable_chars[cls.as_int_range(0, len(allowable_chars) - 1, secure=secure)] for _ in range(length)],
         )
 
     @classmethod
@@ -268,7 +265,7 @@ class RandomHelper:
         upper: int,
         allowable_chars: str,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random string with length between lower and upper bounds.
@@ -293,35 +290,36 @@ class RandomHelper:
             'aB3cD4eF'
         """
         if not isinstance(lower, int):
+            msg = f"lower must be an integer, got {type(lower).__name__}"
             raise SplurgeParameterError(
-                f"lower must be an integer, got {type(lower).__name__}",
-                details=f"Expected integer, received: {repr(lower)}"
+                msg,
+                details=f"Expected integer, received: {lower!r}",
             )
-        
+
         if lower < 0:
+            msg = f"lower must be >= 0, got {lower}"
             raise SplurgeRangeError(
-                f"lower must be >= 0, got {lower}",
-                details=f"Value {lower} is below minimum allowed value 0"
+                msg,
+                details=f"Value {lower} is below minimum allowed value 0",
             )
-        
+
         if lower >= upper:
+            msg = "lower must be < upper"
             raise SplurgeRangeError(
-                "lower must be < upper",
-                details=f"Got lower={lower}, upper={upper}"
+                msg,
+                details=f"Got lower={lower}, upper={upper}",
             )
 
         length: int = cls.as_int_range(lower, upper, secure=secure)
 
-        return (
-            cls.as_string(length, allowable_chars, secure=secure) if length > 0 else ""
-        )
+        return cls.as_string(length, allowable_chars, secure=secure) if length > 0 else ""
 
     @classmethod
     def as_alpha(
         cls,
         length: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random string of letters.
@@ -347,7 +345,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random alphanumeric string.
@@ -373,7 +371,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random numeric string.
@@ -399,7 +397,7 @@ class RandomHelper:
         cls,
         length: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random Base58 string.
@@ -426,29 +424,29 @@ class RandomHelper:
         size: int,
         *,
         symbols: str = SYMBOLS,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a Base58-like string with guaranteed character diversity.
-        
+
         Creates a string from BASE58_ALPHA, BASE58_DIGITS, and symbols that contains
         at least one alphabetic character, one digit, and (if symbols provided) one symbol.
-        
+
         Args:
             size (int): Length of the string to generate (must be >= 1)
-            symbols (str, optional): Symbol characters to include from cls.SYMBOLS. 
+            symbols (str, optional): Symbol characters to include from cls.SYMBOLS.
                 Defaults to cls.SYMBOLS. If empty or None, no symbols will be required or used.
                 All characters must be from the SYMBOLS constant.
             secure (bool, optional): If True, uses cryptographically secure random generation.
                 Defaults to False.
-        
+
         Returns:
             str: Random Base58-like string with guaranteed character diversity
-            
+
         Raises:
             ValueError: If size < 1, if size is too small to satisfy character requirements,
                 or if symbols contains characters not in cls.SYMBOLS
-            
+
         Example:
             >>> RandomHelper.as_base58_like(5)
             'A3!bC'  # Contains alpha, digit, and symbol
@@ -458,74 +456,77 @@ class RandomHelper:
             'A3@bC4#dE'  # Secure generation with symbols from SYMBOLS constant
         """
         if not isinstance(size, int):
+            msg = f"size must be an integer, got {type(size).__name__}"
             raise SplurgeParameterError(
-                f"size must be an integer, got {type(size).__name__}",
-                details=f"Expected integer, received: {repr(size)}"
+                msg,
+                details=f"Expected integer, received: {size!r}",
             )
-        
+
         if size < 1:
+            msg = f"size must be >= 1, got {size}"
             raise SplurgeRangeError(
-                f"size must be >= 1, got {size}",
-                details=f"Value {size} is below minimum allowed value 1"
+                msg,
+                details=f"Value {size} is below minimum allowed value 1",
             )
-        
+
         # Validate symbols parameter
         if symbols:
             invalid_chars = set(symbols) - set(cls.SYMBOLS)
             if invalid_chars:
                 details_parts = []
-                details_parts.append(f"Received value: {repr(symbols)} (type: {type(symbols).__name__})")
+                details_parts.append(f"Received value: {symbols!r} (type: {type(symbols).__name__})")
                 details_parts.append("Suggestions:")
                 details_parts.append(f"  - Use only characters from SYMBOLS constant: {cls.SYMBOLS}")
                 details_parts.append(f"  - Remove invalid characters: {''.join(sorted(invalid_chars))}")
                 details = "\n".join(details_parts)
-                raise SplurgeFormatError("Invalid characters in symbols parameter", details=details)
-        
+                msg = "Invalid characters in symbols parameter"
+                raise SplurgeFormatError(msg, details=details)
+
         # Determine required character types
         use_symbols = symbols and len(symbols) > 0
         min_required = 2 if not use_symbols else 3  # alpha + digit + optional symbol
-        
+
         if size < min_required:
             message = "Size too small to guarantee character diversity"
             details = f"Need at least {min_required} characters to include alpha, digit"
             if use_symbols:
                 details += ", and symbol"
             raise SplurgeRangeError(message, details=details)
-        
+
         # Build character set
         char_set = cls.BASE58_ALPHA + cls.BASE58_DIGITS
         if use_symbols:
             char_set += symbols
-        
+
         # Generate string with guaranteed diversity
         result = []
-        
+
         # Add required characters
         alpha_idx = cls.as_int_range(0, len(cls.BASE58_ALPHA) - 1, secure=secure)
         result.append(cls.BASE58_ALPHA[alpha_idx])  # At least one alpha
-        
+
         digit_idx = cls.as_int_range(0, len(cls.BASE58_DIGITS) - 1, secure=secure)
         result.append(cls.BASE58_DIGITS[digit_idx])  # At least one digit
-        
+
         if use_symbols:
             if len(symbols) == 1:
                 result.append(symbols[0])  # Only one symbol available
             else:
                 symbol_idx = cls.as_int_range(0, len(symbols) - 1, secure=secure)
                 result.append(symbols[symbol_idx])  # At least one symbol
-        
+
         # Fill remaining positions randomly from full character set
         remaining = size - len(result)
         for _ in range(remaining):
             char_idx = cls.as_int_range(0, len(char_set) - 1, secure=secure)
             result.append(char_set[char_idx])
-        
+
         # Shuffle to avoid predictable patterns (Fisher-Yates shuffle)
         for i in range(len(result) - 1, 0, -1):
             j = cls.as_int_range(0, i, secure=secure)
             result[i], result[j] = result[j], result[i]
-        
-        return ''.join(result)
+
+        return "".join(result)
 
     @classmethod
     def as_variable_base58(
@@ -533,7 +534,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random Base58 string with variable length.
@@ -561,7 +562,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random alphabetic string with variable length.
@@ -589,7 +590,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random alphanumeric string with variable length.
@@ -610,7 +611,10 @@ class RandomHelper:
             'Xy4'
         """
         return cls.as_variable_string(
-            lower, upper, cls.ALPHANUMERIC_CHARS, secure=secure
+            lower,
+            upper,
+            cls.ALPHANUMERIC_CHARS,
+            secure=secure,
         )
 
     @classmethod
@@ -619,7 +623,7 @@ class RandomHelper:
         lower: int,
         upper: int,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random numeric string with variable length.
@@ -645,7 +649,7 @@ class RandomHelper:
     def as_bool(
         cls,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> bool:
         """
         Generate a random boolean value.
@@ -670,7 +674,7 @@ class RandomHelper:
         cls,
         mask: str,
         *,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> str:
         """
         Generate a random string based on a mask pattern.
@@ -699,14 +703,15 @@ class RandomHelper:
         """
         if not mask or (mask.count("#") == 0 and mask.count("@") == 0):
             details_parts = []
-            details_parts.append(f"Received value: {repr(mask)} (type: {type(mask).__name__})")
+            details_parts.append(f"Received value: {mask!r} (type: {type(mask).__name__})")
             details_parts.append("Expected: string containing # (digit) or @ (letter) placeholders")
             details_parts.append("Suggestions:")
             details_parts.append("  - Use # for digit placeholders")
             details_parts.append("  - Use @ for letter placeholders")
             details_parts.append("  - Example: '###-@@-###' generates '123-AB-456'")
             details = "\n".join(details_parts)
-            raise SplurgeFormatError("Invalid mask format", details=details)
+            msg = "Invalid mask format"
+            raise SplurgeFormatError(msg, details=details)
 
         digit_count: int = mask.count("#")
         digits: str = cls.as_numeric(digit_count, secure=secure)
@@ -732,8 +737,8 @@ class RandomHelper:
         *,
         start: int = 0,
         prefix: str | None = None,
-        suffix: str | None = None
-    ) -> List[str]:
+        suffix: str | None = None,
+    ) -> list[str]:
         """
         Generate a list of sequentially numbered strings.
 
@@ -757,39 +762,45 @@ class RandomHelper:
             ['ID-100-END', 'ID-101-END', 'ID-102-END']
         """
         if not isinstance(count, int):
+            msg = f"count must be an integer, got {type(count).__name__}"
             raise SplurgeParameterError(
-                f"count must be an integer, got {type(count).__name__}",
-                details=f"Expected integer, received: {repr(count)}"
+                msg,
+                details=f"Expected integer, received: {count!r}",
             )
-        
+
         if count < 1:
+            msg = f"count must be >= 1, got {count}"
             raise SplurgeRangeError(
-                f"count must be >= 1, got {count}",
-                details=f"Value {count} is below minimum allowed value 1"
+                msg,
+                details=f"Value {count} is below minimum allowed value 1",
             )
-        
+
         if not isinstance(digits, int):
+            msg = f"digits must be an integer, got {type(digits).__name__}"
             raise SplurgeParameterError(
-                f"digits must be an integer, got {type(digits).__name__}",
-                details=f"Expected integer, received: {repr(digits)}"
+                msg,
+                details=f"Expected integer, received: {digits!r}",
             )
-        
+
         if digits < 1:
+            msg = f"digits must be >= 1, got {digits}"
             raise SplurgeRangeError(
-                f"digits must be >= 1, got {digits}",
-                details=f"Value {digits} is below minimum allowed value 1"
+                msg,
+                details=f"Value {digits} is below minimum allowed value 1",
             )
-        
+
         if not isinstance(start, int):
+            msg = f"start must be an integer, got {type(start).__name__}"
             raise SplurgeParameterError(
-                f"start must be an integer, got {type(start).__name__}",
-                details=f"Expected integer, received: {repr(start)}"
+                msg,
+                details=f"Expected integer, received: {start!r}",
             )
-        
+
         if start < 0:
+            msg = f"start must be >= 0, got {start}"
             raise SplurgeRangeError(
-                f"start must be >= 0, got {start}",
-                details=f"Value {start} is below minimum allowed value 0"
+                msg,
+                details=f"Value {start} is below minimum allowed value 0",
             )
 
         max_value: int = 10**digits - 1
@@ -801,11 +812,12 @@ class RandomHelper:
             details_parts.append(f"  - Reduce start parameter (current: {start})")
             details_parts.append(f"  - Maximum sequence value with {digits} digits: {max_value}")
             details = "\n".join(details_parts)
-            raise SplurgeRangeError("Sequence parameters exceed digit capacity", details=details)
+            msg = "Sequence parameters exceed digit capacity"
+            raise SplurgeRangeError(msg, details=details)
 
         prefix = prefix if prefix else ""
         suffix = suffix if suffix else ""
-        values: List[str] = []
+        values: list[str] = []
 
         for sequence in range(start, start + count):
             values.append(f"{prefix}{sequence:0{digits}}{suffix}")
@@ -819,7 +831,7 @@ class RandomHelper:
         upper_days: int,
         *,
         base_date: date | None = None,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> date:
         """
         Generate a random date between two days.
@@ -841,7 +853,7 @@ class RandomHelper:
             datetime.date(2025, 7, 15)
         """
         return (base_date if base_date else date.today()) + timedelta(
-            days=cls.as_int_range(lower_days, upper_days, secure=secure)
+            days=cls.as_int_range(lower_days, upper_days, secure=secure),
         )
 
     @classmethod
@@ -851,7 +863,7 @@ class RandomHelper:
         upper_days: int,
         *,
         base_date: datetime | None = None,
-        secure: bool | None = False
+        secure: bool | None = False,
     ) -> datetime:
         """
         Generate a random datetime between two days.
@@ -883,5 +895,8 @@ class RandomHelper:
         microseconds: int = cls.as_int_range(0, 999999, secure=secure)
 
         return result.replace(
-            hour=hours, minute=minutes, second=seconds, microsecond=microseconds
+            hour=hours,
+            minute=minutes,
+            second=seconds,
+            microsecond=microseconds,
         )

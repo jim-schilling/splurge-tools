@@ -5,27 +5,26 @@ Tests all custom exception classes and their behavior including
 message handling, details, and inheritance hierarchy.
 """
 
-
 from splurge_tools.exceptions import (
-    SplurgeToolsError,
-    SplurgeValidationError,
-    SplurgeFileOperationError,
-    SplurgeFileNotFoundError,
-    SplurgeFilePermissionError,
-    SplurgeFileEncodingError,
-    SplurgePathValidationError,
-    SplurgeDataProcessingError,
-    SplurgeParsingError,
-    SplurgeTypeConversionError,
-    SplurgeStreamingError,
     SplurgeConfigurationError,
-    SplurgeResourceError,
-    SplurgeResourceAcquisitionError,
-    SplurgeResourceReleaseError,
-    SplurgePerformanceWarning,
+    SplurgeDataProcessingError,
+    SplurgeFileEncodingError,
+    SplurgeFileNotFoundError,
+    SplurgeFileOperationError,
+    SplurgeFilePermissionError,
+    SplurgeFormatError,
     SplurgeParameterError,
+    SplurgeParsingError,
+    SplurgePathValidationError,
+    SplurgePerformanceWarning,
     SplurgeRangeError,
-    SplurgeFormatError
+    SplurgeResourceAcquisitionError,
+    SplurgeResourceError,
+    SplurgeResourceReleaseError,
+    SplurgeStreamingError,
+    SplurgeToolsError,
+    SplurgeTypeConversionError,
+    SplurgeValidationError,
 )
 
 
@@ -209,7 +208,7 @@ class TestExceptionHierarchy:
             SplurgeTypeConversionError("test"),
             SplurgeStreamingError("test"),
             SplurgeResourceAcquisitionError("test"),
-            SplurgeResourceReleaseError("test")
+            SplurgeResourceReleaseError("test"),
         ]
 
         for exc in exceptions:
@@ -222,7 +221,7 @@ class TestExceptionHierarchy:
         param_error = SplurgeParameterError("test")
         range_error = SplurgeRangeError("test")
         format_error = SplurgeFormatError("test")
-        
+
         assert isinstance(param_error, SplurgeValidationError)
         assert isinstance(range_error, SplurgeValidationError)
         assert isinstance(format_error, SplurgeValidationError)
@@ -232,7 +231,7 @@ class TestExceptionHierarchy:
         file_permission = SplurgeFilePermissionError("test")
         file_encoding = SplurgeFileEncodingError("test")
         path_validation = SplurgePathValidationError("test")
-        
+
         assert isinstance(file_not_found, SplurgeFileOperationError)
         assert isinstance(file_permission, SplurgeFileOperationError)
         assert isinstance(file_encoding, SplurgeFileOperationError)
@@ -242,7 +241,7 @@ class TestExceptionHierarchy:
         parsing_error = SplurgeParsingError("test")
         type_error = SplurgeTypeConversionError("test")
         streaming_error = SplurgeStreamingError("test")
-        
+
         assert isinstance(parsing_error, SplurgeDataProcessingError)
         assert isinstance(type_error, SplurgeDataProcessingError)
         assert isinstance(streaming_error, SplurgeDataProcessingError)
@@ -250,6 +249,6 @@ class TestExceptionHierarchy:
         # Test resource errors
         acquisition_error = SplurgeResourceAcquisitionError("test")
         release_error = SplurgeResourceReleaseError("test")
-        
+
         assert isinstance(acquisition_error, SplurgeResourceError)
         assert isinstance(release_error, SplurgeResourceError)

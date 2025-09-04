@@ -23,14 +23,11 @@ This module is licensed under the MIT License.
 """
 
 from collections import deque
+from collections.abc import Iterator
 from os import PathLike
 from pathlib import Path
-from typing import Iterator
 
-from splurge_tools.exceptions import (
-    SplurgeParameterError,
-    SplurgeFileEncodingError
-)
+from splurge_tools.exceptions import SplurgeFileEncodingError, SplurgeParameterError
 from splurge_tools.path_validator import PathValidator
 from splurge_tools.resource_manager import safe_file_operation
 
@@ -55,7 +52,7 @@ class TextFileHelper:
         cls,
         file_path: PathLike[str] | str,
         *,
-        encoding: str = DEFAULT_ENCODING
+        encoding: str = DEFAULT_ENCODING,
     ) -> int:
         """
         Count the number of lines in a text file.
@@ -81,9 +78,9 @@ class TextFileHelper:
             Path(file_path),
             must_exist=True,
             must_be_file=True,
-            must_be_readable=True
+            must_be_readable=True,
         )
-        
+
         with safe_file_operation(validated_path, encoding=encoding, mode=cls.DEFAULT_MODE) as stream:
             return sum(1 for _ in stream)
 
@@ -95,7 +92,7 @@ class TextFileHelper:
         max_lines: int = DEFAULT_MAX_LINES,
         strip: bool = DEFAULT_STRIP,
         encoding: str = DEFAULT_ENCODING,
-        skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS
+        skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS,
     ) -> list[str]:
         """
         Preview the first N lines of a text file.
@@ -121,35 +118,36 @@ class TextFileHelper:
             SplurgePathValidationError: If file path validation fails
         """
         if max_lines < 1:
+            msg = "TextFileHelper.preview: max_lines is less than 1"
             raise SplurgeParameterError(
-                "TextFileHelper.preview: max_lines is less than 1",
-                details="max_lines must be at least 1"
+                msg,
+                details="max_lines must be at least 1",
             )
-               
+
         # Validate file path
         validated_path = PathValidator.validate_path(
             Path(file_path),
             must_exist=True,
             must_be_file=True,
-            must_be_readable=True
+            must_be_readable=True,
         )
-        
+
         skip_header_rows = max(skip_header_rows, cls.DEFAULT_SKIP_HEADER_ROWS)
         lines: list[str] = []
-        
+
         with safe_file_operation(validated_path, encoding=encoding, mode=cls.DEFAULT_MODE) as stream:
             # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
                     return lines
-            
+
             # Read up to max_lines after skipping headers
             for _ in range(max_lines):
                 line = stream.readline()
                 if not line:
                     break
                 lines.append(line.strip() if strip else line.rstrip("\n"))
-        
+
         return lines
 
     @classmethod
@@ -161,7 +159,7 @@ class TextFileHelper:
         encoding: str = DEFAULT_ENCODING,
         skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS,
         skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS,
-        chunk_size: int = DEFAULT_CHUNK_SIZE
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
     ) -> Iterator[list[str]]:
         """
         Read a text file as a stream of line chunks.
@@ -192,67 +190,67 @@ class TextFileHelper:
         chunk_size = max(chunk_size, cls.DEFAULT_MIN_CHUNK_SIZE)
         skip_header_rows = max(skip_header_rows, cls.DEFAULT_SKIP_HEADER_ROWS)
         skip_footer_rows = max(skip_footer_rows, cls.DEFAULT_SKIP_FOOTER_ROWS)
-        
+
         # Validate file path
         validated_path = PathValidator.validate_path(
             Path(file_path),
             must_exist=True,
             must_be_file=True,
-            must_be_readable=True
-        )               
-        
+            must_be_readable=True,
+        )
+
         with safe_file_operation(validated_path, encoding=encoding, mode=cls.DEFAULT_MODE) as stream:
             # Skip header rows
             for _ in range(skip_header_rows):
                 if not stream.readline():
                     return
-            
+
             # Use a sliding window to handle footer skipping efficiently
             if skip_footer_rows > 0:
                 # Buffer to hold the last skip_footer_rows lines
                 buffer: deque[str] = deque(maxlen=skip_footer_rows + 1)
                 current_chunk: list[str] = []
-                
+
                 for line in stream:
                     processed_line = line.strip() if strip else line.rstrip("\n")
-                    
+
                     # Add current line to buffer
                     buffer.append(processed_line)
-                    
+
                     # Wait until the buffer is full (skip_footer_rows + 1 lines) before processing lines.
                     # This ensures we have enough lines to reliably identify and skip the footer rows at the end.
                     if len(buffer) < skip_footer_rows + 1:
                         continue
-                    
+
                     # Once the buffer contains more than skip_footer_rows lines, the oldest line (removed with popleft)
                     # is guaranteed not to be part of the footer and can be safely processed and added to the current chunk.
                     safe_line = buffer.popleft()
                     current_chunk.append(safe_line)
-                    
+
                     # Yield chunk when it reaches the desired size
                     if len(current_chunk) >= chunk_size:
                         yield current_chunk
                         current_chunk = []
-                
+
                 # At the end, the buffer contains exactly the footer rows to skip
                 # All other lines have already been processed and yielded
-                
+
                 # Yield any remaining lines in the final chunk
                 if current_chunk:
                     yield current_chunk
             else:
                 # No footer skipping needed - simple streaming
                 chunk: list[str] = []
-                
+
                 for line in stream:
                     processed_line = line.strip() if strip else line.rstrip("\n")
                     chunk.append(processed_line)
-                    
+
                     # Yield chunk when it reaches the desired size
                     if len(chunk) >= chunk_size:
                         yield chunk
                         chunk = []
-                
+
                 # Yield any remaining lines in the final chunk
                 if chunk:
                     yield chunk
@@ -265,7 +263,7 @@ class TextFileHelper:
         strip: bool = DEFAULT_STRIP,
         encoding: str = DEFAULT_ENCODING,
         skip_header_rows: int = DEFAULT_SKIP_HEADER_ROWS,
-        skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS
+        skip_footer_rows: int = DEFAULT_SKIP_FOOTER_ROWS,
     ) -> list[str]:
         """
         Read the entire contents of a text file into a list of strings.
@@ -294,50 +292,50 @@ class TextFileHelper:
             Path(file_path),
             must_exist=True,
             must_be_file=True,
-            must_be_readable=True
+            must_be_readable=True,
         )
-                      
+
         skip_header_rows = max(skip_header_rows, cls.DEFAULT_SKIP_HEADER_ROWS)
         skip_footer_rows = max(skip_footer_rows, cls.DEFAULT_SKIP_FOOTER_ROWS)
-        
+
         with safe_file_operation(validated_path, encoding=encoding, mode=cls.DEFAULT_MODE) as stream:
             for _ in range(skip_header_rows):
                 if not stream.readline():
                     return []
-            
+
             try:
                 if skip_footer_rows > 0:
                     # Buffer to hold the last skip_footer_rows + 1 lines
                     buffer = deque(maxlen=skip_footer_rows + 1)
                     result: list[str] = []
-                    
+
                     for line in stream:
                         processed_line = line.strip() if strip else line.rstrip("\n")
-                        
+
                         # Add current line to buffer
                         buffer.append(processed_line)
-                        
+
                         # Wait until the buffer is full (skip_footer_rows + 1 lines) before processing lines.
                         # This ensures we have enough lines to reliably identify and skip the footer rows at the end.
                         if len(buffer) < skip_footer_rows + 1:
                             continue
-                        
+
                         # Once the buffer contains more than skip_footer_rows lines, the oldest line (removed with popleft)
                         # is guaranteed not to be part of the footer and can be safely processed and added to the result.
                         safe_line = buffer.popleft()
                         result.append(safe_line)
-                    
+
                     # At the end, the buffer contains exactly the footer rows to skip
                     # All other lines have already been processed and added to result
                     return result
-                else:
-                    result: list[str] = []
-                    for line in stream:
-                        processed_line = line.strip() if strip else line.rstrip("\n")
-                        result.append(processed_line)
-                    return result
+                result: list[str] = []
+                for line in stream:
+                    processed_line = line.strip() if strip else line.rstrip("\n")
+                    result.append(processed_line)
+                return result
             except UnicodeDecodeError as e:
+                msg = f"Encoding error reading file: {validated_path}"
                 raise SplurgeFileEncodingError(
-                    f"Encoding error reading file: {validated_path}",
-                    details=str(e)
+                    msg,
+                    details=str(e),
                 )

@@ -11,7 +11,7 @@ Please preserve this header and all related material when sharing!
 This module is licensed under the MIT License.
 """
 
-from typing import Generator, Iterator
+from collections.abc import Generator, Iterator
 
 from splurge_tools.protocols import StreamingTabularDataProtocol
 from splurge_tools.tabular_utils import process_headers as _process_headers
@@ -20,10 +20,10 @@ from splurge_tools.tabular_utils import process_headers as _process_headers
 class StreamingTabularDataModel(StreamingTabularDataProtocol):
     """
     Streaming tabular data model for large datasets that don't fit in memory.
-    
+
     This class works with streams from DsvHelper.parse_stream to process data
     without loading the entire dataset into memory.
-    
+
     This class implements the StreamingTabularDataProtocol interface, providing
     a streaming-optimized interface for tabular data operations. Unlike the full
     TabularDataProtocol, this protocol focuses on forward-only iteration and
@@ -36,7 +36,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         *,
         header_rows: int = 1,
         skip_empty_rows: bool = True,
-        chunk_size: int = 1000
+        chunk_size: int = 1000,
     ) -> None:
         """
         Initialize StreamingTabularDataModel.
@@ -51,17 +51,20 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
             ValueError: If stream or header configuration is invalid.
         """
         if stream is None:
-            raise ValueError("Stream is required")
+            msg = "Stream is required"
+            raise ValueError(msg)
         if header_rows < 0:
-            raise ValueError("Header rows must be greater than or equal to 0")
+            msg = "Header rows must be greater than or equal to 0"
+            raise ValueError(msg)
         if chunk_size < 100:
-            raise ValueError("chunk_size must be at least 100")
+            msg = "chunk_size must be at least 100"
+            raise ValueError(msg)
 
         self._stream = stream
         self._header_rows = header_rows
         self._skip_empty_rows = skip_empty_rows
         self._chunk_size = chunk_size
-        
+
         # Initialize state
         self._header_data: list[list[str]] = []
         self._column_names: list[str] = []
@@ -69,7 +72,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         self._buffer: list[list[str]] = []
         self._max_columns: int = 0
         self._is_initialized: bool = False
-        
+
         # Process headers and initialize
         self._initialize_from_stream()
 
@@ -83,7 +86,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         # Collect header rows from the stream
         header_rows_collected = 0
         header_data: list[list[str]] = []
-        
+
         for chunk in self._stream:
             chunk_iter = iter(chunk)
             for row in chunk_iter:
@@ -94,7 +97,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
                     # Buffer remaining rows in this chunk (including current), respecting skip_empty_rows
                     if not (self._skip_empty_rows and all(cell.strip() == "" for cell in row)):
                         self._buffer.append(row)
-                    
+
                     # Process remaining rows in the chunk
                     for remaining_row in chunk_iter:
                         if not (self._skip_empty_rows and all(cell.strip() == "" for cell in remaining_row)):
@@ -107,13 +110,12 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         if self._header_rows > 0:
             self._header_data, self._column_names = _process_headers(
                 header_data,
-                header_rows=self._header_rows
+                header_rows=self._header_rows,
             )
-        else:
-            # No headers, generate column names from first data row
-            if self._buffer:
-                self._max_columns = len(self._buffer[0])
-                self._column_names = [f"column_{i}" for i in range(self._max_columns)]
+        # No headers, generate column names from first data row
+        elif self._buffer:
+            self._max_columns = len(self._buffer[0])
+            self._column_names = [f"column_{i}" for i in range(self._max_columns)]
 
         # Create column index map
         self._column_index_map = {name: i for i, name in enumerate(self._column_names)}
@@ -130,7 +132,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
 
     def column_index(
         self,
-        name: str
+        name: str,
     ) -> int:
         """
         Get the column index for a given name.
@@ -145,7 +147,8 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
             ValueError: If column name is not found.
         """
         if name not in self._column_index_map:
-            raise ValueError(f"Column name {name} not found")
+            msg = f"Column name {name} not found"
+            raise ValueError(msg)
         return self._column_index_map[name]
 
     @property
@@ -173,7 +176,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
                     self._column_index_map[new_col_name] = len(self._column_names) - 1
             yield row_copy
         self._buffer.clear()
-        
+
         # Then yield remaining rows from stream, chunk by chunk
         for chunk in self._stream:
             for row in chunk:
@@ -196,7 +199,7 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         Iterate over rows as dictionaries.
         """
         for row in self:
-            yield dict(zip(self._column_names, row))
+            yield dict(zip(self._column_names, row, strict=False))
 
     def iter_rows_as_tuples(self) -> Generator[tuple[str, ...], None, None]:
         """
@@ -217,4 +220,3 @@ class StreamingTabularDataModel(StreamingTabularDataProtocol):
         """
         self._buffer.clear()
         self._is_initialized = False
- 

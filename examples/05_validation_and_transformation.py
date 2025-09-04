@@ -10,11 +10,12 @@ Copyright (c) 2025 Jim Schilling
 Licensed under the MIT License.
 """
 
-from splurge_tools.data_validator import DataValidator
-from splurge_tools.data_transformer import DataTransformer
-from splurge_tools.tabular_data_model import TabularDataModel
-from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
+import contextlib
 
+from splurge_tools.data_transformer import DataTransformer
+from splurge_tools.data_validator import DataValidator
+from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError
+from splurge_tools.tabular_data_model import TabularDataModel
 
 
 def create_sample_data():
@@ -28,7 +29,7 @@ def create_sample_data():
         ["Alice Brown", "35", "alice@example.com", "72000", "Engineering", "true"],
         ["Charlie Wilson", "28", "charlie@example.com", "68000", "Marketing", "true"],
     ]
-    
+
     # Sales data for transformation
     sales_data = [
         ["Date", "Product", "Category", "Sales", "Region"],
@@ -39,63 +40,49 @@ def create_sample_data():
         ["2023-01-02", "Gadget B", "Gadgets", "900", "South"],
         ["2023-01-02", "Tool C", "Tools", "650", "North"],
     ]
-    
+
     return employee_data, sales_data
 
 
 def basic_validation_examples(employee_data):
     """Demonstrate basic data validation capabilities."""
-    print("=== Basic Data Validation Examples ===\n")
-    
+
     # Create validator directly
     validator = DataValidator()
-    
+
     # Add validation rules
     validator.add_validator("Name", lambda x: len(x.strip()) > 0)
     validator.add_validator("Age", lambda x: x.isdigit() and 18 <= int(x) <= 65)
     validator.add_validator("Email", lambda x: "@" in x and "." in x)
     validator.add_validator("Salary", lambda x: x.isdigit() and int(x) > 0)
-    
-    print("Validation Rules:")
-    print("• Name: Must not be empty")
-    print("• Age: Must be digit between 18-65")
-    print("• Email: Must contain @ and .")
-    print("• Salary: Must be positive number")
-    print()
-    
+
     # Create tabular model and validate each row
     model = TabularDataModel(employee_data, header_rows=1)
-    
-    print("Validation Results:")
+
     for i in range(model.row_count):
         row_dict = model.row(i)
         is_valid = validator.validate(row_dict)
-        
-        print(f"  Row {i}: {row_dict['Name']}")
-        print(f"    Valid: {is_valid}")
-        
+
         if not is_valid:
             errors = validator.get_errors()
-            for error in errors:
-                print(f"    Error: {error}")
-        
+            for _error in errors:
+                pass
+
         validator.clear_errors()
-        print()
 
 
 def custom_validation_examples():
     """Demonstrate custom validation scenarios."""
-    print("=== Custom Validation Examples ===\n")
-    
+
     validator = DataValidator()
-    
+
     # Add custom validators with more complex rules
     def validate_email_domain(email):
         """Validate that email is from approved domains."""
         approved_domains = ["example.com", "company.com", "test.org"]
         domain = email.split("@")[-1] if "@" in email else ""
         return domain in approved_domains
-    
+
     def validate_age_group(age_str):
         """Validate age is in acceptable range for employment."""
         try:
@@ -103,7 +90,7 @@ def custom_validation_examples():
             return 16 <= age <= 70
         except ValueError:
             return False
-    
+
     def validate_salary_range(salary_str):
         """Validate salary is within company ranges."""
         try:
@@ -111,12 +98,12 @@ def custom_validation_examples():
             return 30000 <= salary <= 200000
         except ValueError:
             return False
-    
+
     # Add custom validators
     validator.add_custom_validator("email_domain", validate_email_domain)
     validator.add_custom_validator("age_group", validate_age_group)
     validator.add_custom_validator("salary_range", validate_salary_range)
-    
+
     # Test data with various validation scenarios
     test_cases = [
         {
@@ -124,125 +111,133 @@ def custom_validation_examples():
             "Age": "30",
             "Email": "valid@example.com",
             "Salary": "75000",
-            "Department": "Engineering"
+            "Department": "Engineering",
         },
         {
             "Name": "",  # Invalid: empty name
             "Age": "25",
             "Email": "test@example.com",
             "Salary": "65000",
-            "Department": "Marketing"
+            "Department": "Marketing",
         },
         {
             "Name": "Invalid Domain",
             "Age": "35",
             "Email": "user@invalid.com",  # Invalid: wrong domain
             "Salary": "80000",
-            "Department": "Sales"
+            "Department": "Sales",
         },
         {
             "Name": "Too Young",
             "Age": "15",  # Invalid: too young
             "Email": "young@example.com",
             "Salary": "40000",
-            "Department": "Intern"
+            "Department": "Intern",
         },
         {
             "Name": "Low Salary",
             "Age": "28",
             "Email": "low@example.com",
             "Salary": "25000",  # Invalid: too low
-            "Department": "Entry"
-        }
+            "Department": "Entry",
+        },
     ]
-    
+
     # Apply validation rules
     validator.add_validator("Name", lambda x: len(x.strip()) > 0)
     validator.add_validator("Email", validate_email_domain)
     validator.add_validator("Age", validate_age_group)
     validator.add_validator("Salary", validate_salary_range)
-    
-    print("Custom Validation Results:")
-    for i, test_case in enumerate(test_cases):
+
+    for _i, test_case in enumerate(test_cases):
         is_valid = validator.validate(test_case)
-        print(f"  Test Case {i + 1}: {test_case['Name'] or 'Empty Name'}")
-        print(f"    Data: {test_case}")
-        print(f"    Valid: {is_valid}")
-        
+
         if not is_valid:
             errors = validator.get_errors()
-            for error in errors:
-                print(f"    Error: {error}")
-        
+            for _error in errors:
+                pass
+
         validator.clear_errors()
-        print()
 
 
 def validation_utils_examples():
     """Demonstrate validation utilities."""
-    print("=== Validation Utils Examples ===\n")
-    
+
     # Test various validation utilities
     def test_non_empty_string():
         value = "hello"
         if not isinstance(value, str):
-            raise SplurgeParameterError("test_param must be a string")
+            msg = "test_param must be a string"
+            raise SplurgeParameterError(msg)
         if not value.strip():
-            raise SplurgeParameterError("test_param must be a non-empty string")
+            msg = "test_param must be a non-empty string"
+            raise SplurgeParameterError(msg)
         return value
-    
+
     def test_empty_string():
         value = ""
         if not isinstance(value, str):
-            raise SplurgeParameterError("test_param must be a string")
+            msg = "test_param must be a string"
+            raise SplurgeParameterError(msg)
         if not value.strip():
-            raise SplurgeParameterError("test_param must be a non-empty string")
+            msg = "test_param must be a non-empty string"
+            raise SplurgeParameterError(msg)
         return value
-    
+
     def test_positive_integer():
         value = 42
         if not isinstance(value, int):
-            raise SplurgeParameterError("test_param must be an integer")
+            msg = "test_param must be an integer"
+            raise SplurgeParameterError(msg)
         if value < 1:
-            raise SplurgeRangeError("test_param must be >= 1")
+            msg = "test_param must be >= 1"
+            raise SplurgeRangeError(msg)
         return value
-    
+
     def test_negative_integer():
         value = -5
         if not isinstance(value, int):
-            raise SplurgeParameterError("test_param must be an integer")
+            msg = "test_param must be an integer"
+            raise SplurgeParameterError(msg)
         if value < 1:
-            raise SplurgeRangeError("test_param must be >= 1")
+            msg = "test_param must be >= 1"
+            raise SplurgeRangeError(msg)
         return value
-    
+
     def test_valid_range():
         lower, upper = 1, 10
         if lower >= upper:
-            raise SplurgeRangeError("lower must be < upper")
+            msg = "lower must be < upper"
+            raise SplurgeRangeError(msg)
         return (lower, upper)
-    
+
     def test_invalid_range():
         lower, upper = 10, 1
         if lower >= upper:
-            raise SplurgeRangeError("lower must be < upper")
+            msg = "lower must be < upper"
+            raise SplurgeRangeError(msg)
         return (lower, upper)
-    
+
     def test_valid_encoding():
         value = "utf-8"
         if not isinstance(value, str):
-            raise SplurgeParameterError("test_param must be a string")
+            msg = "test_param must be a string"
+            raise SplurgeParameterError(msg)
         if not value.strip():
-            raise SplurgeParameterError("test_param must be a non-empty string")
+            msg = "test_param must be a non-empty string"
+            raise SplurgeParameterError(msg)
         return value
-    
+
     def test_invalid_encoding():
         value = "invalid-encoding"
         if not isinstance(value, str):
-            raise SplurgeParameterError("test_param must be a string")
+            msg = "test_param must be a string"
+            raise SplurgeParameterError(msg)
         if not value.strip():
-            raise SplurgeParameterError("test_param must be a non-empty string")
+            msg = "test_param must be a non-empty string"
+            raise SplurgeParameterError(msg)
         return value
-    
+
     validation_tests = [
         ("Non-empty string", test_non_empty_string),
         ("Empty string (should fail)", test_empty_string),
@@ -253,73 +248,54 @@ def validation_utils_examples():
         ("Valid encoding", test_valid_encoding),
         ("Invalid encoding (should fail)", test_invalid_encoding),
     ]
-    
-    print("Validation Utilities Test Results:")
-    for test_name, test_func in validation_tests:
-        try:
-            result = test_func()
-            print(f"  OK {test_name}: {result}")
-        except Exception as e:
-            print(f"  ERROR {test_name}: {type(e).__name__} - {e}")
-    print()
+
+    for _test_name, test_func in validation_tests:
+        with contextlib.suppress(Exception):
+            test_func()
 
 
 def basic_transformation_examples(sales_data):
     """Demonstrate basic data transformation capabilities."""
-    print("=== Basic Data Transformation Examples ===\n")
-    
+
     # Create data model and transformer
     model = TabularDataModel(sales_data, header_rows=1)
     transformer = DataTransformer(model)
-    
-    print(f"Original data: {model.row_count} rows × {model.column_count} columns")
-    print("Sample data:")
-    for i in range(min(3, model.row_count)):
-        print(f"  {model.row(i)}")
-    print()
-    
+
+    for _i in range(min(3, model.row_count)):
+        pass
+
     # Pivot transformation
-    print("Pivot Transformation (Product by Region):")
     try:
         pivoted = transformer.pivot(
             index_cols=["Product"],
-            columns_col="Region", 
+            columns_col="Region",
             values_col="Sales",
-            agg_func=lambda values: str(sum(int(v) for v in values))
+            agg_func=lambda values: str(sum(int(v) for v in values)),
         )
-        print(f"Pivoted data: {pivoted.row_count} rows × {pivoted.column_count} columns")
-        print("Pivoted sample:")
-        for i in range(min(3, pivoted.row_count)):
-            print(f"  {pivoted.row(i)}")
-    except Exception as e:
-        print(f"Pivot error: {e}")
-    print()
-    
+        for _i in range(min(3, pivoted.row_count)):
+            pass
+    except Exception:
+        pass
+
     # Group by transformation
-    print("Group By Transformation (by Category):")
     try:
         grouped = transformer.group_by(
             group_cols=["Category"],
-            agg_dict={"Sales": lambda values: str(sum(int(v) for v in values))}
+            agg_dict={"Sales": lambda values: str(sum(int(v) for v in values))},
         )
-        print(f"Grouped data: {grouped.row_count} rows × {grouped.column_count} columns")
-        print("Grouped sample:")
-        for i in range(grouped.row_count):
-            print(f"  {grouped.row(i)}")
-    except Exception as e:
-        print(f"Group by error: {e}")
-    print()
+        for _i in range(grouped.row_count):
+            pass
+    except Exception:
+        pass
 
 
 def advanced_transformation_examples(sales_data):
     """Demonstrate advanced transformation scenarios."""
-    print("=== Advanced Data Transformation Examples ===\n")
-    
+
     model = TabularDataModel(sales_data, header_rows=1)
     transformer = DataTransformer(model)
-    
+
     # Column transformation
-    print("Column Transformation (adding calculated fields):")
     try:
         # Transform sales values to include tax
         def add_tax(value):
@@ -327,23 +303,18 @@ def advanced_transformation_examples(sales_data):
                 return str(int(value) * 1.08)  # 8% tax
             except (ValueError, TypeError):
                 return value
-        
+
         transformed = transformer.transform_column(
             column="Sales",
-            transform_func=add_tax
+            transform_func=add_tax,
         )
-        
-        print(f"Transformed data: {transformed.row_count} rows × {transformed.column_count} columns")
-        print("Sample with tax calculation:")
+
         for i in range(min(3, transformed.row_count)):
-            row = transformed.row(i)
-            print(f"  Original: {model.row(i)['Sales']}, Transformed: {row['Sales']}")
-    except Exception as e:
-        print(f"Column transformation error: {e}")
-    print()
-    
+            transformed.row(i)
+    except Exception:
+        pass
+
     # Melt transformation
-    print("Melt Transformation:")
     try:
         # First create a wider dataset for melting
         wide_data = [
@@ -352,44 +323,34 @@ def advanced_transformation_examples(sales_data):
             ["Gadget B", "750", "800", "900", "950"],
             ["Tool C", "650", "700", "750", "800"],
         ]
-        
+
         wide_model = TabularDataModel(wide_data, header_rows=1)
         wide_transformer = DataTransformer(wide_model)
-        
+
         melted = wide_transformer.melt(
             id_vars=["Product"],
             value_vars=["Q1_Sales", "Q2_Sales", "Q3_Sales", "Q4_Sales"],
             var_name="Quarter",
-            value_name="Sales"
+            value_name="Sales",
         )
-        
-        print(f"Original wide data: {wide_model.row_count} rows × {wide_model.column_count} columns")
-        print(f"Melted data: {melted.row_count} rows × {melted.column_count} columns")
-        print("Melted sample:")
+
         for i in range(min(6, melted.row_count)):
-            print(f"  {melted.row(i)}")
-    except Exception as e:
-        print(f"Melt transformation error: {e}")
-    print()
+            pass
+    except Exception:
+        pass
 
 
 def factory_pattern_examples():
     """Demonstrate simple explicit construction usage (no factories)."""
-    print("=== Explicit Construction Examples ===\n")
-    validator = DataValidator()
-    print(f"OK Validator created: {type(validator).__name__}")
+    DataValidator()
     sample_data = [["Name", "Value"], ["A", "1"], ["B", "2"]]
     model = TabularDataModel(sample_data, header_rows=1)
-    print(f"OK Data model created: {type(model).__name__}")
-    transformer = DataTransformer(model)
-    print(f"OK Transformer created: {type(transformer).__name__}")
-    print()
+    DataTransformer(model)
 
 
 def comprehensive_validation_workflow():
     """Demonstrate a comprehensive validation workflow."""
-    print("=== Comprehensive Validation Workflow ===\n")
-    
+
     # Simulate processing a dataset with validation
     raw_employee_data = [
         ["Name", "Age", "Email", "Salary", "Department", "Start_Date"],
@@ -400,87 +361,63 @@ def comprehensive_validation_workflow():
         ["Charlie Wilson", "28", "charlie@invalid.com", "68000", "Marketing", "2023-02-14"],  # Invalid domain
         ["David Jones", "35", "david@company.com", "250000", "Executive", "2023-01-01"],  # Salary too high
     ]
-    
-    print("Comprehensive Validation Workflow:")
-    print("Step 1: Create data model")
+
     model = TabularDataModel(raw_employee_data, header_rows=1)
-    print(f"  Loaded {model.row_count} employee records")
-    print()
-    
-    print("Step 2: Set up comprehensive validation")
+
     validator = DataValidator()
-    
+
     # Add comprehensive validation rules
     validator.add_validator("Name", lambda x: len(x.strip()) > 0)
     validator.add_validator("Age", lambda x: x.isdigit() and 18 <= int(x) <= 65)
     validator.add_validator("Email", lambda x: "@company.com" in x)
     validator.add_validator("Salary", lambda x: x.isdigit() and 30000 <= int(x) <= 200000)
     validator.add_validator("Department", lambda x: x in ["Engineering", "Marketing", "Sales", "Executive"])
-    
-    print("  Validation rules established")
-    print()
-    
-    print("Step 3: Validate all records")
+
     valid_records = []
     invalid_records = []
-    
+
     for i in range(model.row_count):
         row_dict = model.row(i)
         is_valid = validator.validate(row_dict)
-        
+
         if is_valid:
             valid_records.append((i, row_dict))
         else:
             errors = validator.get_errors()
             invalid_records.append((i, row_dict, errors.copy()))
-        
+
         validator.clear_errors()
-    
-    print(f"  Valid records: {len(valid_records)}")
-    print(f"  Invalid records: {len(invalid_records)}")
-    print()
-    
-    print("Step 4: Report validation results")
-    print("Valid Records:")
+
     for i, record in valid_records:
-        print(f"  Row {i}: {record['Name']} - OK")
-    print()
-    
-    print("Invalid Records:")
+        pass
+
     for i, record, errors in invalid_records:
-        print(f"  Row {i}: {record['Name'] or 'Missing Name'} - ERROR")
-        for error in errors:
-            print(f"    • {error}")
-        print()
-    
-    print("Step 5: Create clean dataset")
+        for _error in errors:
+            pass
+
     if valid_records:
         clean_data = [raw_employee_data[0]]  # Header
         for _, record in valid_records:
-            clean_data.append([
-                record["Name"],
-                record["Age"],
-                record["Email"],
-                record["Salary"],
-                record["Department"],
-                record["Start_Date"]
-            ])
-        
-        clean_model = TabularDataModel(clean_data, header_rows=1)
-        print(f"  Clean dataset created: {clean_model.row_count} valid records")
-    
-    print()
+            clean_data.append(
+                [
+                    record["Name"],
+                    record["Age"],
+                    record["Email"],
+                    record["Salary"],
+                    record["Department"],
+                    record["Start_Date"],
+                ],
+            )
+
+        TabularDataModel(clean_data, header_rows=1)
 
 
 if __name__ == "__main__":
     """Run all validation and transformation examples."""
-    print("Splurge-Tools: Data Validation and Transformation Examples")
-    print("=" * 70)
-    print()
-    
+
     # Create sample data
     employee_data, sales_data = create_sample_data()
-    
+
     basic_validation_examples(employee_data)
     custom_validation_examples()
     validation_utils_examples()
@@ -488,12 +425,3 @@ if __name__ == "__main__":
     advanced_transformation_examples(sales_data)
     factory_pattern_examples()
     comprehensive_validation_workflow()
-    
-    print("Examples completed successfully!")
-    print("\nKey Takeaways:")
-    print("• DataValidator supports custom validation rules and error tracking")
-    print("• DataTransformer provides pivot, melt, group-by, and column transformations")
-    print("• Factory pattern enables consistent component creation")
-    print("• Validation utilities provide common validation patterns")
-    print("• Components integrate seamlessly with tabular data models")
-    print("• Comprehensive error handling and reporting capabilities")
