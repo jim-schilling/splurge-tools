@@ -74,7 +74,7 @@ class TestSafeFileOperation(unittest.TestCase):
         """Test safe file operation with empty path."""
         # Empty string creates Path('.') which is valid
         result = safe_file_operation("")
-        assert result == Path()
+        assert result == Path(".")
 
     def test_permission_error_simulation(self):
         """Test that safe_file_operation handles basic path operations."""
@@ -850,9 +850,9 @@ class TestIsEmptyOrNone(unittest.TestCase):
     def test_edge_cases(self):
         """Test edge cases for empty checking."""
         # Test with various whitespace characters
-        assert is_empty_or_none("\t\n\r\x0c\x0b")
-        assert is_empty_or_none("\t\n\r\x0c\x0b", trim=True)
-        assert not is_empty_or_none("\t\n\r\x0c\x0b", trim=False)
+        assert is_empty_or_none("\t\n\r\f\v")
+        assert is_empty_or_none("\t\n\r\f\v", trim=True)
+        assert not is_empty_or_none("\t\n\r\f\v", trim=False)
 
         # Test with unicode whitespace
         assert is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a")
