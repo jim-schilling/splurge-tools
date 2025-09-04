@@ -28,7 +28,7 @@ class TestRandomHelper(unittest.TestCase):
         """Test class constants are correctly defined."""
         assert RandomHelper.INT64_MAX == 2**63 - 1
         assert RandomHelper.INT64_MIN == -(2**63)
-        assert RandomHelper.INT64_MASK == 9223372036854775807
+        assert RandomHelper.INT64_MASK == 0x7FFF_FFFF_FFFF_FFFF
         assert len(RandomHelper.ALPHA_CHARS) == 52  # 26 lowercase + 26 uppercase
         assert len(RandomHelper.DIGITS) == 10
         assert len(RandomHelper.ALPHANUMERIC_CHARS) == 62  # 52 letters + 10 digits

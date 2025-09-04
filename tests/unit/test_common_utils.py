@@ -27,34 +27,25 @@ from splurge_tools.common_utils import (
 from splurge_tools.exceptions import SplurgeParameterError, SplurgeValidationError
 
 
-class TestSafeFileOperation(unittest.TestCase):
+class TestSafeFileOperation:
     """Test cases for safe_file_operation function."""
 
-    def setUp(self):
-        """Set up test fixtures."""
-        # Create a temporary file
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False)
-        self.temp_file.write(b"test content")
-        self.temp_file.close()
-        self.temp_path = Path(self.temp_file.name)
-
-    def tearDown(self):
-        """Clean up test fixtures."""
-        if self.temp_path.exists():
-            self.temp_path.unlink()
-
-    def test_existing_file_path(self):
+    def test_existing_file_path(self, tmp_path: Path):
         """Test safe file operation with existing file."""
-        result = safe_file_operation(str(self.temp_path))
-        assert result == self.temp_path
+        # Create a temporary file using pytest's tmp_path fixture
+        temp_file = tmp_path / "test_file.txt"
+        temp_file.write_text("test content")
+
+        result = safe_file_operation(str(temp_file))
+        assert result == temp_file
 
         # Test with Path object
-        result = safe_file_operation(self.temp_path)
-        assert result == self.temp_path
+        result = safe_file_operation(temp_file)
+        assert result == temp_file
 
-    def test_non_existent_file(self):
+    def test_non_existent_file(self, tmp_path: Path):
         """Test safe file operation with non-existent file."""
-        non_existent = self.temp_path.parent / "non_existent.txt"
+        non_existent = tmp_path / "non_existent.txt"
 
         # safe_file_operation just calls validate_file_path, which allows non-existent files by default
         result = safe_file_operation(str(non_existent))
@@ -76,11 +67,14 @@ class TestSafeFileOperation(unittest.TestCase):
         result = safe_file_operation("")
         assert result == Path(".")
 
-    def test_permission_error_simulation(self):
+    def test_permission_error_simulation(self, tmp_path: Path):
         """Test that safe_file_operation handles basic path operations."""
         # Just test that it returns a Path object for valid input
-        result = safe_file_operation(str(self.temp_path))
-        assert result == self.temp_path
+        temp_file = tmp_path / "test_file.txt"
+        temp_file.write_text("test content")
+
+        result = safe_file_operation(str(temp_file))
+        assert result == temp_file
 
 
 class TestEnsureMinimumColumns(unittest.TestCase):

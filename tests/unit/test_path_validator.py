@@ -133,7 +133,7 @@ class TestPathValidatorValidatePath:
         dangerous_paths = [
             "file<.txt",
             "file>.txt",
-            'file".txt',
+            "file\".txt",
             "file|.txt",
             "file?.txt",
             "file*.txt",
@@ -226,7 +226,7 @@ class TestPathValidatorSanitizeFilename:
             ("file<name.txt", "file_name.txt"),
             ("file>name.txt", "file_name.txt"),
             ("file:name.txt", "file_name.txt"),
-            ('file"name.txt', "file_name.txt"),
+            ("file\"name.txt", "file_name.txt"),
             ("file|name.txt", "file_name.txt"),
             ("file?name.txt", "file_name.txt"),
             ("file*name.txt", "file_name.txt"),
@@ -304,7 +304,7 @@ class TestPathValidatorIsSafePath:
         dangerous_paths = [
             "file<.txt",
             "file>.txt",
-            'file".txt',
+            "file\".txt",
             "file|.txt",
             "file?.txt",
             "file*.txt",
