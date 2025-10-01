@@ -60,76 +60,33 @@ packages = ["splurge_tools"]
 [tool.setuptools.package-data]
 splurge_tools = ["py.typed"]
 
+# Ruff configuration
 [tool.ruff]
 line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "N",   # pep8-naming
-    "UP",  # pyupgrade
-    "YTT", # flake8-2020
-    "S",   # flake8-bandit
-    "BLE", # flake8-blind-except
-    "FBT", # flake8-boolean-trap
-    "B",   # flake8-bugbear
-    "A",   # flake8-builtins
-    "COM", # flake8-commas
-    "C4",  # flake8-comprehensions
-    "DTZ", # flake8-datetimez
-    "T10", # flake8-debugger
-    "DJ",  # flake8-django
-    "EM",  # flake8-errmsg
-    "EXE", # flake8-executable
-    "FA",  # flake8-future-annotations
-    "ISC", # flake8-implicit-str-concat
-    "ICN", # flake8-import-conventions
-    "G",   # flake8-logging-format
-    "INP", # flake8-no-pep420
-    "PIE", # flake8-pie
-    "T20", # flake8-print
-    "PYI", # flake8-pyi
-    "PT",  # flake8-pytest-style
-    "Q",   # flake8-quotes
-    "RSE", # flake8-raise
-    "RET", # flake8-return
-    "SLF", # flake8-self
-    "SLOT", # flake8-slots
-    "SIM", # flake8-simplify
-    "TID", # flake8-tidy-imports
-    "TCH", # flake8-type-checking
-    "INT", # flake8-gettext
-    "ARG", # flake8-unused-arguments
-    "PTH", # flake8-use-pathlib
-    "ERA", # eradicate
-    "PD",  # pandas-vet
-    "PGH", # pygrep-hooks
-    "PL",  # pylint
-    "TRY", # tryceratops
-    "FLY", # flynt
-    "NPY", # numpy-specific rules
-    "AIR", # airflow-specific rules
-    "PERF", # perflint
-    "FURB", # refurb
-    "LOG", # flake8-logging
-    "RUF", # ruff-specific rules
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
 ]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*" = ["S101", "ARG001"]  # Allow assertions and unused arguments in tests
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["splurge_tools"]
 
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "auto"
-skip-magic-trailing-comma = false
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**/*" = ["F401", "F811"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -8,7 +8,6 @@ Please keep the copyright notice in this file and in the source code files.
 This module is licensed under the MIT License.
 """
 
-import unittest
 from datetime import date, datetime, time
 
 import pytest
@@ -17,20 +16,35 @@ from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.type_helper import DataType
 
 
-class TestTypedView(unittest.TestCase):
+class TestTypedView:
     """Test cases for typed view via TabularDataModel.to_typed()."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test data."""
         self.test_data = [
-            ["name", "age", "is_active", "score", "birth_date", "created_at", "login_time"],
-            ["John", "25", "true", "95.5", "1998-01-01", "2024-01-01T12:00:00", "14:30:45"],
+            [
+                "name",
+                "age",
+                "is_active",
+                "score",
+                "birth_date",
+                "created_at",
+                "login_time",
+            ],
+            [
+                "John",
+                "25",
+                "true",
+                "95.5",
+                "1998-01-01",
+                "2024-01-01T12:00:00",
+                "14:30:45",
+            ],
             ["Jane", "", "false", "", "1993-05-15", "2024-01-02T13:00:00", "2:30 PM"],
             ["Bob", "none", "none", "none", "none", "none", "none"],
             ["Alice", "30", "true", "88.0", "1995-12-31", "2024-01-03T14:00:00", ""],
         ]
-
-        # Custom type configurations
         self.custom_configs = {
             DataType.BOOLEAN: True,
             DataType.INTEGER: -1,
@@ -39,10 +53,10 @@ class TestTypedView(unittest.TestCase):
             DataType.DATETIME: datetime(1900, 1, 1),
             DataType.TIME: time(0, 0, 0),
         }
-
         base = TabularDataModel(self.test_data)
         self.default_model = base.to_typed()
         self.custom_model = base.to_typed(type_configs=self.custom_configs)
+        yield
 
     def test_column_types(self):
         """Test that column types are correctly inferred."""
@@ -225,7 +239,3 @@ class TestTypedView(unittest.TestCase):
         # Test column values
         mixed_values = mixed_model.column_values("mixed_col")
         assert mixed_values == ["123", "abc", "", "NONE"]
-
-
-if __name__ == "__main__":
-    unittest.main()

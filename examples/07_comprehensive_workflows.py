@@ -116,7 +116,8 @@ def workflow_1_data_cleaning_and_validation(files):
     validator.add_validator("Email", lambda x: "@company.com" in x and "." in x)
     validator.add_validator("Salary", lambda x: x.replace(".", "").isdigit() and float(x) >= 30000)
     validator.add_validator(
-        "Active", lambda x: x.lower() in ["true", "false", "yes", "no", "1", "0", "y", "n", "active"],
+        "Active",
+        lambda x: x.lower() in ["true", "false", "yes", "no", "1", "0", "y", "n", "active"],
     )
 
     valid_rows = []

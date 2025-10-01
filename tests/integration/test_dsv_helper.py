@@ -346,7 +346,13 @@ class TestDsvHelperParseStream:
         test_file.write_text("header1,header2,header3\na,b,c\nd,e,f\nfooter1,footer2,footer3")
 
         chunks = list(
-            DsvHelper.parse_stream(test_file, delimiter=",", skip_header_rows=1, skip_footer_rows=1, chunk_size=2),
+            DsvHelper.parse_stream(
+                test_file,
+                delimiter=",",
+                skip_header_rows=1,
+                skip_footer_rows=1,
+                chunk_size=2,
+            ),
         )
         expected = [[["a", "b", "c"], ["d", "e", "f"]]]
         assert chunks == expected

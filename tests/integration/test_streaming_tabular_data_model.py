@@ -8,7 +8,6 @@ This module is licensed under the MIT License.
 
 import os
 import tempfile
-import unittest
 
 import pytest
 
@@ -16,7 +15,7 @@ from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 
 
-class TestStreamingTabularDataModel(unittest.TestCase):
+class TestStreamingTabularDataModel:
     """Test cases for StreamingTabularDataModel."""
 
     def test_streaming_model_with_headers(self) -> None:
@@ -94,7 +93,11 @@ class TestStreamingTabularDataModel(unittest.TestCase):
             # Test iteration
             rows = list(model.iter_rows())
             assert len(rows) == 3
-            assert rows[0] == {"column_0": "John", "column_1": "25", "column_2": "New York"}
+            assert rows[0] == {
+                "column_0": "John",
+                "column_1": "25",
+                "column_2": "New York",
+            }
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -261,7 +264,3 @@ class TestStreamingTabularDataModel(unittest.TestCase):
             except Exception:
                 pass
             os.unlink(temp_file)
-
-
-if __name__ == "__main__":
-    unittest.main()

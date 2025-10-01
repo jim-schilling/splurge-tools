@@ -6,23 +6,28 @@ including both secure and non-secure random generation modes.
 """
 
 import re
-import unittest
 from datetime import date, datetime, timedelta
 
 import pytest
 
-from splurge_tools.exceptions import SplurgeFormatError, SplurgeParameterError, SplurgeRangeError
+from splurge_tools.exceptions import (
+    SplurgeFormatError,
+    SplurgeParameterError,
+    SplurgeRangeError,
+)
 from splurge_tools.random_helper import RandomHelper
 
 
-class TestRandomHelper(unittest.TestCase):
+class TestRandomHelper:
     """Test cases for RandomHelper class."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test fixtures."""
         self.helper = RandomHelper()
         self.today = date.today()
         self.now = datetime.now()
+        yield
 
     def test_constants(self):
         """Test class constants are correctly defined."""
@@ -455,7 +460,3 @@ class TestRandomHelper(unittest.TestCase):
         assert 0 <= value.minute <= 59
         assert 0 <= value.second <= 59
         assert 0 <= value.microsecond <= 999999
-
-
-if __name__ == "__main__":
-    unittest.main()

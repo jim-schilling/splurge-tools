@@ -2,20 +2,20 @@
 Comprehensive unit tests for DataValidator class to improve coverage.
 """
 
-import unittest
-
 import pytest
 
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.protocols import DataValidatorProtocol
 
 
-class TestDataValidatorComprehensive(unittest.TestCase):
+class TestDataValidatorComprehensive:
     """Comprehensive test cases for DataValidator class."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test fixtures."""
         self.validator = DataValidator()
+        yield
 
     def test_validate_non_dict_list_data_with_validators(self):
         """Test validate method with non-dict/list data when validators exist."""
@@ -429,7 +429,3 @@ class TestDataValidatorComprehensive(unittest.TestCase):
         assert callable(self.validator.validate)
         assert callable(self.validator.get_errors)
         assert callable(self.validator.clear_errors)
-
-
-if __name__ == "__main__":
-    unittest.main()

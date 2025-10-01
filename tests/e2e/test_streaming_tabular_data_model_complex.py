@@ -7,14 +7,15 @@ and edge cases.
 
 import os
 import tempfile
-import unittest
+
+import pytest
 
 from splurge_tools.dsv_helper import DsvHelper
 from splurge_tools.streaming_tabular_data_model import StreamingTabularDataModel
 from splurge_tools.tabular_utils import process_headers
 
 
-class TestStreamingTabularDataModelComplex(unittest.TestCase):
+class TestStreamingTabularDataModelComplex:
     """Complex test cases for StreamingTabularDataModel."""
 
     def test_streaming_model_with_multi_row_headers(self) -> None:
@@ -40,13 +41,21 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
             )
 
             # Test column names (merged)
-            assert model.column_names == ["Personal_Name", "Personal_Age", "Location_City"]
+            assert model.column_names == [
+                "Personal_Name",
+                "Personal_Age",
+                "Location_City",
+            ]
             assert model.column_count == 3
 
             # Test iteration
             rows = list(model.iter_rows())
             assert len(rows) == 2
-            assert rows[0] == {"Personal_Name": "John", "Personal_Age": "25", "Location_City": "New York"}
+            assert rows[0] == {
+                "Personal_Name": "John",
+                "Personal_Age": "25",
+                "Location_City": "New York",
+            }
 
         finally:
             # Ensure all file handles are closed before deletion
@@ -433,7 +442,10 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
         assert result[1] == ["Name", "column_1", "City"]
 
         # Test with column count padding
-        header_data = [["Name", "Age"], ["John", "25", "Extra"]]  # Second row has more columns
+        header_data = [
+            ["Name", "Age"],
+            ["John", "25", "Extra"],
+        ]  # Second row has more columns
         result = process_headers(header_data, header_rows=2)
         assert len(result[1]) == 3  # Should have 3 columns based on max row length
 
@@ -632,7 +644,3 @@ class TestStreamingTabularDataModelComplex(unittest.TestCase):
             except Exception:
                 pass
             os.unlink(temp_file)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -1,18 +1,21 @@
 """Unit tests for DSVHelper class."""
 
-import unittest
-
 import pytest
 
-from splurge_tools.exceptions import SplurgeParameterError, SplurgeRangeError, SplurgeValidationError
+from splurge_tools.exceptions import (
+    SplurgeParameterError,
+    SplurgeRangeError,
+    SplurgeValidationError,
+)
 from splurge_tools.tabular_data_model import TabularDataModel
 from splurge_tools.type_helper import DataType
 
 
-class TestTabularDataModel(unittest.TestCase):
+class TestTabularDataModel:
     """Test cases for TabularDataModel class."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test data."""
         self.sample_data = [
             ["Name", "Age", "City"],  # Header
@@ -20,14 +23,13 @@ class TestTabularDataModel(unittest.TestCase):
             ["Jane", "25", "Boston"],
             ["Bob", "35", "Chicago"],
         ]
-
-        # Data with mixed types
         self.mixed_type_data = [
             ["Name", "Age", "Score", "IsActive", "Date"],
             ["John", "30", "95.5", "true", "2024-01-01"],
             ["Jane", "25", "88.0", "false", "2024-01-02"],
             ["Bob", "35", "92.5", "true", "2024-01-03"],
         ]
+        yield
 
     def test_basic_initialization(self):
         """Test basic model initialization."""
@@ -77,7 +79,12 @@ class TestTabularDataModel(unittest.TestCase):
         model = TabularDataModel(data)
         assert model.column_count == 4
         assert model.row(0) == {"Name": "John", "Age": "30", "City": "", "column_3": ""}
-        assert model.row(1) == {"Name": "Jane", "Age": "25", "City": "Boston", "column_3": "Extra"}
+        assert model.row(1) == {
+            "Name": "Jane",
+            "Age": "25",
+            "City": "Boston",
+            "column_3": "Extra",
+        }
         assert model.row(2) == {"Name": "Bob", "Age": "", "City": "", "column_3": ""}
 
     def test_skip_empty_rows(self):
@@ -100,8 +107,16 @@ class TestTabularDataModel(unittest.TestCase):
         model = TabularDataModel(data, header_rows=0)
         assert model.column_names == ["column_0", "column_1", "column_2"]
         assert model.row_count == 2
-        assert model.row(0) == {"column_0": "John", "column_1": "30", "column_2": "New York"}
-        assert model.row(1) == {"column_0": "Jane", "column_1": "25", "column_2": "Boston"}
+        assert model.row(0) == {
+            "column_0": "John",
+            "column_1": "30",
+            "column_2": "New York",
+        }
+        assert model.row(1) == {
+            "column_0": "Jane",
+            "column_1": "25",
+            "column_2": "Boston",
+        }
 
     def test_invalid_initialization(self):
         """Test invalid initialization parameters."""
@@ -125,7 +140,11 @@ class TestTabularDataModel(unittest.TestCase):
         model = TabularDataModel(data, header_rows=2)
         assert model.column_names == ["Category_Name", "Details_Age", "Location_City"]
         assert model.row_count == 2
-        assert model.row(0) == {"Category_Name": "John", "Details_Age": "30", "Location_City": "New York"}
+        assert model.row(0) == {
+            "Category_Name": "John",
+            "Details_Age": "30",
+            "Location_City": "New York",
+        }
 
     def test_iter_rows(self):
         """Test iteration over rows as dictionaries."""
@@ -212,7 +231,3 @@ class TestTabularDataModel(unittest.TestCase):
 
         assert type1 == type2
         assert type1 == DataType.INTEGER
-
-
-if __name__ == "__main__":
-    unittest.main()

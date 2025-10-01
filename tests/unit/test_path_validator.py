@@ -12,7 +12,11 @@ from unittest.mock import patch
 
 import pytest
 
-from splurge_tools.exceptions import SplurgeFileNotFoundError, SplurgeFilePermissionError, SplurgePathValidationError
+from splurge_tools.exceptions import (
+    SplurgeFileNotFoundError,
+    SplurgeFilePermissionError,
+    SplurgePathValidationError,
+)
 from splurge_tools.path_validator import PathValidator
 
 
@@ -133,7 +137,7 @@ class TestPathValidatorValidatePath:
         dangerous_paths = [
             "file<.txt",
             "file>.txt",
-            "file\".txt",
+            'file".txt',
             "file|.txt",
             "file?.txt",
             "file*.txt",
@@ -226,7 +230,7 @@ class TestPathValidatorSanitizeFilename:
             ("file<name.txt", "file_name.txt"),
             ("file>name.txt", "file_name.txt"),
             ("file:name.txt", "file_name.txt"),
-            ("file\"name.txt", "file_name.txt"),
+            ('file"name.txt', "file_name.txt"),
             ("file|name.txt", "file_name.txt"),
             ("file?name.txt", "file_name.txt"),
             ("file*name.txt", "file_name.txt"),
@@ -304,7 +308,7 @@ class TestPathValidatorIsSafePath:
         dangerous_paths = [
             "file<.txt",
             "file>.txt",
-            "file\".txt",
+            'file".txt',
             "file|.txt",
             "file?.txt",
             "file*.txt",

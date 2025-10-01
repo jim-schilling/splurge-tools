@@ -1223,7 +1223,10 @@ def is_list_like(value: Any) -> bool:
         return True
 
     return bool(
-        hasattr(value, "__iter__") and hasattr(value, "append") and hasattr(value, "remove") and hasattr(value, "index"),
+        hasattr(value, "__iter__")
+        and hasattr(value, "append")
+        and hasattr(value, "remove")
+        and hasattr(value, "index"),
     )
 
 
