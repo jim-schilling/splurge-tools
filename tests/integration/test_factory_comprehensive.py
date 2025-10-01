@@ -6,8 +6,9 @@ Tests all factory functions with various input types and configurations.
 
 import os
 import tempfile
-import unittest
 from pathlib import Path
+
+import pytest
 
 from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.data_validator import DataValidator
@@ -16,7 +17,7 @@ from splurge_tools.protocols import StreamingTabularDataProtocol, TabularDataPro
 from splurge_tools.resource_manager import safe_file_operation
 
 
-class TestModelConstruction(unittest.TestCase):
+class TestModelConstruction:
     """Comprehensive tests for simplified model constructors."""
 
     def _assert_is_tabular_data_protocol(self, obj):
@@ -200,14 +201,16 @@ class TestModelConstruction(unittest.TestCase):
         assert model.column_count == 2
 
 
-class TestComponentFactoryComprehensive(unittest.TestCase):
+class TestComponentFactoryComprehensive:
     """Simple component creation tests without factories."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         data = [["name", "age"], ["John", "25"]]
         self.data_model = create_in_memory_model(data)
         self.DataTransformer = DataTransformer
         self.DataValidator = DataValidator
+        yield
 
     def test_create_validator(self):
         """Test create_validator method."""
@@ -276,7 +279,7 @@ class TestComponentFactoryComprehensive(unittest.TestCase):
                 os.unlink(temp_file_path)
 
 
-class TestExplicitModelHelpers(unittest.TestCase):
+class TestExplicitModelHelpers:
     def test_create_in_memory_model(self):
         data = [["name", "age"], ["John", "25"], ["Jane", "30"]]
         model = create_in_memory_model(data)
@@ -293,7 +296,3 @@ class TestExplicitModelHelpers(unittest.TestCase):
         model = create_streaming_model(data_iterator())
         assert isinstance(model, StreamingTabularDataProtocol)
         assert model.column_count == 2
-
-
-if __name__ == "__main__":
-    unittest.main()

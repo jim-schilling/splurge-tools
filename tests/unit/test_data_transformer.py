@@ -1,6 +1,5 @@
 """Unit tests for DataTransformer class."""
 
-import unittest
 from statistics import mean
 
 import pytest
@@ -9,12 +8,12 @@ from splurge_tools.data_transformer import DataTransformer
 from splurge_tools.tabular_data_model import TabularDataModel
 
 
-class TestDataTransformer(unittest.TestCase):
+class TestDataTransformer:
     """Test cases for DataTransformer class."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test data."""
-        # Sample data for testing
         self.sample_data = [
             ["Name", "Category", "Value", "Date"],
             ["John", "A", "10", "2024-01-01"],
@@ -26,8 +25,6 @@ class TestDataTransformer(unittest.TestCase):
         ]
         self.model = TabularDataModel(self.sample_data)
         self.transformer = DataTransformer(self.model)
-
-        # Data with duplicates for testing
         self.duplicate_data = [
             ["Name", "Category", "Value", "Date"],
             ["John", "A", "10", "2024-01-01"],
@@ -41,6 +38,7 @@ class TestDataTransformer(unittest.TestCase):
         ]
         self.duplicate_model = TabularDataModel(self.duplicate_data)
         self.duplicate_transformer = DataTransformer(self.duplicate_model)
+        yield
 
     def test_pivot(self):
         """Test pivot operation."""

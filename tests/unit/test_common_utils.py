@@ -844,8 +844,14 @@ class TestIsEmptyOrNone:
 
         # Test with unicode whitespace
         assert is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a")
-        assert is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a", trim=True)
-        assert not is_empty_or_none("\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a", trim=False)
+        assert is_empty_or_none(
+            "\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a",
+            trim=True,
+        )
+        assert not is_empty_or_none(
+            "\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a",
+            trim=False,
+        )
 
 
 class TestSafeStringOperation:

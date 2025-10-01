@@ -2,8 +2,9 @@
 Test cases for decorators module.
 """
 
-import unittest
 from unittest.mock import Mock
+
+import pytest
 
 from splurge_tools.decorators import (
     deprecated_method,
@@ -13,7 +14,7 @@ from splurge_tools.decorators import (
 )
 
 
-class TestDecorators(unittest.TestCase):
+class TestDecorators:
     """Test cases for decorators module."""
 
     def test_handle_empty_value_classmethod_with_none(self):
@@ -228,7 +229,3 @@ class TestDecorators(unittest.TestCase):
         # Both methods should work
         assert method1("Hello") == "HELLO"
         assert method2("WORLD") == "world"
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -2,7 +2,6 @@
 Unit tests for type_helper module
 """
 
-import unittest
 from datetime import date, datetime, time
 
 import pytest
@@ -19,7 +18,7 @@ from splurge_tools.type_helper import (
 )
 
 
-class TestString(unittest.TestCase):
+class TestString:
     """Test cases for String class methods"""
 
     def test_is_bool_like(self):
@@ -364,38 +363,17 @@ class TestString(unittest.TestCase):
         assert String.to_time("14:30") == time(14, 30)
         assert String.to_time("143045") == time(14, 30, 45)
         assert String.to_time("1430") == time(14, 30)
-        self.assertEqual(
-            String.to_time("00:00:00"),
-            time(0, 0, 0),  # Midnight
-        )
-        self.assertEqual(
-            String.to_time("23:59:59"),
-            time(23, 59, 59),  # End of day
-        )
-        self.assertEqual(
-            String.to_time("12:00:00"),
-            time(12, 0, 0),  # Noon
-        )
+        assert String.to_time("00:00:00") == time(0, 0, 0)
+        assert String.to_time("23:59:59") == time(23, 59, 59)
+        assert String.to_time("12:00:00") == time(12, 0, 0)
 
         # Test valid time strings - 12-hour format
         assert String.to_time("2:30 PM") == time(14, 30)
         assert String.to_time("2:30:45 PM") == time(14, 30, 45)
-        self.assertEqual(
-            String.to_time("12:00 AM"),
-            time(0, 0, 0),  # Midnight
-        )
-        self.assertEqual(
-            String.to_time("12:00 PM"),
-            time(12, 0, 0),  # Noon
-        )
-        self.assertEqual(
-            String.to_time("11:59 PM"),
-            time(23, 59),  # End of day
-        )
-        self.assertEqual(
-            String.to_time("12:30 AM"),
-            time(0, 30),  # Early morning
-        )
+        assert String.to_time("12:00 AM") == time(0, 0, 0)
+        assert String.to_time("12:00 PM") == time(12, 0, 0)
+        assert String.to_time("11:59 PM") == time(23, 59)
+        assert String.to_time("12:30 AM") == time(0, 30)
 
         # Test with microseconds
         assert String.to_time("14:30:45.123456") == time(14, 30, 45, 123456)
@@ -455,7 +433,7 @@ class TestString(unittest.TestCase):
         assert not String.is_time_like(" 2:30 PM ", trim=False)
 
 
-class TestProfileValues(unittest.TestCase):
+class TestProfileValues:
     """Test cases for profile_values function"""
 
     def test_profile_values(self):
@@ -605,13 +583,9 @@ class TestProfileValues(unittest.TestCase):
 
         assert profile_values(gen_mixed()) == DataType.MIXED
 
-    def test_profile_values_incremental_typecheck_flag(self):
-        """Test the use_incremental_typecheck flag functionality."""
-        # Test that both True and False produce the same results for simple cases
-        # where early termination doesn't affect the outcome
-
-        # Simple cases that should be identical regardless of flag
-        simple_cases = [
+    @pytest.mark.parametrize(
+        "values,expected_type",
+        [
             ([], DataType.EMPTY),
             (["", "   ", "\t"], DataType.EMPTY),
             ([None, None], DataType.NONE),
@@ -622,15 +596,37 @@ class TestProfileValues(unittest.TestCase):
             (["abc", "def", ""], DataType.STRING),
             (["1", "2.2", "abc"], DataType.MIXED),
             (["1", "2.2", "abc", ""], DataType.MIXED),
-        ]
-
-        for values, expected_type in simple_cases:
-            with self.subTest(values=values):
-                result_with_flag = profile_values(values, use_incremental_typecheck=True)
-                result_without_flag = profile_values(values, use_incremental_typecheck=False)
-                assert result_with_flag == expected_type
-                assert result_without_flag == expected_type
-                assert result_with_flag == result_without_flag
+            (["1", "2.2", "3"], DataType.FLOAT),
+            (["20230101", "143000", "12345"], DataType.INTEGER),
+            (["2023-01-01", "2023-01-02"], DataType.DATE),
+            (["14:30:00", "15:45:00"], DataType.TIME),
+            (["2023-01-01T12:00:00", "2023-01-02T12:00:00"], DataType.DATETIME),
+        ],
+        ids=[
+            "row_0",
+            "row_1",
+            "row_2",
+            "row_3",
+            "row_4",
+            "row_5",
+            "row_6",
+            "row_7",
+            "row_8",
+            "row_9",
+            "row_10",
+            "row_11",
+            "row_12",
+            "row_13",
+            "row_14",
+        ],
+    )
+    def test_profile_values_incremental_typecheck_flag(self, values, expected_type):
+        """Test the use_incremental_typecheck flag functionality."""
+        result_with_flag = profile_values(values, use_incremental_typecheck=True)
+        result_without_flag = profile_values(values, use_incremental_typecheck=False)
+        assert result_with_flag == expected_type
+        assert result_without_flag == expected_type
+        assert result_with_flag == result_without_flag
 
         # Test cases where incremental checking might make a difference
         # These are edge cases where the flag could potentially affect behavior
@@ -649,23 +645,11 @@ class TestProfileValues(unittest.TestCase):
         large_empty_data = [""] * 200
         assert profile_values(large_empty_data, use_incremental_typecheck=True) == DataType.EMPTY
         assert profile_values(large_empty_data, use_incremental_typecheck=False) == DataType.EMPTY
-
-        # Test complex cases that require full analysis
-        complex_cases = [
-            (["1", "2.2", "3"], DataType.FLOAT),  # Mixed int/float
-            (["20230101", "143000", "12345"], DataType.INTEGER),  # All-digit strings
-            (["2023-01-01", "2023-01-02"], DataType.DATE),  # Date format
-            (["14:30:00", "15:45:00"], DataType.TIME),  # Time format
-            (["2023-01-01T12:00:00", "2023-01-02T12:00:00"], DataType.DATETIME),  # Datetime format
-        ]
-
-        for values, expected_type in complex_cases:
-            with self.subTest(values=values):
-                result_with_flag = profile_values(values, use_incremental_typecheck=True)
-                result_without_flag = profile_values(values, use_incremental_typecheck=False)
-                assert result_with_flag == expected_type
-                assert result_without_flag == expected_type
-                assert result_with_flag == result_without_flag
+        result_with_flag = profile_values(values, use_incremental_typecheck=True)
+        result_without_flag = profile_values(values, use_incremental_typecheck=False)
+        assert result_with_flag == expected_type
+        assert result_without_flag == expected_type
+        assert result_with_flag == result_without_flag
 
         # Test with generators (non-reusable iterators)
         def gen_boolean():
@@ -692,48 +676,133 @@ class TestProfileValues(unittest.TestCase):
             profile_values(["test"], use_incremental_typecheck=True)
             profile_values(["test"], use_incremental_typecheck=False)
         except Exception as e:
-            self.fail(f"use_incremental_typecheck flag caused an error: {e}")
+            pytest.fail(f"use_incremental_typecheck flag caused an error: {e}")
 
     def test_profile_values_early_mixed_detection(self):
         """Test early detection of MIXED type when both numeric/temporal and string types are present."""
         # Test cases where we should detect MIXED early (at 25% check point)
 
         # Integer + String (should detect MIXED early)
-        mixed_int_string = ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr"]
+        mixed_int_string = [
+            "123",
+            "abc",
+            "456",
+            "def",
+            "789",
+            "ghi",
+            "012",
+            "jkl",
+            "345",
+            "mno",
+            "678",
+            "pqr",
+        ]
         assert profile_values(mixed_int_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_int_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Float + String (should detect MIXED early)
-        mixed_float_string = ["1.23", "abc", "4.56", "def", "7.89", "ghi", "0.12", "jkl", "3.45", "mno", "6.78", "pqr"]
+        mixed_float_string = [
+            "1.23",
+            "abc",
+            "4.56",
+            "def",
+            "7.89",
+            "ghi",
+            "0.12",
+            "jkl",
+            "3.45",
+            "mno",
+            "6.78",
+            "pqr",
+        ]
         assert profile_values(mixed_float_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_float_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Date + String (should detect MIXED early)
-        mixed_date_string = ["2023-01-01", "abc", "2023-01-02", "def", "2023-01-03", "ghi", "2023-01-04", "jkl"]
+        mixed_date_string = [
+            "2023-01-01",
+            "abc",
+            "2023-01-02",
+            "def",
+            "2023-01-03",
+            "ghi",
+            "2023-01-04",
+            "jkl",
+        ]
         assert profile_values(mixed_date_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_date_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Time + String (should detect MIXED early)
-        mixed_time_string = ["14:30:00", "abc", "15:45:00", "def", "16:00:00", "ghi", "17:15:00", "jkl"]
+        mixed_time_string = [
+            "14:30:00",
+            "abc",
+            "15:45:00",
+            "def",
+            "16:00:00",
+            "ghi",
+            "17:15:00",
+            "jkl",
+        ]
         assert profile_values(mixed_time_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_time_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Datetime + String (should detect MIXED early)
-        mixed_datetime_string = ["2023-01-01T14:30:00", "abc", "2023-01-02T15:45:00", "def"]
+        mixed_datetime_string = [
+            "2023-01-01T14:30:00",
+            "abc",
+            "2023-01-02T15:45:00",
+            "def",
+        ]
         assert profile_values(mixed_datetime_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_datetime_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Multiple numeric types + String (should detect MIXED early)
-        mixed_numeric_string = ["123", "1.23", "abc", "456", "4.56", "def", "789", "7.89", "ghi"]
+        mixed_numeric_string = [
+            "123",
+            "1.23",
+            "abc",
+            "456",
+            "4.56",
+            "def",
+            "789",
+            "7.89",
+            "ghi",
+        ]
         assert profile_values(mixed_numeric_string, use_incremental_typecheck=True) == DataType.MIXED
         assert profile_values(mixed_numeric_string, use_incremental_typecheck=False) == DataType.MIXED
 
         # Test that pure types still work correctly (should NOT detect MIXED early)
-        pure_integer = ["123", "456", "789", "012", "345", "678", "901", "234", "567", "890", "123", "456"]
+        pure_integer = [
+            "123",
+            "456",
+            "789",
+            "012",
+            "345",
+            "678",
+            "901",
+            "234",
+            "567",
+            "890",
+            "123",
+            "456",
+        ]
         assert profile_values(pure_integer, use_incremental_typecheck=True) == DataType.INTEGER
         assert profile_values(pure_integer, use_incremental_typecheck=False) == DataType.INTEGER
 
-        pure_string = ["abc", "def", "ghi", "jkl", "mno", "pqr", "stu", "vwx", "yz", "ab", "cd", "ef"]
+        pure_string = [
+            "abc",
+            "def",
+            "ghi",
+            "jkl",
+            "mno",
+            "pqr",
+            "stu",
+            "vwx",
+            "yz",
+            "ab",
+            "cd",
+            "ef",
+        ]
         assert profile_values(pure_string, use_incremental_typecheck=True) == DataType.STRING
         assert profile_values(pure_string, use_incremental_typecheck=False) == DataType.STRING
 
@@ -752,24 +821,18 @@ class TestProfileValues(unittest.TestCase):
         assert profile_values(string_only, use_incremental_typecheck=True) == DataType.STRING
         assert profile_values(string_only, use_incremental_typecheck=False) == DataType.STRING
 
-    def test_profile_values_comprehensive_early_termination(self):
-        """Comprehensive test of all early termination scenarios."""
-
-        # Test data sizes that will trigger check points
-        # 25% check point at 3 items, 50% at 6 items, 75% at 9 items
-        test_size = 12
-
-        # Test cases for early termination scenarios
-        early_termination_cases = [
+    @pytest.mark.parametrize(
+        "case",
+        [
             {
                 "name": "EMPTY only (should terminate immediately)",
-                "data": [""] * test_size,
+                "data": [""] * 12,
                 "expected": DataType.EMPTY,
                 "should_terminate_early": True,
             },
             {
                 "name": "NONE only (should terminate immediately)",
-                "data": [None] * test_size,
+                "data": [None] * 12,
                 "expected": DataType.NONE,
                 "should_terminate_early": True,
             },
@@ -781,25 +844,77 @@ class TestProfileValues(unittest.TestCase):
             },
             {
                 "name": "BOOLEAN + EMPTY (should terminate early)",
-                "data": ["true", "", "false", "", "true", "", "false", "", "true", "", "false", ""],
+                "data": [
+                    "true",
+                    "",
+                    "false",
+                    "",
+                    "true",
+                    "",
+                    "false",
+                    "",
+                    "true",
+                    "",
+                    "false",
+                    "",
+                ],
                 "expected": DataType.BOOLEAN,
                 "should_terminate_early": True,
             },
             {
                 "name": "STRING + EMPTY (should terminate early)",
-                "data": ["abc", "", "def", "", "ghi", "", "jkl", "", "mno", "", "pqr", ""],
+                "data": [
+                    "abc",
+                    "",
+                    "def",
+                    "",
+                    "ghi",
+                    "",
+                    "jkl",
+                    "",
+                    "mno",
+                    "",
+                    "pqr",
+                    "",
+                ],
                 "expected": DataType.STRING,
                 "should_terminate_early": True,
             },
             {
                 "name": "Integer + String (should detect MIXED early)",
-                "data": ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr"],
+                "data": [
+                    "123",
+                    "abc",
+                    "456",
+                    "def",
+                    "789",
+                    "ghi",
+                    "012",
+                    "jkl",
+                    "345",
+                    "mno",
+                    "678",
+                    "pqr",
+                ],
                 "expected": DataType.MIXED,
                 "should_terminate_early": True,
             },
             {
                 "name": "Float + String (should detect MIXED early)",
-                "data": ["1.23", "abc", "4.56", "def", "7.89", "ghi", "0.12", "jkl", "3.45", "mno", "6.78", "pqr"],
+                "data": [
+                    "1.23",
+                    "abc",
+                    "4.56",
+                    "def",
+                    "7.89",
+                    "ghi",
+                    "0.12",
+                    "jkl",
+                    "3.45",
+                    "mno",
+                    "6.78",
+                    "pqr",
+                ],
                 "expected": DataType.MIXED,
                 "should_terminate_early": True,
             },
@@ -856,25 +971,34 @@ class TestProfileValues(unittest.TestCase):
                 "expected": DataType.MIXED,
                 "should_terminate_early": True,
             },
-        ]
-
-        # Test cases that should NOT terminate early (require full analysis)
-        no_early_termination_cases = [
             {
                 "name": "Pure INTEGER (requires full analysis for all-digit logic)",
-                "data": [str(i) for i in range(test_size)],
+                "data": [str(i) for i in range(12)],
                 "expected": DataType.INTEGER,
                 "should_terminate_early": False,
             },
             {
                 "name": "Pure FLOAT (requires full analysis)",
-                "data": [f"{i}.5" for i in range(test_size)],
+                "data": [f"{i}.5" for i in range(12)],
                 "expected": DataType.FLOAT,
                 "should_terminate_early": False,
             },
             {
                 "name": "INTEGER + FLOAT (requires full analysis)",
-                "data": ["123", "1.23", "456", "4.56", "789", "7.89", "012", "0.12", "345", "3.45", "678", "6.78"],
+                "data": [
+                    "123",
+                    "1.23",
+                    "456",
+                    "4.56",
+                    "789",
+                    "7.89",
+                    "012",
+                    "0.12",
+                    "345",
+                    "3.45",
+                    "678",
+                    "6.78",
+                ],
                 "expected": DataType.FLOAT,
                 "should_terminate_early": False,
             },
@@ -897,38 +1021,6 @@ class TestProfileValues(unittest.TestCase):
                 "expected": DataType.INTEGER,
                 "should_terminate_early": False,
             },
-        ]
-
-        # Test all early termination cases
-        for case in early_termination_cases:
-            with self.subTest(case=case["name"]):
-                # Test with incremental checking
-                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
-
-                # Test without incremental checking
-                result_original = profile_values(case["data"], use_incremental_typecheck=False)
-
-                # Verify results match
-                assert result_optimized == case["expected"]
-                assert result_original == case["expected"]
-                assert result_optimized == result_original
-
-        # Test cases that should NOT terminate early
-        for case in no_early_termination_cases:
-            with self.subTest(case=case["name"]):
-                # Test with incremental checking
-                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
-
-                # Test without incremental checking
-                result_original = profile_values(case["data"], use_incremental_typecheck=False)
-
-                # Verify results match
-                assert result_optimized == case["expected"]
-                assert result_original == case["expected"]
-                assert result_optimized == result_original
-
-        # Test edge cases with different data sizes
-        edge_cases = [
             {
                 "name": "Very small dataset (no check points)",
                 "data": ["123", "abc"],
@@ -941,24 +1033,85 @@ class TestProfileValues(unittest.TestCase):
             },
             {
                 "name": "Dataset exactly at 50% check point",
-                "data": ["123", "abc", "456", "def", "789", "ghi"],  # 6 items, 50% of 12
+                "data": [
+                    "123",
+                    "abc",
+                    "456",
+                    "def",
+                    "789",
+                    "ghi",
+                ],  # 6 items, 50% of 12
                 "expected": DataType.MIXED,
             },
             {
                 "name": "Dataset exactly at 75% check point",
-                "data": ["123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345"],  # 9 items, 75% of 12
+                "data": [
+                    "123",
+                    "abc",
+                    "456",
+                    "def",
+                    "789",
+                    "ghi",
+                    "012",
+                    "jkl",
+                    "345",
+                ],  # 9 items, 75% of 12
                 "expected": DataType.MIXED,
             },
-        ]
+        ],
+        ids=[
+            "row_0",
+            "row_1",
+            "row_2",
+            "row_3",
+            "row_4",
+            "row_5",
+            "row_6",
+            "row_7",
+            "row_8",
+            "row_9",
+            "row_10",
+            "row_11",
+            "row_12",
+            "row_13",
+            "row_14",
+            "row_15",
+            "row_16",
+            "row_17",
+        ],
+    )
+    def test_profile_values_comprehensive_early_termination(self, case: dict[str, object]):
+        """Comprehensive test of all early termination scenarios."""
 
-        for case in edge_cases:
-            with self.subTest(case=case["name"]):
-                result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
-                result_original = profile_values(case["data"], use_incremental_typecheck=False)
+        # Test data sizes that will trigger check points
+        # 25% check point at 3 items, 50% at 6 items, 75% at 9 items
+        test_size = 12
+        # Test with incremental checking
+        result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
 
-                assert result_optimized == case["expected"]
-                assert result_original == case["expected"]
-                assert result_optimized == result_original
+        # Test without incremental checking
+        result_original = profile_values(case["data"], use_incremental_typecheck=False)
+
+        # Verify results match
+        assert result_optimized == case["expected"]
+        assert result_original == case["expected"]
+        assert result_optimized == result_original
+        # Test with incremental checking
+        result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
+
+        # Test without incremental checking
+        result_original = profile_values(case["data"], use_incremental_typecheck=False)
+
+        # Verify results match
+        assert result_optimized == case["expected"]
+        assert result_original == case["expected"]
+        assert result_optimized == result_original
+        result_optimized = profile_values(case["data"], use_incremental_typecheck=True)
+        result_original = profile_values(case["data"], use_incremental_typecheck=False)
+
+        assert result_optimized == case["expected"]
+        assert result_original == case["expected"]
+        assert result_optimized == result_original
 
         # Test with generators and other iterables
         def gen_mixed():
@@ -983,7 +1136,20 @@ class TestProfileValues(unittest.TestCase):
         assert result_gen_optimized == result_gen_original
 
         # Test with tuples
-        tuple_data = ("123", "abc", "456", "def", "789", "ghi", "012", "jkl", "345", "mno", "678", "pqr")
+        tuple_data = (
+            "123",
+            "abc",
+            "456",
+            "def",
+            "789",
+            "ghi",
+            "012",
+            "jkl",
+            "345",
+            "mno",
+            "678",
+            "pqr",
+        )
         result_tuple_optimized = profile_values(tuple_data, use_incremental_typecheck=True)
         result_tuple_original = profile_values(tuple_data, use_incremental_typecheck=False)
 
@@ -992,7 +1158,7 @@ class TestProfileValues(unittest.TestCase):
         assert result_tuple_optimized == result_tuple_original
 
 
-class TestUtilityFunctions(unittest.TestCase):
+class TestUtilityFunctions:
     """Test cases for utility functions"""
 
     def test_is_list_like(self):
@@ -1060,7 +1226,3 @@ class TestUtilityFunctions(unittest.TestCase):
         assert not is_empty({"a": 1})
         assert not is_empty(0)
         assert not is_empty(False)
-
-
-if __name__ == "__main__":
-    unittest.main()

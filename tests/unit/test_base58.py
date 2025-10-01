@@ -89,7 +89,7 @@ def test_encode_very_large_data():
 
 def test_encode_unicode_bytes():
     """Test encoding unicode bytes."""
-    data = "Hello🚀World".encode("utf-8")
+    data = "Hello🚀World".encode()
     encoded = Base58.encode(data)
     assert isinstance(encoded, str)
 
@@ -751,7 +751,6 @@ def test_validation_edge_case_coverage():
 def test_validation_exception_path(monkeypatch):
     """Test the exception path in the try-except block for 100% coverage."""
 
-    # Create a custom class that raises an exception during membership testing
     class BadAlphabet:
         def __contains__(self, item):
             raise RuntimeError("Test exception")

@@ -2,15 +2,17 @@
 Tests for data validation utilities.
 """
 
-import unittest
+import pytest
 
 from splurge_tools.data_validator import DataValidator
 from splurge_tools.protocols import DataValidatorProtocol
 
 
-class TestDataValidator(unittest.TestCase):
-    def setUp(self):
+class TestDataValidator:
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         self.validator = DataValidator()
+        yield
 
     def test_required_validator(self):
         # Test required field validation
@@ -141,7 +143,3 @@ class TestDataValidator(unittest.TestCase):
         errors = self.validator.validate_detailed(data)
         assert "name" in errors
         assert "Field is required" in errors["name"]
-
-
-if __name__ == "__main__":
-    unittest.main()

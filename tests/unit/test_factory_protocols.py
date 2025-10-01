@@ -6,7 +6,6 @@ Tests that factory functions return objects that implement the correct protocols
 
 import os
 import tempfile
-import unittest
 
 import pytest
 
@@ -24,11 +23,13 @@ from splurge_tools.resource_manager import safe_file_operation
 from splurge_tools.type_helper import DataType, TypeInference
 
 
-class TestFactoryProtocols(unittest.TestCase):
+class TestFactoryProtocols:
     """Test that factory methods return objects that implement the correct protocols."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         pass
+        yield
 
     def test_data_model_factory_returns_protocol_compliant_objects(self):
         """Test that DataModelFactory returns TabularDataProtocol compliant objects."""
@@ -142,7 +143,3 @@ class TestFactoryProtocols(unittest.TestCase):
         """Basic validation on explicit constructors."""
         with pytest.raises(Exception):
             create_streaming_model(None)  # type: ignore[arg-type]
-
-
-if __name__ == "__main__":
-    unittest.main()

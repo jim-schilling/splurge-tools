@@ -1,11 +1,11 @@
 """Unit tests for text_normalizer.py"""
 
-import unittest
+import pytest
 
 from splurge_tools.text_normalizer import TextNormalizer
 
 
-class TestTextNormalizer(unittest.TestCase):
+class TestTextNormalizer:
     def test_remove_accents(self):
         assert TextNormalizer.remove_accents("café") == "cafe"
         assert TextNormalizer.remove_accents("résumé") == "resume"
@@ -92,7 +92,3 @@ class TestTextNormalizer(unittest.TestCase):
 
         # Test with no duplicates
         assert TextNormalizer.remove_duplicate_chars("hello world") == "hello world"
-
-
-if __name__ == "__main__":
-    unittest.main()

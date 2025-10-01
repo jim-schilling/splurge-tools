@@ -2,19 +2,22 @@
 Unit tests for TypeInference class and TypeInferenceProtocol compliance.
 """
 
-import unittest
 from datetime import date, datetime, time
+
+import pytest
 
 from splurge_tools.protocols import TypeInferenceProtocol
 from splurge_tools.type_helper import DataType, TypeInference
 
 
-class TestTypeInference(unittest.TestCase):
+class TestTypeInference:
     """Test cases for TypeInference class"""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test fixtures"""
         self.type_inference = TypeInference()
+        yield
 
     def test_protocol_compliance(self):
         """Test that TypeInference implements TypeInferenceProtocol"""
@@ -143,30 +146,46 @@ class TestTypeInference(unittest.TestCase):
         assert self.type_inference.convert_value("abc123") == "abc123"
         assert self.type_inference.convert_value("123abc") == "123abc"
 
-    def test_integration_workflow(self):
-        """Test the complete workflow: can_infer -> infer_type -> convert_value"""
-        test_cases = [
+    @pytest.mark.parametrize(
+        "value,can_infer,expected_type,expected_converted",
+        [
             ("123", True, DataType.INTEGER, 123),
             ("3.14", True, DataType.FLOAT, 3.14),
             ("true", True, DataType.BOOLEAN, True),
             ("2023-01-15", True, DataType.DATE, date(2023, 1, 15)),
             ("14:30:00", True, DataType.TIME, time(14, 30)),
-            ("2023-01-15T14:30:00", True, DataType.DATETIME, datetime(2023, 1, 15, 14, 30)),
+            (
+                "2023-01-15T14:30:00",
+                True,
+                DataType.DATETIME,
+                datetime(2023, 1, 15, 14, 30),
+            ),
             ("none", True, DataType.NONE, None),
             ("", True, DataType.EMPTY, ""),
             ("hello", False, DataType.STRING, "hello"),
-        ]
+        ],
+        ids=[
+            "row_0",
+            "row_1",
+            "row_2",
+            "row_3",
+            "row_4",
+            "row_5",
+            "row_6",
+            "row_7",
+            "row_8",
+        ],
+    )
+    def test_integration_workflow(self, value: str, can_infer: bool, expected_type, expected_converted):
+        """Test the complete workflow: can_infer -> infer_type -> convert_value"""
+        # Test can_infer
+        assert self.type_inference.can_infer(value) == can_infer
 
-        for value, can_infer, expected_type, expected_converted in test_cases:
-            with self.subTest(value=value):
-                # Test can_infer
-                assert self.type_inference.can_infer(value) == can_infer
+        # Test infer_type
+        assert self.type_inference.infer_type(value) == expected_type
 
-                # Test infer_type
-                assert self.type_inference.infer_type(value) == expected_type
-
-                # Test convert_value
-                assert self.type_inference.convert_value(value) == expected_converted
+        # Test convert_value
+        assert self.type_inference.convert_value(value) == expected_converted
 
     def test_edge_cases(self):
         """Test edge cases and boundary conditions"""
@@ -212,7 +231,3 @@ class TestTypeInference(unittest.TestCase):
         assert instance1.can_infer("123") == instance2.can_infer("123")
         assert instance1.infer_type("123") == instance2.infer_type("123")
         assert instance1.convert_value("123") == instance2.convert_value("123")
-
-
-if __name__ == "__main__":
-    unittest.main()
